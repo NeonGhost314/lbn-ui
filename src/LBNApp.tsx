@@ -298,83 +298,133 @@ const LBNApp = () => {
 
     // Navigation
     const NavBar = () => (
-        <div className="bg-gradient-to-r from-slate-50 to-white text-slate-800 p-4 flex items-center justify-between shadow-md border-b-2 border-orange-200">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center font-bold text-xl text-white shadow-lg">
-                    LBN
-                </div>
-                <span
-                    className="text-xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent"
-                    style={{ fontFamily: "Georgia, serif" }}
-                >
-                    la bonne note
-                </span>
-            </div>
-            <div className="flex items-center gap-4">
-                <button className="p-2 hover:bg-orange-100 rounded-lg transition-all relative group">
-                    <Bell size={20} className="text-slate-600 group-hover:text-orange-600" />
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                </button>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
-                    <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md"></div>
-                    <span className="text-sm font-medium text-slate-700">Admin</span>
-                </div>
+        <div className="fixed top-0 left-64 right-0 bg-white/80 backdrop-blur-sm text-slate-800 px-6 py-3 flex items-center justify-between shadow-sm border-b border-slate-200/60 z-50">
+            <div>
+                <h1 className="text-lg font-semibold text-slate-700">
+                    {currentPage === "dashboard" && "Tableau de bord"}
+                    {currentPage === "personnel" && "Personnel"}
+                    {currentPage === "placement" && "Placement"}
+                    {currentPage === "stats" && "Statistiques"}
+                    {currentPage === "settings" && "Réglages"}
+                </h1>
             </div>
         </div>
     );
 
     const Sidebar = () => (
-        <div className="fixed left-0 top-16 w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-white h-[calc(100vh-4rem)] p-4 space-y-1 overflow-y-auto shadow-2xl border-r border-slate-800">
-            <button
-                onClick={() => setCurrentPage("dashboard")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "dashboard"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    }`}
-            >
-                <Calendar size={20} className={currentPage === "dashboard" ? "animate-pulse" : ""} />
-                <span>Tableau de bord</span>
-            </button>
-            <button
-                onClick={() => setCurrentPage("personnel")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "personnel"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    }`}
-            >
-                <Users size={20} />
-                <span>Personnel</span>
-            </button>
-            <button
-                onClick={() => setCurrentPage("placement")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "placement"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    }`}
-            >
-                <BookOpen size={20} />
-                <span>Placement</span>
-            </button>
-            <button
-                onClick={() => setCurrentPage("stats")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "stats"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    }`}
-            >
-                <BarChart3 size={20} />
-                <span>Statistiques</span>
-            </button>
-            <button
-                onClick={() => setCurrentPage("settings")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "settings"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
-                    }`}
-            >
-                <Settings size={20} />
-                <span>Réglages</span>
-            </button>
+        <div className="fixed left-0 top-0 w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white h-screen overflow-y-auto shadow-2xl border-r border-slate-700/50 z-40">
+            {/* Logo Section */}
+            <div className="p-6 border-b border-slate-700/50">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-lg ring-2 ring-orange-400/20">
+                        LBN
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white">La Bonne Note</span>
+                        <span className="text-xs text-slate-400">Gestion de cours</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="p-4 space-y-1.5">
+                <button
+                    onClick={() => setCurrentPage("dashboard")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "dashboard"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "dashboard" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <Calendar size={20} className={currentPage === "dashboard" ? "" : "group-hover:scale-110 transition-transform"} />
+                    <span>Tableau de bord</span>
+                </button>
+
+                <button
+                    onClick={() => setCurrentPage("personnel")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "personnel"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "personnel" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <Users size={20} className="group-hover:scale-110 transition-transform" />
+                    <span>Personnel</span>
+                </button>
+
+                <button
+                    onClick={() => setCurrentPage("placement")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "placement"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "placement" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <BookOpen size={20} className="group-hover:scale-110 transition-transform" />
+                    <span>Placement</span>
+                </button>
+
+                <button
+                    onClick={() => setCurrentPage("stats")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "stats"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "stats" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <BarChart3 size={20} className="group-hover:scale-110 transition-transform" />
+                    <span>Statistiques</span>
+                </button>
+
+                {/* Notifications Button */}
+                <div className="pt-4 mt-4 border-t border-slate-700/50">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group hover:bg-slate-800/50 text-slate-300 hover:text-white">
+                        <div className="relative">
+                            <Bell size={20} className="group-hover:scale-110 transition-transform" />
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                        </div>
+                        <span>Notifications</span>
+                        <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+                    </button>
+                </div>
+
+                <div className="pt-2">
+                    <button
+                        onClick={() => setCurrentPage("settings")}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "settings"
+                            ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                            : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                            }`}
+                    >
+                        {currentPage === "settings" && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                        )}
+                        <Settings size={20} className="group-hover:scale-110 transition-transform" />
+                        <span>Réglages</span>
+                    </button>
+                </div>
+            </nav>
+
+            {/* Footer/User Section */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors cursor-pointer">
+                    <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md flex items-center justify-center text-sm font-bold">
+                        A
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">Admin</div>
+                        <div className="text-xs text-slate-400 truncate">admin@labonnenote.com</div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 
@@ -1525,11 +1575,10 @@ const LBNApp = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
             <NavBar />
-            <div className="flex flex-1">
-                <div className="w-64 flex-shrink-0" />
-                <Sidebar />
+            <Sidebar />
+            <div className="ml-64 pt-14">
                 {currentPage === "dashboard" && <DashboardPage />}
                 {currentPage === "personnel" && <PersonnelPage />}
                 {currentPage === "placement" && <PlacementPage />}
