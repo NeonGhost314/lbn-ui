@@ -18,10 +18,16 @@ import {
     CheckCircle,
     Menu,
     X,
+    Eye,
+    EyeOff,
+    Printer,
+    Trash2,
+    ChevronDown,
 } from "lucide-react";
 
 const LBNApp = () => {
     type Day = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi";
+    type RoomFilter = "all" | "occupied" | "free";
 
     interface Course {
         time: string;
@@ -32,19 +38,42 @@ const LBNApp = () => {
         color: string;
     }
 
+    interface TimeSlot {
+        id: string;
+        startTime: string;
+        endTime: string;
+        label: string;
+    }
+
+    interface StatisticConfig {
+        id: string;
+        name: string;
+        visible: boolean;
+    }
+
     const [currentPage, setCurrentPage] = useState("dashboard");
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
+    const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
+    const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
+        activeStudents: true,
+        plannedCourses: true,
+        occupancyRate: true,
+        overages: true,
+        tutorCapacity: true,
+        roomUsage: true,
+    });
+
+    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
+        { id: "1", startTime: "08:00", endTime: "10:15", label: "8h-10h15" },
+        { id: "2", startTime: "10:30", endTime: "12:30", label: "10h30-12h30" },
+        { id: "3", startTime: "13:00", endTime: "15:15", label: "13h-15h15" },
+        { id: "4", startTime: "15:30", endTime: "17:30", label: "15h30-17h30" },
+    ]);
 
     const days: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
-    const timeSlots = [
-        "8h00",
-        "9h30",
-        "11h00",
-        "13h00",
-        "14h30",
-        "16h00",
-        "17h30",
-    ];
+
+    // All rooms available for the dashboard
+    const allRooms = ["Salle A", "Salle B", "Salle C", "Salle D", "Salle E"];
 
     const courses: Partial<Record<Day, Course[]>> = {
         Lundi: [
@@ -57,17 +86,15 @@ const LBNApp = () => {
                 color: "bg-blue-500",
             },
             {
-                time: "13h00",
+                time: "8h00",
                 room: "Salle B",
                 tutor: "Jean Martin",
                 students: 4,
                 subject: "Français",
                 color: "bg-purple-500",
             },
-        ],
-        Mardi: [
             {
-                time: "9h30",
+                time: "10h30",
                 room: "Salle A",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -75,7 +102,65 @@ const LBNApp = () => {
                 color: "bg-green-500",
             },
             {
-                time: "14h30",
+                time: "13h00",
+                room: "Salle B",
+                tutor: "Jean Martin",
+                students: 4,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+            {
+                time: "13h00",
+                room: "Salle C",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "15h30",
+                room: "Salle A",
+                tutor: "Marie Dupont",
+                students: 5,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+        ],
+        Mardi: [
+            {
+                time: "8h00",
+                room: "Salle C",
+                tutor: "Marie Dupont",
+                students: 3,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+            {
+                time: "8h00",
+                room: "Salle D",
+                tutor: "Sophie Chen",
+                students: 2,
+                subject: "Sciences",
+                color: "bg-green-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle B",
+                tutor: "Jean Martin",
+                students: 4,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+            {
+                time: "13h00",
+                room: "Salle A",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "15h30",
                 room: "Salle C",
                 tutor: "Marie Dupont",
                 students: 5,
@@ -83,52 +168,178 @@ const LBNApp = () => {
                 color: "bg-blue-500",
             },
         ],
+        Mercredi: [
+            {
+                time: "8h00",
+                room: "Salle A",
+                tutor: "Jean Martin",
+                students: 4,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle B",
+                tutor: "Marie Dupont",
+                students: 3,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle D",
+                tutor: "Sophie Chen",
+                students: 2,
+                subject: "Sciences",
+                color: "bg-green-500",
+            },
+            {
+                time: "13h00",
+                room: "Salle C",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "15h30",
+                room: "Salle E",
+                tutor: "Jean Martin",
+                students: 5,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+        ],
+        Jeudi: [
+            {
+                time: "8h00",
+                room: "Salle B",
+                tutor: "Sophie Chen",
+                students: 2,
+                subject: "Sciences",
+                color: "bg-green-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle A",
+                tutor: "Jean Martin",
+                students: 4,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle C",
+                tutor: "Marie Dupont",
+                students: 3,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+            {
+                time: "13h00",
+                room: "Salle D",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "15h30",
+                room: "Salle B",
+                tutor: "Marie Dupont",
+                students: 5,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+        ],
+        Vendredi: [
+            {
+                time: "8h00",
+                room: "Salle A",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "8h00",
+                room: "Salle D",
+                tutor: "Jean Martin",
+                students: 4,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+            {
+                time: "10h30",
+                room: "Salle B",
+                tutor: "Marie Dupont",
+                students: 3,
+                subject: "Math",
+                color: "bg-blue-500",
+            },
+            {
+                time: "13h00",
+                room: "Salle C",
+                tutor: "Sophie Chen",
+                students: 2,
+                subject: "Sciences",
+                color: "bg-green-500",
+            },
+            {
+                time: "15h30",
+                room: "Salle E",
+                tutor: "Jean Martin",
+                students: 5,
+                subject: "Français",
+                color: "bg-purple-500",
+            },
+        ],
     };
 
     // Navigation
     const NavBar = () => (
-        <div className="bg-white text-slate-800 p-4 flex items-center justify-between shadow-md border-b border-slate-200">
+        <div className="bg-gradient-to-r from-slate-50 to-white text-slate-800 p-4 flex items-center justify-between shadow-md border-b-2 border-orange-200">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center font-bold text-xl text-white">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center font-bold text-xl text-white shadow-lg">
                     LBN
                 </div>
                 <span
-                    className="text-xl font-semibold"
+                    className="text-xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent"
                     style={{ fontFamily: "Georgia, serif" }}
                 >
                     la bonne note
                 </span>
             </div>
             <div className="flex items-center gap-4">
-                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors relative">
-                    <Bell size={20} className="text-slate-600" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <button className="p-2 hover:bg-orange-100 rounded-lg transition-all relative group">
+                    <Bell size={20} className="text-slate-600 group-hover:text-orange-600" />
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full"></div>
-                    <span className="text-sm text-slate-700">Admin</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md"></div>
+                    <span className="text-sm font-medium text-slate-700">Admin</span>
                 </div>
             </div>
         </div>
     );
 
     const Sidebar = () => (
-        <div className="w-64 bg-slate-900 text-white h-screen p-4 space-y-2">
+        <div className="fixed left-0 top-16 w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-white h-[calc(100vh-4rem)] p-4 space-y-1 overflow-y-auto shadow-2xl border-r border-slate-800">
             <button
                 onClick={() => setCurrentPage("dashboard")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${currentPage === "dashboard"
-                        ? "bg-orange-500 shadow-lg"
-                        : "hover:bg-slate-800"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "dashboard"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
                     }`}
             >
-                <Calendar size={20} />
+                <Calendar size={20} className={currentPage === "dashboard" ? "animate-pulse" : ""} />
                 <span>Tableau de bord</span>
             </button>
             <button
                 onClick={() => setCurrentPage("personnel")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${currentPage === "personnel"
-                        ? "bg-orange-500 shadow-lg"
-                        : "hover:bg-slate-800"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "personnel"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
                     }`}
             >
                 <Users size={20} />
@@ -136,9 +347,9 @@ const LBNApp = () => {
             </button>
             <button
                 onClick={() => setCurrentPage("placement")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${currentPage === "placement"
-                        ? "bg-orange-500 shadow-lg"
-                        : "hover:bg-slate-800"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "placement"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
                     }`}
             >
                 <BookOpen size={20} />
@@ -146,9 +357,9 @@ const LBNApp = () => {
             </button>
             <button
                 onClick={() => setCurrentPage("stats")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${currentPage === "stats"
-                        ? "bg-orange-500 shadow-lg"
-                        : "hover:bg-slate-800"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "stats"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
                     }`}
             >
                 <BarChart3 size={20} />
@@ -156,9 +367,9 @@ const LBNApp = () => {
             </button>
             <button
                 onClick={() => setCurrentPage("settings")}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${currentPage === "settings"
-                        ? "bg-orange-500 shadow-lg"
-                        : "hover:bg-slate-800"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-200 ${currentPage === "settings"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                    : "hover:bg-slate-800 text-slate-300 hover:text-white"
                     }`}
             >
                 <Settings size={20} />
@@ -228,170 +439,365 @@ const LBNApp = () => {
         </div>
     );
 
+    // Helper function to get filtered rooms
+    const getFilteredRooms = () => {
+        if (roomFilter === "all") return allRooms;
+
+        const occupiedRooms = new Set(
+            courses[selectedDay]?.map((c) => c.room) || []
+        );
+
+        if (roomFilter === "occupied") {
+            return allRooms.filter((room) => occupiedRooms.has(room));
+        } else {
+            return allRooms.filter((room) => !occupiedRooms.has(room));
+        }
+    };
+
+    // Helper to get courses for a room in a time slot
+    const getCoursesForRoomAndSlot = (room: string, slotStart: string) => {
+        return (
+            courses[selectedDay]?.filter(
+                (c) => c.room === room && c.time.startsWith(slotStart.split(":")[0])
+            ) || []
+        );
+    };
+
+    // Statistics configuration
+    const statsConfig: StatisticConfig[] = [
+        { id: "activeStudents", name: "Élèves actifs", visible: true },
+        { id: "plannedCourses", name: "Cours planifiés", visible: true },
+        { id: "occupancyRate", name: "Taux occupation", visible: true },
+        { id: "overages", name: "Dépassements", visible: true },
+        { id: "tutorCapacity", name: "Capacité tuteurs", visible: false },
+        { id: "roomUsage", name: "Utilisation salles", visible: false },
+    ];
+
     // Dashboard Page
-    const DashboardPage = () => (
-        <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-auto">
-            {/* KPIs */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-slate-600 text-sm font-medium">
-                            Élèves actifs
-                        </span>
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <Users size={20} className="text-blue-600" />
+    const DashboardPage = () => {
+        const [showStatsPicker, setShowStatsPicker] = useState(false);
+        const [printRange, setPrintRange] = useState("week");
+
+        return (
+            <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-8 overflow-auto">
+                {/* Statistics Section with Configuration - FIRST */}
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-8 w-full">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900">
+                                Statistiques
+                            </h3>
+                            <p className="text-slate-600 text-sm">
+                                Semaine du 17 octobre 2025
+                            </p>
                         </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">142</div>
-                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
-                        <TrendingUp size={14} />
-                        <span>+12% ce mois</span>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-slate-600 text-sm font-medium">
-                            Cours planifiés
-                        </span>
-                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                            <Calendar size={20} className="text-purple-600" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">87</div>
-                    <div className="text-slate-500 text-sm mt-2">
-                        Cette semaine
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-slate-600 text-sm font-medium">
-                            Taux occupation
-                        </span>
-                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                            <BarChart3 size={20} className="text-green-600" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">92%</div>
-                    <div className="w-full bg-slate-200 h-2 rounded-full mt-2">
-                        <div
-                            className="bg-green-500 h-2 rounded-full"
-                            style={{ width: "92%" }}
-                        ></div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-slate-600 text-sm font-medium">
-                            Dépassements
-                        </span>
-                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                            <AlertCircle
-                                size={20}
-                                className="text-orange-600"
-                            />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">3</div>
-                    <div className="text-orange-600 text-sm mt-2">
-                        À résoudre
-                    </div>
-                </div>
-            </div>
-
-            {/* Weekly Schedule */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                            Vue hebdomadaire
-                        </h2>
-                        <p className="text-slate-600 text-sm">
-                            Semaine du 17 octobre 2025
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2">
-                            <Filter size={16} />
-                            Filtrer
-                        </button>
-                        <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                            <Plus size={16} />
-                            Nouveau cours
-                        </button>
-                    </div>
-                </div>
-
-                {/* Day tabs */}
-                <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {days.map((day) => (
                         <button
-                            key={day}
-                            onClick={() => setSelectedDay(day)}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${selectedDay === day
-                                    ? "bg-orange-500 text-white shadow-lg"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                }`}
+                            onClick={() => setShowStatsPicker(!showStatsPicker)}
+                            className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2"
                         >
-                            {day}
+                            <Eye size={16} />
+                            Personnaliser
                         </button>
-                    ))}
+                    </div>
+
+                    {/* Statistics Picker */}
+                    {showStatsPicker && (
+                        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4">
+                            <p className="text-sm font-medium text-slate-700 mb-3">
+                                Choisir les statistiques à afficher:
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {statsConfig.map((stat) => (
+                                    <label
+                                        key={stat.id}
+                                        className="flex items-center gap-2 p-2 hover:bg-white rounded transition-colors cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                visibleStats[stat.id] ?? stat.visible
+                                            }
+                                            onChange={(e) =>
+                                                setVisibleStats({
+                                                    ...visibleStats,
+                                                    [stat.id]: e.target.checked,
+                                                })
+                                            }
+                                            className="rounded"
+                                        />
+                                        <span className="text-sm text-slate-700">
+                                            {stat.name}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* KPIs */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {visibleStats.activeStudents && (
+                            <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-5 shadow-md border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Élèves actifs
+                                    </span>
+                                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                        <Users size={20} className="text-blue-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    142
+                                </div>
+                                <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                    <TrendingUp size={14} />
+                                    <span>+12% ce mois</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {visibleStats.plannedCourses && (
+                            <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Cours planifiés
+                                    </span>
+                                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <Calendar size={20} className="text-purple-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    87
+                                </div>
+                                <div className="text-slate-500 text-sm mt-2">
+                                    Cette semaine
+                                </div>
+                            </div>
+                        )}
+
+                        {visibleStats.occupancyRate && (
+                            <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Taux occupation
+                                    </span>
+                                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <BarChart3 size={20} className="text-green-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    92%
+                                </div>
+                                <div className="w-full bg-slate-200 h-2 rounded-full mt-2">
+                                    <div
+                                        className="bg-green-500 h-2 rounded-full"
+                                        style={{ width: "92%" }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
+
+                        {visibleStats.overages && (
+                            <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Dépassements
+                                    </span>
+                                    <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                                        <AlertCircle
+                                            size={20}
+                                            className="text-orange-600"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    3
+                                </div>
+                                <div className="text-orange-600 text-sm mt-2">
+                                    À résoudre
+                                </div>
+                            </div>
+                        )}
+
+                        {visibleStats.tutorCapacity && (
+                            <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Capacité tuteurs
+                                    </span>
+                                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <Users size={20} className="text-purple-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    78%
+                                </div>
+                                <div className="text-slate-500 text-sm mt-2">
+                                    Moyenne utilisation
+                                </div>
+                            </div>
+                        )}
+
+                        {visibleStats.roomUsage && (
+                            <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-600 text-sm font-medium">
+                                        Utilisation salles
+                                    </span>
+                                    <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+                                        <MapPin size={20} className="text-teal-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-slate-900">
+                                    85%
+                                </div>
+                                <div className="w-full bg-slate-200 h-2 rounded-full mt-2">
+                                    <div
+                                        className="bg-teal-500 h-2 rounded-full"
+                                        style={{ width: "85%" }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Schedule grid */}
-                <div className="grid grid-cols-4 gap-4">
-                    {timeSlots.map((time) => {
-                        const coursesAtTime =
-                            courses[selectedDay]?.filter(
-                                (c) => c.time === time
-                            ) || [];
-                        return (
-                            <div key={time} className="space-y-2">
-                                <div className="text-sm font-medium text-slate-500">
-                                    {time}
-                                </div>
-                                {coursesAtTime.length > 0 ? (
-                                    coursesAtTime.map((course, idx) => (
-                                        <div
-                                            key={idx}
-                                            className={`${course.color} text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all cursor-pointer`}
+                {/* Weekly Schedule with New Layout - SECOND */}
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">
+                                Vue hebdomadaire
+                            </h2>
+                            <p className="text-slate-600 text-sm">
+                                Salles et créneaux horaires
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={roomFilter}
+                                onChange={(e) =>
+                                    setRoomFilter(e.target.value as RoomFilter)
+                                }
+                                className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                            >
+                                <option value="all">Toutes les salles</option>
+                                <option value="occupied">Salles occupées</option>
+                                <option value="free">Salles libres</option>
+                            </select>
+                            <button
+                                onClick={() => window.print()}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
+                            >
+                                <Printer size={16} />
+                                Imprimer
+                            </button>
+                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                                <Plus size={16} />
+                                Nouveau cours
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Day tabs */}
+                    <div className="flex gap-3 mb-6 flex-wrap">
+                        {days.map((day) => (
+                            <button
+                                key={day}
+                                onClick={() => setSelectedDay(day)}
+                                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${selectedDay === day
+                                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg scale-105"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:shadow-md"
+                                    }`}
+                            >
+                                {day}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* New Grid Layout: Time slots horizontally, Rooms vertically */}
+                    <div className="w-full overflow-x-auto -mx-6 px-6">
+                        <table className="w-full border-collapse min-w-max">
+                            <thead>
+                                <tr>
+                                    <th className="p-3 text-left bg-slate-50 border border-slate-200">
+                                        <span className="text-sm font-semibold text-slate-700">
+                                            Salles / Créneaux
+                                        </span>
+                                    </th>
+                                    {timeSlots.map((slot) => (
+                                        <th
+                                            key={slot.id}
+                                            className="p-3 text-center bg-slate-50 border border-slate-200 min-w-[150px]"
                                         >
-                                            <div className="font-semibold mb-1">
-                                                {course.subject}
-                                            </div>
-                                            <div className="text-sm opacity-90 flex items-center gap-1 mb-1">
-                                                <MapPin size={12} />
-                                                {course.room}
-                                            </div>
-                                            <div className="text-sm opacity-90">
-                                                {course.tutor}
-                                            </div>
-                                            <div className="flex items-center gap-1 mt-2 text-xs">
-                                                <Users size={12} />
-                                                <span>
-                                                    {course.students} élèves
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-slate-400 hover:border-slate-300 transition-colors cursor-pointer">
-                                        <Plus
-                                            size={16}
-                                            className="mx-auto mb-1"
-                                        />
-                                        <span className="text-xs">Ajouter</span>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                                            <span className="text-sm font-semibold text-slate-700">
+                                                {slot.label}
+                                            </span>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {getFilteredRooms().map((room, roomIdx) => (
+                                    <tr key={room} className={`transition-colors duration-200 hover:bg-orange-50 ${roomIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                                        <td className="p-3 bg-inherit border border-slate-200 font-semibold text-slate-900 whitespace-nowrap hover:bg-orange-100 transition-colors">
+                                            {room}
+                                        </td>
+                                        {timeSlots.map((slot) => {
+                                            const roomCourses =
+                                                getCoursesForRoomAndSlot(
+                                                    room,
+                                                    slot.startTime
+                                                );
+                                            return (
+                                                <td
+                                                    key={`${room}-${slot.id}`}
+                                                    className="p-2 border border-slate-200 min-w-[150px] align-top"
+                                                >
+                                                    {roomCourses.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                            {roomCourses.map(
+                                                                (course, idx) => (
+                                                                    <div
+                                                                        key={idx}
+                                                                        className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer text-xs font-medium group hover:scale-105 border border-opacity-20 border-white`}
+                                                                    >
+                                                                        <div className="font-bold mb-1 group-hover:text-yellow-50">
+                                                                            {
+                                                                                course.tutor
+                                                                            }
+                                                                        </div>
+                                                                        <div className="opacity-90 flex items-center gap-1 group-hover:opacity-100">
+                                                                            <Users
+                                                                                size={
+                                                                                    12
+                                                                                }
+                                                                            />
+                                                                            <span>{course.students} élèves</span>
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center text-slate-300 hover:border-slate-300 transition-colors cursor-pointer h-20 flex items-center justify-center">
+                                                            <span className="text-xs">
+                                                                Libre
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Personnel Page
     const PersonnelPage = () => (
@@ -472,8 +878,8 @@ const LBNApp = () => {
                                 </div>
                                 <div
                                     className={`px-3 py-1 rounded-full text-xs font-medium ${tutor.status === "full"
-                                            ? "bg-orange-100 text-orange-700"
-                                            : "bg-green-100 text-green-700"
+                                        ? "bg-orange-100 text-orange-700"
+                                        : "bg-green-100 text-green-700"
                                         }`}
                                 >
                                     {tutor.status === "full"
@@ -862,137 +1268,256 @@ const LBNApp = () => {
     );
 
     // Settings Page
-    const SettingsPage = () => (
-        <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-auto">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Réglages</h2>
+    const SettingsPage = () => {
+        const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
+        const [newSlotStart, setNewSlotStart] = useState("");
+        const [newSlotEnd, setNewSlotEnd] = useState("");
+        const [newSlotLabel, setNewSlotLabel] = useState("");
 
-            <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                        Paramètres généraux
-                    </h3>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Nom de l'organisation
-                            </label>
-                            <input
-                                type="text"
-                                value="La Bonne Note"
-                                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Capacité max par défaut (PG)
-                            </label>
-                            <input
-                                type="number"
-                                value="15"
-                                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Durée des cours (min)
-                            </label>
-                            <input
-                                type="number"
-                                value="90"
-                                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-                    </div>
-                </div>
+        const handleAddTimeSlot = () => {
+            if (newSlotStart && newSlotEnd && newSlotLabel) {
+                const newSlot: TimeSlot = {
+                    id: Date.now().toString(),
+                    startTime: newSlotStart,
+                    endTime: newSlotEnd,
+                    label: newSlotLabel,
+                };
+                setTimeSlots([...timeSlots, newSlot]);
+                setNewSlotStart("");
+                setNewSlotEnd("");
+                setNewSlotLabel("");
+            }
+        };
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                        Notifications
-                    </h3>
-                    <div className="space-y-3">
-                        {[
-                            {
-                                label: "Envoi automatique des horaires",
-                                checked: true,
-                            },
-                            { label: "Alertes de dépassement", checked: true },
-                            { label: "Rappels avant cours", checked: false },
-                            {
-                                label: "Confirmations par e-mail",
-                                checked: true,
-                            },
-                        ].map((setting, idx) => (
-                            <label
-                                key={idx}
-                                className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
-                            >
-                                <span className="text-sm font-medium text-slate-700">
-                                    {setting.label}
-                                </span>
-                                <div
-                                    className={`w-12 h-6 rounded-full transition-colors ${setting.checked
-                                            ? "bg-orange-500"
-                                            : "bg-slate-300"
-                                        }`}
-                                >
-                                    <div
-                                        className={`w-5 h-5 bg-white rounded-full mt-0.5 transition-transform ${setting.checked ? "ml-6" : "ml-0.5"
-                                            }`}
-                                    ></div>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+        const handleDeleteTimeSlot = (id: string) => {
+            setTimeSlots(timeSlots.filter((slot) => slot.id !== id));
+        };
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                        Thème et affichage
-                    </h3>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Couleur principale
-                            </label>
-                            <div className="flex gap-2">
-                                {[
-                                    "bg-orange-500",
-                                    "bg-blue-500",
-                                    "bg-purple-500",
-                                    "bg-green-500",
-                                ].map((color, idx) => (
-                                    <button
-                                        key={idx}
-                                        className={`w-10 h-10 ${color} rounded-lg ${idx === 0
-                                                ? "ring-2 ring-slate-900 ring-offset-2"
-                                                : ""
-                                            }`}
-                                    ></button>
-                                ))}
+        return (
+            <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-auto">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">Réglages</h2>
+
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                            Paramètres généraux
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Nom de l'organisation
+                                </label>
+                                <input
+                                    type="text"
+                                    value="La Bonne Note"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Capacité max par défaut (PG)
+                                </label>
+                                <input
+                                    type="number"
+                                    value="15"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Durée des cours (min)
+                                </label>
+                                <input
+                                    type="number"
+                                    value="90"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                        Sécurité
-                    </h3>
-                    <div className="space-y-3">
-                        <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                            Changer le mot de passe
-                        </button>
-                        <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                            Activer 2FA
-                        </button>
-                        <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                            Gérer les sessions
-                        </button>
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                            Notifications
+                        </h3>
+                        <div className="space-y-3">
+                            {[
+                                {
+                                    label: "Envoi automatique des horaires",
+                                    checked: true,
+                                },
+                                { label: "Alertes de dépassement", checked: true },
+                                { label: "Rappels avant cours", checked: false },
+                                {
+                                    label: "Confirmations par e-mail",
+                                    checked: true,
+                                },
+                            ].map((setting, idx) => (
+                                <label
+                                    key={idx}
+                                    className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                                >
+                                    <span className="text-sm font-medium text-slate-700">
+                                        {setting.label}
+                                    </span>
+                                    <div
+                                        className={`w-12 h-6 rounded-full transition-colors ${setting.checked
+                                            ? "bg-orange-500"
+                                            : "bg-slate-300"
+                                            }`}
+                                    >
+                                        <div
+                                            className={`w-5 h-5 bg-white rounded-full mt-0.5 transition-transform ${setting.checked ? "ml-6" : "ml-0.5"
+                                                }`}
+                                        ></div>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                            Thème et affichage
+                        </h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Couleur principale
+                                </label>
+                                <div className="flex gap-2">
+                                    {[
+                                        "bg-orange-500",
+                                        "bg-blue-500",
+                                        "bg-purple-500",
+                                        "bg-green-500",
+                                    ].map((color, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`w-10 h-10 ${color} rounded-lg ${idx === 0
+                                                ? "ring-2 ring-slate-900 ring-offset-2"
+                                                : ""
+                                                }`}
+                                        ></button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                            Sécurité
+                        </h3>
+                        <div className="space-y-3">
+                            <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
+                                Changer le mot de passe
+                            </button>
+                            <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
+                                Activer 2FA
+                            </button>
+                            <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
+                                Gérer les sessions
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Time Slots Configuration */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                            Créneaux horaires fixes
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-4">
+                            Définissez les créneaux fixes de votre organisation
+                        </p>
+
+                        {/* Add new time slot form */}
+                        <div className="bg-slate-50 rounded-lg p-4 mb-6 space-y-3">
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Heure début
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={newSlotStart}
+                                        onChange={(e) =>
+                                            setNewSlotStart(e.target.value)
+                                        }
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Heure fin
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={newSlotEnd}
+                                        onChange={(e) =>
+                                            setNewSlotEnd(e.target.value)
+                                        }
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Libellé
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="ex: 8h-10h15"
+                                        value={newSlotLabel}
+                                        onChange={(e) =>
+                                            setNewSlotLabel(e.target.value)
+                                        }
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleAddTimeSlot}
+                                className="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Plus size={16} />
+                                Ajouter un créneau
+                            </button>
+                        </div>
+
+                        {/* List of time slots */}
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-slate-700 mb-3">
+                                Créneaux actuels:
+                            </h4>
+                            {timeSlots.map((slot) => (
+                                <div
+                                    key={slot.id}
+                                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                                >
+                                    <div>
+                                        <div className="font-medium text-slate-900">
+                                            {slot.label}
+                                        </div>
+                                        <div className="text-sm text-slate-600">
+                                            {slot.startTime} - {slot.endTime}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() =>
+                                            handleDeleteTimeSlot(slot.id)
+                                        }
+                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Main render
     if (currentPage === "login") {
@@ -1003,6 +1528,7 @@ const LBNApp = () => {
         <div className="min-h-screen flex flex-col">
             <NavBar />
             <div className="flex flex-1">
+                <div className="w-64 flex-shrink-0" />
                 <Sidebar />
                 {currentPage === "dashboard" && <DashboardPage />}
                 {currentPage === "personnel" && <PersonnelPage />}
