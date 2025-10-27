@@ -23,6 +23,20 @@ import {
     Printer,
     Trash2,
     ChevronDown,
+    Building2,
+    UserCog,
+    Palette,
+    Lock,
+    MessageSquare,
+    DoorOpen,
+    Wifi,
+    Monitor,
+    Wind,
+    Activity,
+    Target,
+    TrendingDown,
+    PieChart,
+    BarChart,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -1889,8 +1903,8 @@ const LBNApp = () => {
                                                     onDragStart={() => setDraggedItem({ type: 'group', data: group })}
                                                     onDragEnd={() => setDraggedItem(null)}
                                                     className={`p-3 border-2 rounded-lg cursor-move hover:shadow-lg transition-all ${group.color === 'blue' ? 'bg-blue-50 border-blue-200 hover:border-blue-400' :
-                                                            group.color === 'purple' ? 'bg-purple-50 border-purple-200 hover:border-purple-400' :
-                                                                'bg-green-50 border-green-200 hover:border-green-400'
+                                                        group.color === 'purple' ? 'bg-purple-50 border-purple-200 hover:border-purple-400' :
+                                                            'bg-green-50 border-green-200 hover:border-green-400'
                                                         }`}
                                                 >
                                                     <div className="flex items-start justify-between mb-2">
@@ -1945,8 +1959,8 @@ const LBNApp = () => {
                                                 <button
                                                     onClick={() => setShowTutorFilters(!showTutorFilters)}
                                                     className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg transition-colors ${showTutorFilters || activeTutorFiltersCount > 0
-                                                            ? "bg-blue-100 text-blue-600"
-                                                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                                        ? "bg-blue-100 text-blue-600"
+                                                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                                                         }`}
                                                 >
                                                     <Filter size={14} />
@@ -2046,8 +2060,8 @@ const LBNApp = () => {
                                                         onDragStart={() => setDraggedItem({ type: 'tutor', data: tutor })}
                                                         onDragEnd={() => setDraggedItem(null)}
                                                         className={`p-3 rounded-lg border-2 cursor-move transition-all ${tutor.available
-                                                                ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg'
-                                                                : 'bg-slate-100 border-slate-300 opacity-60'
+                                                            ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg'
+                                                            : 'bg-slate-100 border-slate-300 opacity-60'
                                                             }`}
                                                     >
                                                         <div className="flex items-center justify-between mb-1">
@@ -2101,8 +2115,8 @@ const LBNApp = () => {
                                                 <button
                                                     onClick={() => setShowStudentFilters(!showStudentFilters)}
                                                     className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg transition-colors ${showStudentFilters || activeStudentFiltersCount > 0
-                                                            ? "bg-purple-100 text-purple-600"
-                                                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                                        ? "bg-purple-100 text-purple-600"
+                                                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                                                         }`}
                                                 >
                                                     <Filter size={14} />
@@ -2225,8 +2239,8 @@ const LBNApp = () => {
                                     <button
                                         onClick={() => setPlacementView("grid")}
                                         className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${placementView === "grid"
-                                                ? "bg-orange-500 text-white shadow-md"
-                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            ? "bg-orange-500 text-white shadow-md"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                             }`}
                                     >
                                         <Calendar size={16} />
@@ -2235,8 +2249,8 @@ const LBNApp = () => {
                                     <button
                                         onClick={() => setPlacementView("detailed")}
                                         className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${placementView === "detailed"
-                                                ? "bg-orange-500 text-white shadow-md"
-                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            ? "bg-orange-500 text-white shadow-md"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                             }`}
                                     >
                                         <Eye size={16} />
@@ -2261,8 +2275,8 @@ const LBNApp = () => {
                                         key={day}
                                         onClick={() => setPlacementDay(day)}
                                         className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${placementDay === day
-                                                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
-                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                             }`}
                                     >
                                         {day}
@@ -2410,169 +2424,354 @@ const LBNApp = () => {
                             Statistiques et rapports
                         </h2>
                         <p className="text-sm text-slate-600 mt-1">
-                            Analysez les performances et tendances
+                            Analysez les performances et tendances pour optimiser vos ressources
                         </p>
                     </div>
-                    <button className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2">
-                        <Download size={16} />
-                        Exporter
-                    </button>
+                    <div className="flex gap-2">
+                        <select className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-sm">
+                            <option>Cette semaine</option>
+                            <option>Ce mois</option>
+                            <option>Ce trimestre</option>
+                            <option>Cette année</option>
+                        </select>
+                        <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                            <Download size={16} />
+                            Exporter
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div className="p-6">
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                    {/* Chart 1 */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+            <div className="p-6 space-y-6">
+                {/* KPIs - Indicateurs clés */}
+                <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Taux utilisation tuteurs</span>
+                            <Activity className="text-blue-500" size={20} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900">78%</div>
+                        <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                            <TrendingUp size={14} />
+                            <span>+5% vs mois dernier</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full mt-3">
+                            <div className="bg-blue-500 h-2 rounded-full" style={{ width: "78%" }}></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Tuteurs à capacité max</span>
+                            <Target className="text-orange-500" size={20} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900">3/12</div>
+                        <div className="text-sm text-slate-600 mt-2">25% de vos tuteurs</div>
+                        <div className="mt-3 text-xs bg-orange-50 border border-orange-200 text-orange-700 px-2 py-1 rounded">
+                            ⚠️ Envisager recrutement
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Salles occupation moy.</span>
+                            <MapPin className="text-purple-500" size={20} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900">82%</div>
+                        <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                            <TrendingUp size={14} />
+                            <span>Optimal</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full mt-3">
+                            <div className="bg-purple-500 h-2 rounded-full" style={{ width: "82%" }}></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Dépassements</span>
+                            <AlertCircle className="text-red-500" size={20} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900">7</div>
+                        <div className="text-sm text-slate-600 mt-2">cette semaine</div>
+                        <div className="flex items-center gap-1 mt-3 text-red-600 text-sm">
+                            <TrendingUp size={14} />
+                            <span>+2 vs semaine dernière</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-6">
+                    {/* Remplissage des tuteurs */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Users className="text-blue-500" size={20} />
+                            Remplissage des tuteurs
+                        </h3>
+                        <div className="space-y-3">
+                            {[
+                                { name: "Marie Dupont", used: 14, total: 15, rate: 93, status: "full" },
+                                { name: "Sophie Chen", used: 15, total: 15, rate: 100, status: "critical" },
+                                { name: "Jean Martin", used: 10, total: 12, rate: 83, status: "good" },
+                                { name: "Thomas Roy", used: 6, total: 10, rate: 60, status: "low" },
+                            ].map((tutor, idx) => (
+                                <div key={idx} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div className="text-sm font-medium text-slate-900">{tutor.name}</div>
+                                            <div className="text-xs text-slate-600">{tutor.used}/{tutor.total} PG</div>
+                                        </div>
+                                        <div className={`px-2 py-1 rounded text-xs font-medium ${tutor.status === "critical" ? "bg-red-100 text-red-700" :
+                                                tutor.status === "full" ? "bg-orange-100 text-orange-700" :
+                                                    tutor.status === "good" ? "bg-green-100 text-green-700" :
+                                                        "bg-blue-100 text-blue-700"
+                                            }`}>
+                                            {tutor.rate}%
+                                        </div>
+                                    </div>
+                                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-2 rounded-full ${tutor.status === "critical" ? "bg-red-500" :
+                                                    tutor.status === "full" ? "bg-orange-500" :
+                                                        tutor.status === "good" ? "bg-green-500" :
+                                                            "bg-blue-500"
+                                                }`}
+                                            style={{ width: `${tutor.rate}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={16} />
+                                <div className="text-xs text-amber-800">
+                                    <strong>Recommandation:</strong> 2 tuteurs à pleine capacité. Considérez l'embauche d'un nouveau tuteur pour Math/Sciences.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Occupation des salles */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <MapPin className="text-purple-500" size={20} />
                             Occupation des salles
                         </h3>
                         <div className="space-y-3">
                             {[
-                                { room: "Salle A", rate: 95, color: "bg-blue-500" },
-                                {
-                                    room: "Salle B",
-                                    rate: 88,
-                                    color: "bg-purple-500",
-                                },
-                                {
-                                    room: "Salle C",
-                                    rate: 72,
-                                    color: "bg-green-500",
-                                },
-                                {
-                                    room: "Salle D",
-                                    rate: 65,
-                                    color: "bg-orange-500",
-                                },
+                                { room: "Salle A", rate: 95, hours: "38/40h", color: "bg-purple-500" },
+                                { room: "Salle B", rate: 88, hours: "35/40h", color: "bg-blue-500" },
+                                { room: "Salle C", rate: 72, hours: "29/40h", color: "bg-green-500" },
+                                { room: "Salle D", rate: 65, hours: "26/40h", color: "bg-yellow-500" },
+                                { room: "Salle E", rate: 45, hours: "18/40h", color: "bg-slate-400" },
                             ].map((room, idx) => (
                                 <div key={idx}>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-sm font-medium text-slate-700">
-                                            {room.room}
-                                        </span>
-                                        <span className="text-sm font-bold text-slate-900">
-                                            {room.rate}%
-                                        </span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <span className="text-sm font-medium text-slate-900">{room.room}</span>
+                                            <span className="text-xs text-slate-600 ml-2">{room.hours}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-900">{room.rate}%</span>
                                     </div>
-                                    <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
                                         <div
-                                            className={`${room.color} h-3 rounded-full transition-all`}
+                                            className={`${room.color} h-2.5 rounded-full transition-all`}
                                             style={{ width: `${room.rate}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="text-xs text-blue-800">
+                                <strong>Insight:</strong> Salle E sous-utilisée. Potentiel de réaffectation ou réduction des coûts.
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Chart 2 */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">
-                            Matières populaires
+                    {/* Dépassements et alertes */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <AlertCircle className="text-red-500" size={20} />
+                            Dépassements
                         </h3>
                         <div className="space-y-3">
                             {[
-                                {
-                                    subject: "Mathématiques",
-                                    count: 45,
-                                    color: "bg-blue-500",
-                                },
-                                {
-                                    subject: "Français",
-                                    count: 32,
-                                    color: "bg-purple-500",
-                                },
-                                {
-                                    subject: "Sciences",
-                                    count: 28,
-                                    color: "bg-green-500",
-                                },
-                                {
-                                    subject: "Anglais",
-                                    count: 18,
-                                    color: "bg-orange-500",
-                                },
-                            ].map((subject, idx) => (
-                                <div key={idx} className="flex items-center gap-3">
-                                    <div
-                                        className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center text-white font-bold`}
-                                    >
-                                        {subject.count}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="font-medium text-slate-900">
-                                            {subject.subject}
+                                { day: "Lundi 10h30", tutor: "Sophie Chen", over: "+2 PG", severity: "high" },
+                                { day: "Mardi 15h30", tutor: "Marie Dupont", over: "+1 PG", severity: "medium" },
+                                { day: "Mercredi 8h00", tutor: "Sophie Chen", over: "+3 PG", severity: "high" },
+                                { day: "Jeudi 13h00", tutor: "Jean Martin", over: "+1 PG", severity: "medium" },
+                            ].map((item, idx) => (
+                                <div key={idx} className={`p-3 rounded-lg border ${item.severity === "high"
+                                        ? "bg-red-50 border-red-200"
+                                        : "bg-orange-50 border-orange-200"
+                                    }`}>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium text-slate-900">{item.day}</div>
+                                            <div className="text-xs text-slate-600 mt-1">{item.tutor}</div>
                                         </div>
-                                        <div className="text-sm text-slate-600">
-                                            {subject.count} cours/semaine
+                                        <div className={`px-2 py-1 rounded text-xs font-bold ${item.severity === "high"
+                                                ? "bg-red-200 text-red-800"
+                                                : "bg-orange-200 text-orange-800"
+                                            }`}>
+                                            {item.over}
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        <div className="mt-4 text-xs text-slate-600">
+                            <div className="flex items-center justify-between mb-2">
+                                <span>Total cette semaine:</span>
+                                <span className="font-bold text-red-600">7 dépassements</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span>Semaine dernière:</span>
+                                <span className="font-medium">5 dépassements</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Alerts */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                        Rapport des dépassements
+                {/* Tendances et recommandations */}
+                <div className="grid grid-cols-2 gap-6">
+                    {/* Évolution hebdomadaire */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <TrendingUp className="text-green-500" size={20} />
+                            Tendances hebdomadaires
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <Users className="text-green-600" size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-slate-900">Nouveaux élèves</div>
+                                        <div className="text-xs text-slate-600">+12 cette semaine</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-green-600">+8%</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <BookOpen className="text-blue-600" size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-slate-900">Cours planifiés</div>
+                                        <div className="text-xs text-slate-600">87 cette semaine</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-blue-600">+3%</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                        <Activity className="text-orange-600" size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-slate-900">Taux présence</div>
+                                        <div className="text-xs text-slate-600">Moyenne élèves</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-orange-600">94%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recommandations intelligentes */}
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm border border-orange-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Target className="text-orange-600" size={20} />
+                            Recommandations d'action
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="bg-white rounded-lg p-4 border-l-4 border-red-500">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-red-600 font-bold text-sm">!</span>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-900 text-sm mb-1">Urgent: Embauche recommandée</div>
+                                        <div className="text-xs text-slate-600">
+                                            Sophie Chen et Marie Dupont sont à 100% et 93% de capacité.
+                                            Recommandation: Recruter 1 tuteur Math/Sciences pour alléger la charge.
+                                        </div>
+                                        <div className="mt-2 text-xs text-red-600 font-medium">
+                                            Impact: Réduction de 40% des dépassements estimée
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-4 border-l-4 border-orange-500">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-orange-600 font-bold text-sm">⚡</span>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-900 text-sm mb-1">Optimisation des salles</div>
+                                        <div className="text-xs text-slate-600">
+                                            Salle E utilisée à seulement 45%. Envisagez de redistribuer ou sous-louer.
+                                        </div>
+                                        <div className="mt-2 text-xs text-orange-600 font-medium">
+                                            Économie potentielle: ~300$/mois
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-blue-600 font-bold text-sm">✓</span>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-900 text-sm mb-1">Croissance positive</div>
+                                        <div className="text-xs text-slate-600">
+                                            +12 nouveaux élèves cette semaine. Excellente tendance!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Matières populaires */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <PieChart className="text-indigo-500" size={20} />
+                        Répartition par matières
                     </h3>
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-                            <AlertCircle
-                                size={20}
-                                className="text-orange-600 mt-0.5"
-                            />
-                            <div className="flex-1">
-                                <div className="font-semibold text-orange-900">
-                                    Capacité dépassée - Marie Dupont
+                    <div className="grid grid-cols-5 gap-4">
+                        {[
+                            { subject: "Mathématiques", count: 45, percentage: 35, color: "bg-blue-500", textColor: "text-blue-700", bgColor: "bg-blue-50" },
+                            { subject: "Français", count: 32, percentage: 25, color: "bg-purple-500", textColor: "text-purple-700", bgColor: "bg-purple-50" },
+                            { subject: "Sciences", count: 28, percentage: 22, color: "bg-green-500", textColor: "text-green-700", bgColor: "bg-green-50" },
+                            { subject: "Anglais", count: 18, percentage: 14, color: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
+                            { subject: "Autres", count: 5, percentage: 4, color: "bg-slate-500", textColor: "text-slate-700", bgColor: "bg-slate-50" },
+                        ].map((subject, idx) => (
+                            <div key={idx} className={`${subject.bgColor} rounded-lg p-4 border border-slate-200`}>
+                                <div className={`w-12 h-12 ${subject.color} rounded-lg flex items-center justify-center text-white font-bold text-lg mb-3`}>
+                                    {subject.count}
                                 </div>
-                                <div className="text-sm text-orange-700">
-                                    Lundi 14h30: 16/15 PG (Salle B)
-                                </div>
+                                <div className="font-medium text-slate-900 text-sm mb-1">{subject.subject}</div>
+                                <div className={`text-xs ${subject.textColor} font-semibold`}>{subject.percentage}% du total</div>
                             </div>
-                            <button className="text-orange-600 hover:bg-orange-100 px-3 py-1 rounded-lg text-sm font-medium transition-colors">
-                                Résoudre
-                            </button>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
-                            <AlertCircle
-                                size={20}
-                                className="text-red-600 mt-0.5"
-                            />
-                            <div className="flex-1">
-                                <div className="font-semibold text-red-900">
-                                    Cours incomplet - Salle A
-                                </div>
-                                <div className="text-sm text-red-700">
-                                    Mercredi 10h00: Aucun tuteur assigné
-                                </div>
-                            </div>
-                            <button className="text-red-600 hover:bg-red-100 px-3 py-1 rounded-lg text-sm font-medium transition-colors">
-                                Assigner
-                            </button>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                            <AlertCircle
-                                size={20}
-                                className="text-yellow-600 mt-0.5"
-                            />
-                            <div className="flex-1">
-                                <div className="font-semibold text-yellow-900">
-                                    Salle surchargée
-                                </div>
-                                <div className="text-sm text-yellow-700">
-                                    Vendredi 16h00: 8/6 élèves (Salle C)
-                                </div>
-                            </div>
-                            <button className="text-yellow-600 hover:bg-yellow-100 px-3 py-1 rounded-lg text-sm font-medium transition-colors">
-                                Ajuster
-                            </button>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
