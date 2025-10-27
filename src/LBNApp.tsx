@@ -37,6 +37,9 @@ import {
     TrendingDown,
     PieChart,
     BarChart,
+    Send,
+    Upload,
+    ChevronRight,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -450,8 +453,22 @@ const LBNApp = () => {
                         {currentPage === "settings" && (
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
                         )}
-                        <Settings size={20} className="group-hover:scale-110 transition-transform" />
-                        <span>Réglages</span>
+                        <UserCog size={20} className="group-hover:scale-110 transition-transform" />
+                        <span>Mon Compte</span>
+                    </button>
+
+                    <button
+                        onClick={() => setCurrentPage("companySettings")}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group mt-1.5 ${currentPage === "companySettings"
+                            ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                            : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                            }`}
+                    >
+                        {currentPage === "companySettings" && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                        )}
+                        <Building2 size={20} className="group-hover:scale-110 transition-transform flex-shrink-0" />
+                        <span>Compagnie</span>
                     </button>
                 </div>
             </nav>
@@ -2522,9 +2539,9 @@ const LBNApp = () => {
                                             <div className="text-xs text-slate-600">{tutor.used}/{tutor.total} PG</div>
                                         </div>
                                         <div className={`px-2 py-1 rounded text-xs font-medium ${tutor.status === "critical" ? "bg-red-100 text-red-700" :
-                                                tutor.status === "full" ? "bg-orange-100 text-orange-700" :
-                                                    tutor.status === "good" ? "bg-green-100 text-green-700" :
-                                                        "bg-blue-100 text-blue-700"
+                                            tutor.status === "full" ? "bg-orange-100 text-orange-700" :
+                                                tutor.status === "good" ? "bg-green-100 text-green-700" :
+                                                    "bg-blue-100 text-blue-700"
                                             }`}>
                                             {tutor.rate}%
                                         </div>
@@ -2532,9 +2549,9 @@ const LBNApp = () => {
                                     <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                                         <div
                                             className={`h-2 rounded-full ${tutor.status === "critical" ? "bg-red-500" :
-                                                    tutor.status === "full" ? "bg-orange-500" :
-                                                        tutor.status === "good" ? "bg-green-500" :
-                                                            "bg-blue-500"
+                                                tutor.status === "full" ? "bg-orange-500" :
+                                                    tutor.status === "good" ? "bg-green-500" :
+                                                        "bg-blue-500"
                                                 }`}
                                             style={{ width: `${tutor.rate}%` }}
                                         ></div>
@@ -2604,8 +2621,8 @@ const LBNApp = () => {
                                 { day: "Jeudi 13h00", tutor: "Jean Martin", over: "+1 PG", severity: "medium" },
                             ].map((item, idx) => (
                                 <div key={idx} className={`p-3 rounded-lg border ${item.severity === "high"
-                                        ? "bg-red-50 border-red-200"
-                                        : "bg-orange-50 border-orange-200"
+                                    ? "bg-red-50 border-red-200"
+                                    : "bg-orange-50 border-orange-200"
                                     }`}>
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
@@ -2613,8 +2630,8 @@ const LBNApp = () => {
                                             <div className="text-xs text-slate-600 mt-1">{item.tutor}</div>
                                         </div>
                                         <div className={`px-2 py-1 rounded text-xs font-bold ${item.severity === "high"
-                                                ? "bg-red-200 text-red-800"
-                                                : "bg-orange-200 text-orange-800"
+                                            ? "bg-red-200 text-red-800"
+                                            : "bg-orange-200 text-orange-800"
                                             }`}>
                                             {item.over}
                                         </div>
@@ -2778,12 +2795,354 @@ const LBNApp = () => {
         </div>
     );
 
-    // Settings Page
+    // Settings Page - Manager Profile
     const SettingsPage = () => {
-        const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
+        const [showPasswordModal, setShowPasswordModal] = useState(false);
+        const [showErrorReportModal, setShowErrorReportModal] = useState(false);
+        const [errorDescription, setErrorDescription] = useState("");
+        const [errorSeverity, setErrorSeverity] = useState("medium");
+
+        return (
+            <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
+                {/* Page Header */}
+                <div className="bg-white border-b border-slate-200 px-8 py-6">
+                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <UserCog className="text-orange-500" size={28} />
+                        Mon Compte
+                    </h2>
+                    <p className="text-sm text-slate-600 mt-1">
+                        Gérez vos informations personnelles et préférences
+                    </p>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    {/* Personal Information */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <UserCog size={20} className="text-orange-500" />
+                            Informations personnelles
+                        </h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Nom complet
+                                </label>
+                                <input
+                                    type="text"
+                                    defaultValue="Marie Dupont"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Adresse e-mail
+                                </label>
+                                <input
+                                    type="email"
+                                    defaultValue="marie.dupont@labonnenote.ca"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Téléphone
+                                </label>
+                                <input
+                                    type="tel"
+                                    defaultValue="+1 (514) 555-0123"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Poste
+                                </label>
+                                <input
+                                    type="text"
+                                    defaultValue="Gestionnaire principal"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors">
+                                Sauvegarder les modifications
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Security Section */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <Lock size={20} className="text-orange-500" />
+                            Sécurité
+                        </h3>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => setShowPasswordModal(true)}
+                                className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left font-medium text-slate-700 transition-colors flex items-center justify-between group"
+                            >
+                                <span className="flex items-center gap-3">
+                                    <Lock size={18} className="text-slate-500 group-hover:text-orange-500 transition-colors" />
+                                    Changer le mot de passe
+                                </span>
+                                <ChevronRight size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+                            </button>
+                            <button className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left font-medium text-slate-700 transition-colors flex items-center justify-between group">
+                                <span className="flex items-center gap-3">
+                                    <Activity size={18} className="text-slate-500 group-hover:text-orange-500 transition-colors" />
+                                    Gérer les sessions actives
+                                </span>
+                                <ChevronRight size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        {/* Theme Customization */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Palette size={20} className="text-orange-500" />
+                                Personnalisation du thème
+                            </h3>
+                            <div className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-3">
+                                        Couleur primaire
+                                    </label>
+                                    <div className="flex gap-3">
+                                        {["bg-orange-500", "bg-blue-500", "bg-purple-500", "bg-green-500", "bg-red-500"].map((color, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={`w-12 h-12 ${color} rounded-xl shadow-sm hover:scale-110 transition-transform ${idx === 0 ? "ring-2 ring-slate-900 ring-offset-2" : ""}`}
+                                            ></button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-3">
+                                        Couleur secondaire
+                                    </label>
+                                    <div className="flex gap-3">
+                                        {["bg-slate-700", "bg-indigo-600", "bg-teal-600", "bg-amber-600", "bg-pink-600"].map((color, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={`w-12 h-12 ${color} rounded-xl shadow-sm hover:scale-110 transition-transform ${idx === 0 ? "ring-2 ring-slate-900 ring-offset-2" : ""}`}
+                                            ></button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-3">
+                                        Couleur tertiaire (accents)
+                                    </label>
+                                    <div className="flex gap-3">
+                                        {["bg-cyan-400", "bg-yellow-400", "bg-lime-400", "bg-rose-400", "bg-violet-400"].map((color, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={`w-12 h-12 ${color} rounded-xl shadow-sm hover:scale-110 transition-transform ${idx === 0 ? "ring-2 ring-slate-900 ring-offset-2" : ""}`}
+                                            ></button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Preferences */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Settings size={20} className="text-orange-500" />
+                                Préférences
+                            </h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Langue de l'interface
+                                    </label>
+                                    <select className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        <option>Français (Canada)</option>
+                                        <option>English (US)</option>
+                                        <option>Español</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Fuseau horaire
+                                    </label>
+                                    <select className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        <option>EST (UTC-5)</option>
+                                        <option>PST (UTC-8)</option>
+                                        <option>MST (UTC-7)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+                                        <span className="text-sm font-medium text-slate-700">Notifications par e-mail</span>
+                                        <div className="w-12 h-6 bg-orange-500 rounded-full">
+                                            <div className="w-5 h-5 bg-white rounded-full mt-0.5 ml-6"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+                                        <span className="text-sm font-medium text-slate-700">Alertes sonores</span>
+                                        <div className="w-12 h-6 bg-slate-300 rounded-full">
+                                            <div className="w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Error Reporting */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <AlertCircle size={20} className="text-orange-500" />
+                            Signaler une erreur
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-4">
+                            Vous avez rencontré un problème? Signalez-le à notre équipe technique.
+                        </p>
+                        <button
+                            onClick={() => setShowErrorReportModal(true)}
+                            className="w-full py-3 px-4 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg font-medium text-orange-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <MessageSquare size={18} />
+                            Ouvrir le formulaire de signalement
+                        </button>
+                    </div>
+                </div>
+
+                {/* Password Change Modal */}
+                {showPasswordModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Lock size={22} className="text-orange-500" />
+                                Changer le mot de passe
+                            </h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Mot de passe actuel
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Nouveau mot de passe
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Confirmer le mot de passe
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowPasswordModal(false)}
+                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium text-slate-700 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors">
+                                    Confirmer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error Report Modal */}
+                {showErrorReportModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
+                            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <AlertCircle size={22} className="text-orange-500" />
+                                Signaler une erreur
+                            </h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Gravité du problème
+                                    </label>
+                                    <select
+                                        value={errorSeverity}
+                                        onChange={(e) => setErrorSeverity(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="low">Faible - Problème mineur</option>
+                                        <option value="medium">Moyen - Affecte l'utilisation</option>
+                                        <option value="high">Élevé - Bloque des fonctionnalités</option>
+                                        <option value="critical">Critique - Système inutilisable</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Description du problème
+                                    </label>
+                                    <textarea
+                                        value={errorDescription}
+                                        onChange={(e) => setErrorDescription(e.target.value)}
+                                        placeholder="Décrivez le problème rencontré en détail..."
+                                        rows={6}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Captures d'écran (optionnel)
+                                    </label>
+                                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors cursor-pointer">
+                                        <Upload size={32} className="mx-auto text-slate-400 mb-2" />
+                                        <p className="text-sm text-slate-600">Glissez-déposez ou cliquez pour ajouter des fichiers</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => {
+                                        setShowErrorReportModal(false);
+                                        setErrorDescription("");
+                                        setErrorSeverity("medium");
+                                    }}
+                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium text-slate-700 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                    <Send size={16} />
+                                    Envoyer le rapport
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Company Settings Page
+    const CompanySettingsPage = () => {
         const [newSlotStart, setNewSlotStart] = useState("");
         const [newSlotEnd, setNewSlotEnd] = useState("");
         const [newSlotLabel, setNewSlotLabel] = useState("");
+        const [newRoomName, setNewRoomName] = useState("");
+        const [newRoomCapacity, setNewRoomCapacity] = useState("");
+        const [newRoomAccommodations, setNewRoomAccommodations] = useState<string[]>([]);
 
         const handleAddTimeSlot = () => {
             if (newSlotStart && newSlotEnd && newSlotLabel) {
@@ -2804,237 +3163,422 @@ const LBNApp = () => {
             setTimeSlots(timeSlots.filter((slot) => slot.id !== id));
         };
 
+        const accommodationOptions = [
+            { id: "windows", label: "Fenêtres", icon: Wind },
+            { id: "wifi", label: "WiFi", icon: Wifi },
+            { id: "projector", label: "Projecteur", icon: Monitor },
+            { id: "whiteboard", label: "Tableau blanc", icon: Activity },
+            { id: "restroom", label: "Proximité toilettes", icon: DoorOpen },
+        ];
+
+        const toggleAccommodation = (id: string) => {
+            setNewRoomAccommodations(prev =>
+                prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+            );
+        };
+
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
                 {/* Page Header */}
                 <div className="bg-white border-b border-slate-200 px-8 py-6">
                     <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                        <Settings className="text-orange-500" size={28} />
-                        Réglages
+                        <Building2 className="text-orange-500" size={28} />
+                        Paramètres de la Compagnie
                     </h2>
                     <p className="text-sm text-slate-600 mt-1">
-                        Configurez votre système et préférences
+                        Gérez les paramètres organisationnels de La Bonne Note
                     </p>
                 </div>
 
-                <div className="p-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                Paramètres généraux
-                            </h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Nom de l'organisation
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value="La Bonne Note"
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Capacité max par défaut (PG)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value="15"
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Durée des cours (min)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value="90"
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                Notifications
-                            </h3>
-                            <div className="space-y-3">
-                                {[
-                                    {
-                                        label: "Envoi automatique des horaires",
-                                        checked: true,
-                                    },
-                                    { label: "Alertes de dépassement", checked: true },
-                                    { label: "Rappels avant cours", checked: false },
-                                    {
-                                        label: "Confirmations par e-mail",
-                                        checked: true,
-                                    },
-                                ].map((setting, idx) => (
-                                    <label
-                                        key={idx}
-                                        className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
-                                    >
-                                        <span className="text-sm font-medium text-slate-700">
-                                            {setting.label}
-                                        </span>
-                                        <div
-                                            className={`w-12 h-6 rounded-full transition-colors ${setting.checked
-                                                ? "bg-orange-500"
-                                                : "bg-slate-300"
-                                                }`}
-                                        >
-                                            <div
-                                                className={`w-5 h-5 bg-white rounded-full mt-0.5 transition-transform ${setting.checked ? "ml-6" : "ml-0.5"
-                                                    }`}
-                                            ></div>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                Thème et affichage
-                            </h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Couleur principale
-                                    </label>
-                                    <div className="flex gap-2">
-                                        {[
-                                            "bg-orange-500",
-                                            "bg-blue-500",
-                                            "bg-purple-500",
-                                            "bg-green-500",
-                                        ].map((color, idx) => (
-                                            <button
-                                                key={idx}
-                                                className={`w-10 h-10 ${color} rounded-lg ${idx === 0
-                                                    ? "ring-2 ring-slate-900 ring-offset-2"
-                                                    : ""
-                                                    }`}
-                                            ></button>
-                                        ))}
+                <div className="p-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* LEFT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Organization Information */}
+                            <div className="bg-gradient-to-br from-white to-orange-50/30 rounded-2xl shadow-lg border border-orange-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                                    <div className="p-2 bg-orange-500 rounded-lg">
+                                        <Building2 size={20} className="text-white" />
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                Sécurité
-                            </h3>
-                            <div className="space-y-3">
-                                <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                                    Changer le mot de passe
-                                </button>
-                                <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                                    Activer 2FA
-                                </button>
-                                <button className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-left text-sm font-medium text-slate-700 transition-colors">
-                                    Gérer les sessions
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Time Slots Configuration */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                Créneaux horaires fixes
-                            </h3>
-                            <p className="text-sm text-slate-600 mb-4">
-                                Définissez les créneaux fixes de votre organisation
-                            </p>
-
-                            {/* Add new time slot form */}
-                            <div className="bg-slate-50 rounded-lg p-4 mb-6 space-y-3">
-                                <div className="grid grid-cols-3 gap-3">
+                                    Informations de l'organisation
+                                </h3>
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Heure début
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={newSlotStart}
-                                            onChange={(e) =>
-                                                setNewSlotStart(e.target.value)
-                                            }
-                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Heure fin
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={newSlotEnd}
-                                            onChange={(e) =>
-                                                setNewSlotEnd(e.target.value)
-                                            }
-                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Libellé
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Nom de l'organisation
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="ex: 8h-10h15"
-                                            value={newSlotLabel}
-                                            onChange={(e) =>
-                                                setNewSlotLabel(e.target.value)
-                                            }
-                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            defaultValue="La Bonne Note"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            E-mail de contact
+                                        </label>
+                                        <input
+                                            type="email"
+                                            defaultValue="contact@labonnenote.ca"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                Téléphone
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                defaultValue="+1 (514) 555-0100"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                Site web
+                                            </label>
+                                            <input
+                                                type="url"
+                                                defaultValue="labonnenote.ca"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Adresse complète
+                                        </label>
+                                        <input
+                                            type="text"
+                                            defaultValue="123 Rue Principale, Montréal, QC H2X 1Y4"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
                                         />
                                     </div>
                                 </div>
-                                <button
-                                    onClick={handleAddTimeSlot}
-                                    className="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Plus size={16} />
-                                    Ajouter un créneau
-                                </button>
                             </div>
 
-                            {/* List of time slots */}
-                            <div className="space-y-2">
-                                <h4 className="text-sm font-semibold text-slate-700 mb-3">
-                                    Créneaux actuels:
-                                </h4>
-                                {timeSlots.map((slot) => (
-                                    <div
-                                        key={slot.id}
-                                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
-                                    >
-                                        <div>
-                                            <div className="font-medium text-slate-900">
-                                                {slot.label}
-                                            </div>
-                                            <div className="text-sm text-slate-600">
-                                                {slot.startTime} - {slot.endTime}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() =>
-                                                handleDeleteTimeSlot(slot.id)
-                                            }
-                                            className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                            {/* Operating Hours */}
+                            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl shadow-lg border border-blue-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                                    <div className="p-2 bg-blue-500 rounded-lg">
+                                        <Clock size={20} className="text-white" />
                                     </div>
-                                ))}
+                                    Heures d'opération
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4 mb-5">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Cours/jour
+                                        </label>
+                                        <input
+                                            type="number"
+                                            defaultValue="4"
+                                            min="1"
+                                            max="10"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Durée (min)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            defaultValue="90"
+                                            step="15"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Pause (min)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            defaultValue="15"
+                                            step="5"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                        Jours d'opération
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map((day) => {
+                                            const isActive = !day.includes("Samedi") && !day.includes("Dimanche");
+                                            return (
+                                                <button
+                                                    key={day}
+                                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isActive
+                                                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg"
+                                                        : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                                                        }`}
+                                                >
+                                                    {day.substring(0, 3)}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Time Slots Configuration */}
+                            <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-2xl shadow-lg border border-purple-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <div className="p-2 bg-purple-500 rounded-lg">
+                                        <Calendar size={20} className="text-white" />
+                                    </div>
+                                    Créneaux horaires
+                                </h3>
+                                <p className="text-sm text-slate-600 mb-4">
+                                    Définissez les plages horaires disponibles
+                                </p>
+
+                                {/* Add new time slot form */}
+                                <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-purple-100">
+                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Début
+                                            </label>
+                                            <input
+                                                type="time"
+                                                value={newSlotStart}
+                                                onChange={(e) => setNewSlotStart(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Fin
+                                            </label>
+                                            <input
+                                                type="time"
+                                                value={newSlotEnd}
+                                                onChange={(e) => setNewSlotEnd(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Libellé
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="8h-10h"
+                                                value={newSlotLabel}
+                                                onChange={(e) => setNewSlotLabel(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleAddTimeSlot}
+                                        className="w-full py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={18} />
+                                        Ajouter
+                                    </button>
+                                </div>
+
+                                {/* List of time slots */}
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {timeSlots.map((slot) => (
+                                        <div
+                                            key={slot.id}
+                                            className="flex items-center justify-between p-3 bg-white/80 backdrop-blur rounded-lg border border-purple-100 hover:shadow-md transition-all group"
+                                        >
+                                            <div>
+                                                <div className="font-bold text-slate-900">{slot.label}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    {slot.startTime} - {slot.endTime}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteTimeSlot(slot.id)}
+                                                className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Rooms Management */}
+                            <div className="bg-gradient-to-br from-white to-green-50/30 rounded-2xl shadow-lg border border-green-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <div className="p-2 bg-green-500 rounded-lg">
+                                        <DoorOpen size={20} className="text-white" />
+                                    </div>
+                                    Gestion des salles
+                                </h3>
+                                <p className="text-sm text-slate-600 mb-5">
+                                    Salles avec capacités et accommodements
+                                </p>
+
+                                {/* Add new room form */}
+                                <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-green-100">
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Nom de la salle
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="A-101"
+                                                value={newRoomName}
+                                                onChange={(e) => setNewRoomName(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Capacité max
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="15"
+                                                value={newRoomCapacity}
+                                                onChange={(e) => setNewRoomCapacity(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2.5">
+                                            Accommodements
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {accommodationOptions.map((option) => {
+                                                const Icon = option.icon;
+                                                const isSelected = newRoomAccommodations.includes(option.id);
+                                                return (
+                                                    <button
+                                                        key={option.id}
+                                                        onClick={() => toggleAccommodation(option.id)}
+                                                        className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${isSelected
+                                                            ? "bg-green-500 text-white shadow-md"
+                                                            : "bg-white border-2 border-slate-200 text-slate-600 hover:border-green-300"
+                                                            }`}
+                                                    >
+                                                        <Icon size={14} />
+                                                        {option.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <button className="w-full py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                        <Plus size={18} />
+                                        Ajouter la salle
+                                    </button>
+                                </div>
+
+                                {/* Rooms List */}
+                                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                    {[
+                                        { name: "A-101", capacity: 15, accommodations: ["windows", "wifi", "projector"] },
+                                        { name: "A-102", capacity: 12, accommodations: ["wifi", "whiteboard"] },
+                                        { name: "B-201", capacity: 20, accommodations: ["windows", "wifi", "projector", "restroom"] },
+                                        { name: "B-202", capacity: 18, accommodations: ["wifi", "projector", "whiteboard"] },
+                                    ].map((room, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="p-4 bg-white/80 backdrop-blur rounded-xl border border-green-100 hover:shadow-md transition-all group"
+                                        >
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
+                                                        {room.name.split("-")[0]}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900">{room.name}</div>
+                                                        <div className="text-xs text-slate-600 flex items-center gap-1">
+                                                            <Users size={12} />
+                                                            Max {room.capacity} pers.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {room.accommodations.map((accId) => {
+                                                    const acc = accommodationOptions.find((a) => a.id === accId);
+                                                    if (!acc) return null;
+                                                    const Icon = acc.icon;
+                                                    return (
+                                                        <span
+                                                            key={accId}
+                                                            className="px-2.5 py-1 bg-green-50 border border-green-200 rounded-md text-xs font-medium text-green-700 flex items-center gap-1"
+                                                        >
+                                                            <Icon size={12} />
+                                                            {acc.label}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Additional Settings */}
+                            <div className="bg-gradient-to-br from-white to-amber-50/30 rounded-2xl shadow-lg border border-amber-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                                    <div className="p-2 bg-amber-500 rounded-lg">
+                                        <Settings size={20} className="text-white" />
+                                    </div>
+                                    Paramètres additionnels
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Capacité par défaut (PG)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            defaultValue="15"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white shadow-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Seuil d'alerte de capacité (%)
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                defaultValue="85"
+                                                min="0"
+                                                max="100"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white shadow-sm"
+                                            />
+                                            <div className="absolute right-4 top-3.5 text-amber-600 font-bold">%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="mt-8 flex justify-end gap-4">
+                        <button className="px-8 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all">
+                            Réinitialiser
+                        </button>
+                        <button className="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+                            <CheckCircle size={20} />
+                            Sauvegarder tous les changements
+                        </button>
                     </div>
                 </div>
             </div>
@@ -3055,6 +3599,7 @@ const LBNApp = () => {
                 {currentPage === "placement" && <PlacementPage />}
                 {currentPage === "stats" && <StatsPage />}
                 {currentPage === "settings" && <SettingsPage />}
+                {currentPage === "companySettings" && <CompanySettingsPage />}
             </div>
         </div>
     );
