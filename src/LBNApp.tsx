@@ -51,6 +51,47 @@ const LBNApp = () => {
         visible: boolean;
     }
 
+    interface Tuteur {
+        id: number;
+        name: string;
+        type: "tuteur";
+        courses: number;
+        capacity: string;
+        status: string;
+        avatar: string;
+        email: string;
+        phone: string;
+        niveau: string;
+        specialites: string[];
+        prochainsCours: Array<{
+            day: string;
+            time: string;
+            room: string;
+            students: number;
+        }>;
+    }
+
+    interface Eleve {
+        id: number;
+        name: string;
+        type: "eleve";
+        grade: string;
+        pg: number;
+        status: string;
+        avatar: string;
+        email: string;
+        phone: string;
+        tuteur: string;
+        prochainsCours: Array<{
+            day: string;
+            time: string;
+            subject: string;
+            tuteur: string;
+        }>;
+    }
+
+    type Personnel = Tuteur | Eleve;
+
     const [currentPage, setCurrentPage] = useState("dashboard");
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
     const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
@@ -850,13 +891,204 @@ const LBNApp = () => {
     };
 
     // Personnel Page
-    const PersonnelPage = () => (
-        <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-auto">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">
-                    Gestion du personnel
-                </h2>
-                <div className="flex items-center gap-2">
+    const PersonnelPage = () => {
+        const [searchQuery, setSearchQuery] = useState("");
+        const [personnelFilter, setPersonnelFilter] = useState<"tuteur" | "eleve">("tuteur");
+        const [selectedPerson, setSelectedPerson] = useState<any>(null);
+        const [showFilters, setShowFilters] = useState(false);
+
+        // Filter states for tuteurs
+        const [niveauFilter, setNiveauFilter] = useState<string[]>([]);
+        const [specialiteFilter, setSpecialiteFilter] = useState<string[]>([]);
+        const [statusFilter, setStatusFilter] = useState<string[]>([]);
+
+        // Filter states for élèves
+        const [gradeFilter, setGradeFilter] = useState<string[]>([]);
+        const [pgFilter, setPgFilter] = useState<string>("");
+
+        // Mock data for tuteurs
+        const tuteurs = [
+            {
+                id: 1,
+                name: "Marie Dupont",
+                type: "tuteur",
+                courses: 8,
+                capacity: "12/15 PG",
+                status: "active",
+                avatar: "from-blue-500 to-blue-600",
+                email: "marie.dupont@lbn.com",
+                phone: "514-555-0001",
+                niveau: "Sénior",
+                specialites: ["Mathématiques", "Sciences"],
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", room: "Salle A", students: 3 },
+                    { day: "Lundi", time: "15h30", room: "Salle A", students: 5 },
+                    { day: "Mardi", time: "15h30", room: "Salle C", students: 5 },
+                ],
+            },
+            {
+                id: 2,
+                name: "Jean Martin",
+                type: "tuteur",
+                courses: 6,
+                capacity: "10/12 PG",
+                status: "active",
+                avatar: "from-purple-500 to-purple-600",
+                email: "jean.martin@lbn.com",
+                phone: "514-555-0002",
+                niveau: "Intermédiaire",
+                specialites: ["Français", "Histoire"],
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", room: "Salle B", students: 4 },
+                    { day: "Lundi", time: "13h00", room: "Salle B", students: 4 },
+                ],
+            },
+            {
+                id: 3,
+                name: "Sophie Chen",
+                type: "tuteur",
+                courses: 10,
+                capacity: "15/15 PG",
+                status: "full",
+                avatar: "from-green-500 to-green-600",
+                email: "sophie.chen@lbn.com",
+                phone: "514-555-0003",
+                niveau: "Sénior",
+                specialites: ["Sciences", "Chimie"],
+                prochainsCours: [
+                    { day: "Lundi", time: "10h30", room: "Salle A", students: 2 },
+                    { day: "Mardi", time: "8h00", room: "Salle D", students: 2 },
+                ],
+            },
+            {
+                id: 4,
+                name: "Thomas Roy",
+                type: "tuteur",
+                courses: 4,
+                capacity: "6/10 PG",
+                status: "active",
+                avatar: "from-orange-500 to-orange-600",
+                email: "thomas.roy@lbn.com",
+                phone: "514-555-0004",
+                niveau: "Junior",
+                specialites: ["Anglais"],
+                prochainsCours: [
+                    { day: "Lundi", time: "13h00", room: "Salle C", students: 3 },
+                    { day: "Mardi", time: "13h00", room: "Salle A", students: 3 },
+                ],
+            },
+        ];
+
+        // Mock data for élèves
+        const eleves = [
+            {
+                id: 5,
+                name: "Lucas Bernard",
+                type: "eleve",
+                grade: "Sec. 3",
+                pg: 3,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "lucas.bernard@student.com",
+                phone: "514-555-1001",
+                tuteur: "Marie Dupont",
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", subject: "Math", tuteur: "Marie Dupont" },
+                    { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
+                ],
+            },
+            {
+                id: 6,
+                name: "Emma Tremblay",
+                type: "eleve",
+                grade: "Sec. 4",
+                pg: 2,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "emma.tremblay@student.com",
+                phone: "514-555-1002",
+                tuteur: "Jean Martin",
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
+                ],
+            },
+            {
+                id: 7,
+                name: "Noah Gagnon",
+                type: "eleve",
+                grade: "Sec. 5",
+                pg: 4,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "noah.gagnon@student.com",
+                phone: "514-555-1003",
+                tuteur: "Sophie Chen",
+                prochainsCours: [
+                    { day: "Mardi", time: "10h30", subject: "Sciences", tuteur: "Sophie Chen" },
+                ],
+            },
+            {
+                id: 8,
+                name: "Olivia Côté",
+                type: "eleve",
+                grade: "Sec. 3",
+                pg: 2,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "olivia.cote@student.com",
+                phone: "514-555-1004",
+                tuteur: "Thomas Roy",
+                prochainsCours: [
+                    { day: "Lundi", time: "13h00", subject: "Anglais", tuteur: "Thomas Roy" },
+                ],
+            },
+            {
+                id: 9,
+                name: "William Roy",
+                type: "eleve",
+                grade: "Sec. 4",
+                pg: 3,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "william.roy@student.com",
+                phone: "514-555-1005",
+                tuteur: "Marie Dupont",
+                prochainsCours: [
+                    { day: "Lundi", time: "15h30", subject: "Math", tuteur: "Marie Dupont" },
+                ],
+            },
+        ];
+
+        // Filter personnel based on type, search query, and advanced filters
+        const filteredPersonnel = (personnelFilter === "tuteur" ? tuteurs : eleves).filter((person) => {
+            // Search filter
+            const matchesSearch = person.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+            if (personnelFilter === "tuteur") {
+                const tuteur = person as Tuteur;
+                const matchesNiveau = niveauFilter.length === 0 || niveauFilter.includes(tuteur.niveau);
+                const matchesSpecialite = specialiteFilter.length === 0 ||
+                    specialiteFilter.some(spec => tuteur.specialites.includes(spec));
+                const matchesStatus = statusFilter.length === 0 || statusFilter.includes(tuteur.status);
+
+                return matchesSearch && matchesNiveau && matchesSpecialite && matchesStatus;
+            } else {
+                const eleve = person as Eleve;
+                const matchesGrade = gradeFilter.length === 0 || gradeFilter.includes(eleve.grade);
+                const matchesPg = pgFilter === "" || eleve.pg.toString() === pgFilter;
+
+                return matchesSearch && matchesGrade && matchesPg;
+            }
+        });
+
+        // Count active filters
+        const activeFiltersCount = personnelFilter === "tuteur"
+            ? niveauFilter.length + specialiteFilter.length + statusFilter.length
+            : gradeFilter.length + (pgFilter ? 1 : 0);
+
+        return (
+            <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-auto">
+                <div className="flex items-center justify-end gap-2 mb-6">
                     <button className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2">
                         <Download size={16} />
                         Import CSV
@@ -866,149 +1098,536 @@ const LBNApp = () => {
                         Ajouter
                     </button>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-6">
-                {/* Tuteurs */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-slate-900">
-                            Tuteurs (12)
-                        </h3>
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                            <Search size={18} />
-                        </button>
-                    </div>
+                <div className="grid grid-cols-3 gap-6 mb-6" style={{ height: 'calc(100vh - 280px)' }}>
+                    {/* Left Panel - Search and Filter */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-900">
+                                Recherche
+                            </h3>
+                            <div className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-medium">
+                                {personnelFilter === "tuteur" ? `${tuteurs.length} tuteurs` : `${eleves.length} élèves`}
+                            </div>
+                        </div>
 
-                    <div className="space-y-3">
-                        {[
-                            {
-                                name: "Marie Dupont",
-                                courses: 8,
-                                capacity: "12/15 PG",
-                                status: "active",
-                                avatar: "from-blue-500 to-blue-600",
-                            },
-                            {
-                                name: "Jean Martin",
-                                courses: 6,
-                                capacity: "10/12 PG",
-                                status: "active",
-                                avatar: "from-purple-500 to-purple-600",
-                            },
-                            {
-                                name: "Sophie Chen",
-                                courses: 10,
-                                capacity: "15/15 PG",
-                                status: "full",
-                                avatar: "from-green-500 to-green-600",
-                            },
-                            {
-                                name: "Thomas Roy",
-                                courses: 4,
-                                capacity: "6/10 PG",
-                                status: "active",
-                                avatar: "from-orange-500 to-orange-600",
-                            },
-                        ].map((tutor, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                            >
-                                <div
-                                    className={`w-12 h-12 bg-gradient-to-br ${tutor.avatar} rounded-full`}
-                                ></div>
-                                <div className="flex-1">
-                                    <div className="font-semibold text-slate-900">
-                                        {tutor.name}
-                                    </div>
-                                    <div className="text-sm text-slate-600">
-                                        {tutor.courses} cours • {tutor.capacity}
-                                    </div>
-                                </div>
-                                <div
-                                    className={`px-3 py-1 rounded-full text-xs font-medium ${tutor.status === "full"
-                                        ? "bg-orange-100 text-orange-700"
-                                        : "bg-green-100 text-green-700"
+                        {/* Search Bar with Clear Button and Filter */}
+                        <div className="relative mb-4">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher une personne..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-20 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery("")}
+                                        className="text-slate-400 hover:text-slate-700 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className={`relative p-1.5 rounded-lg transition-colors ${showFilters || activeFiltersCount > 0
+                                            ? "bg-orange-100 text-orange-600"
+                                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                                         }`}
                                 >
-                                    {tutor.status === "full"
-                                        ? "Complet"
-                                        : "Actif"}
+                                    <Filter size={16} />
+                                    {activeFiltersCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                            {activeFiltersCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Filter Popup */}
+                            {showFilters && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-10">
+                                    {personnelFilter === "tuteur" ? (
+                                        // Tuteur filters
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="text-sm font-semibold text-slate-700 mb-2 block">Niveau</label>
+                                                <div className="space-y-2">
+                                                    {["Sénior", "Intermédiaire", "Junior"].map((niveau) => (
+                                                        <label key={niveau} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={niveauFilter.includes(niveau)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setNiveauFilter([...niveauFilter, niveau]);
+                                                                    } else {
+                                                                        setNiveauFilter(niveauFilter.filter(n => n !== niveau));
+                                                                    }
+                                                                }}
+                                                                className="rounded text-orange-500 focus:ring-orange-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{niveau}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-slate-200 pt-3">
+                                                <label className="text-sm font-semibold text-slate-700 mb-2 block">Spécialités</label>
+                                                <div className="space-y-2">
+                                                    {["Mathématiques", "Sciences", "Français", "Anglais", "Histoire", "Chimie"].map((spec) => (
+                                                        <label key={spec} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={specialiteFilter.includes(spec)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setSpecialiteFilter([...specialiteFilter, spec]);
+                                                                    } else {
+                                                                        setSpecialiteFilter(specialiteFilter.filter(s => s !== spec));
+                                                                    }
+                                                                }}
+                                                                className="rounded text-orange-500 focus:ring-orange-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{spec}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-slate-200 pt-3">
+                                                <label className="text-sm font-semibold text-slate-700 mb-2 block">Disponibilité</label>
+                                                <div className="space-y-2">
+                                                    {[
+                                                        { value: "active", label: "Disponible" },
+                                                        { value: "full", label: "Complet" }
+                                                    ].map((status) => (
+                                                        <label key={status.value} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={statusFilter.includes(status.value)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setStatusFilter([...statusFilter, status.value]);
+                                                                    } else {
+                                                                        setStatusFilter(statusFilter.filter(s => s !== status.value));
+                                                                    }
+                                                                }}
+                                                                className="rounded text-orange-500 focus:ring-orange-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{status.label}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Élève filters
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="text-sm font-semibold text-slate-700 mb-2 block">Niveau scolaire</label>
+                                                <div className="space-y-2">
+                                                    {["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4", "Sec. 5"].map((grade) => (
+                                                        <label key={grade} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={gradeFilter.includes(grade)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setGradeFilter([...gradeFilter, grade]);
+                                                                    } else {
+                                                                        setGradeFilter(gradeFilter.filter(g => g !== grade));
+                                                                    }
+                                                                }}
+                                                                className="rounded text-orange-500 focus:ring-orange-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{grade}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-slate-200 pt-3">
+                                                <label className="text-sm font-semibold text-slate-700 mb-2 block">Périodes-Groupes (PG)</label>
+                                                <select
+                                                    value={pgFilter}
+                                                    onChange={(e) => setPgFilter(e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                                                >
+                                                    <option value="">Tous</option>
+                                                    <option value="2">2 PG</option>
+                                                    <option value="3">3 PG</option>
+                                                    <option value="4">4 PG</option>
+                                                    <option value="5">5 PG et plus</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Filter Actions */}
+                                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
+                                        <button
+                                            onClick={() => {
+                                                setNiveauFilter([]);
+                                                setSpecialiteFilter([]);
+                                                setStatusFilter([]);
+                                                setGradeFilter([]);
+                                                setPgFilter("");
+                                            }}
+                                            className="flex-1 px-3 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                        >
+                                            Réinitialiser
+                                        </button>
+                                        <button
+                                            onClick={() => setShowFilters(false)}
+                                            className="flex-1 px-3 py-2 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                        >
+                                            Appliquer
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Filter Buttons with Icons */}
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => {
+                                    setPersonnelFilter("tuteur");
+                                    setSelectedPerson(null);
+                                }}
+                                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${personnelFilter === "tuteur"
+                                    ? "bg-orange-500 text-white shadow-md"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                    }`}
+                            >
+                                <Users size={16} />
+                                Tuteurs
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setPersonnelFilter("eleve");
+                                    setSelectedPerson(null);
+                                }}
+                                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${personnelFilter === "eleve"
+                                    ? "bg-orange-500 text-white shadow-md"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                    }`}
+                            >
+                                <BookOpen size={16} />
+                                Élèves
+                            </button>
+                        </div>
+
+                        {/* Results Count */}
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-200">
+                            <div className="text-sm text-slate-600">
+                                <span className="font-semibold text-slate-900">{filteredPersonnel.length}</span> résultat(s)
+                            </div>
+                        </div>
+
+                        {/* Personnel List */}
+                        <div className="flex-1 overflow-y-auto space-y-2">
+                            {filteredPersonnel.length > 0 ? (
+                                filteredPersonnel.map((person) => (
+                                    <div
+                                        key={person.id}
+                                        onClick={() => setSelectedPerson(person)}
+                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedPerson?.id === person.id
+                                            ? "bg-orange-100 border-2 border-orange-500 shadow-sm"
+                                            : "bg-slate-50 hover:bg-slate-100 border-2 border-transparent hover:shadow-sm"
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <div className={`w-10 h-10 bg-gradient-to-br ${person.avatar} rounded-full flex-shrink-0`}></div>
+                                            {/* Status indicator dot */}
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${person.status === "full"
+                                                ? "bg-red-500"
+                                                : person.status === "active"
+                                                    ? "bg-green-500"
+                                                    : "bg-gray-400"
+                                                }`} title={
+                                                    person.status === "full"
+                                                        ? "Complet"
+                                                        : person.status === "active"
+                                                            ? "Disponible"
+                                                            : "Inactif"
+                                                }></div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-semibold text-slate-900 truncate">
+                                                {person.name}
+                                            </div>
+                                            <div className="text-xs text-slate-600">
+                                                {person.type === "tuteur"
+                                                    ? `${(person as Tuteur).courses} cours • ${(person as Tuteur).capacity}`
+                                                    : `${(person as Eleve).grade} • ${(person as Eleve).pg} PG`
+                                                }
+                                            </div>
+                                        </div>
+                                        {selectedPerson?.id === person.id && (
+                                            <div className="text-orange-500">
+                                                <ChevronDown size={18} className="transform -rotate-90" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                                    <Search size={48} className="mb-3 opacity-50" />
+                                    <p className="text-sm font-medium">Aucune personne trouvée</p>
+                                    <p className="text-xs">Essayez un autre terme de recherche</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Panel - Details View */}
+                    <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-y-auto">
+                        {selectedPerson ? (
+                            <div>
+                                {/* Header */}
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-20 h-20 bg-gradient-to-br ${selectedPerson.avatar} rounded-2xl`}></div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-slate-900">
+                                                {selectedPerson.name}
+                                            </h3>
+                                            <div className="text-slate-600">
+                                                {selectedPerson.type === "tuteur" ? "Tuteur" : "Élève"}
+                                                {selectedPerson.niveau && ` • Niveau ${selectedPerson.niveau}`}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                                            <Mail size={18} />
+                                        </button>
+                                        <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                                            Modifier
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Contact Information */}
+                                <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                                    <h4 className="font-semibold text-slate-900 mb-3">Informations de contact</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <div className="text-sm text-slate-600 mb-1">Email</div>
+                                            <div className="text-slate-900">{selectedPerson.email}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-sm text-slate-600 mb-1">Téléphone</div>
+                                            <div className="text-slate-900">{selectedPerson.phone}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tutor-specific information */}
+                                {selectedPerson.type === "tuteur" && (
+                                    <>
+                                        {/* Specialties */}
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold text-slate-900 mb-3">Spécialités</h4>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {selectedPerson.specialites.map((spec: string, idx: number) => (
+                                                    <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                                        {spec}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Capacity */}
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold text-slate-900 mb-3">Capacité</h4>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-2xl font-bold text-slate-900">
+                                                    {selectedPerson.capacity}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-3 rounded-full ${selectedPerson.status === "full"
+                                                                ? "bg-orange-500"
+                                                                : "bg-green-500"
+                                                                }`}
+                                                            style={{
+                                                                width: `${(parseInt(selectedPerson.capacity.split('/')[0]) / parseInt(selectedPerson.capacity.split('/')[1])) * 100}%`
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                                <div className={`px-3 py-1 rounded-full text-sm font-medium ${selectedPerson.status === "full"
+                                                    ? "bg-orange-100 text-orange-700"
+                                                    : "bg-green-100 text-green-700"
+                                                    }`}>
+                                                    {selectedPerson.status === "full" ? "Complet" : "Disponible"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Student-specific information */}
+                                {selectedPerson.type === "eleve" && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="bg-slate-50 rounded-xl p-4">
+                                                <div className="text-sm text-slate-600 mb-1">Niveau</div>
+                                                <div className="text-xl font-bold text-slate-900">{selectedPerson.grade}</div>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-4">
+                                                <div className="text-sm text-slate-600 mb-1">Périodes-Groupes</div>
+                                                <div className="text-xl font-bold text-slate-900">{selectedPerson.pg} PG</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold text-slate-900 mb-3">Tuteur assigné</h4>
+                                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                                                <div className="font-medium text-blue-900">{selectedPerson.tuteur}</div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Upcoming Courses */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                                            <Clock size={18} className="text-orange-500" />
+                                            Prochains cours
+                                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                                {selectedPerson.prochainsCours.length}
+                                            </span>
+                                        </h4>
+                                        <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 hover:underline">
+                                            <Plus size={14} />
+                                            Modifier horaire
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {selectedPerson.prochainsCours.map((course: any, idx: number) => (
+                                            <div key={idx} className="group relative flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 hover:from-orange-50 hover:to-slate-50 rounded-lg border border-slate-200 hover:border-orange-300 transition-all cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <Calendar size={20} className="text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-900">
+                                                            {course.day} - {course.time}
+                                                        </div>
+                                                        <div className="text-sm text-slate-600">
+                                                            {selectedPerson.type === "tuteur"
+                                                                ? `${course.room} • ${course.students} élèves`
+                                                                : `${course.subject} • ${course.tuteur}`
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg transition-all text-blue-600"
+                                                        title="Modifier ce cours"
+                                                    >
+                                                        <Settings size={16} />
+                                                    </button>
+                                                    <button className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600">
+                                                        <ChevronDown size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>                                {/* Action Buttons */}
+                                <div className="mt-6 pt-6 border-t border-slate-200 flex gap-3">
+                                    <button className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                                        Modifier une date unique
+                                    </button>
+                                    <button className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                        Modification long terme
+                                    </button>
                                 </div>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-slate-400">
+                                <div className="text-center">
+                                    <Users size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p className="text-lg font-medium">Sélectionnez une personne</p>
+                                    <p className="text-sm">pour voir les détails</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Élèves */}
+                {/* Bottom Panel - Group Management */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-slate-900">
-                            Élèves (142)
-                        </h3>
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                            <Search size={18} />
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900">Gestion des groupes</h3>
+                            <p className="text-sm text-slate-600">Créez et gérez des groupes pour déplacer plusieurs personnes ensemble</p>
+                        </div>
+                        <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                            <Plus size={16} />
+                            Créer un groupe
                         </button>
                     </div>
 
-                    <div className="space-y-3">
-                        {[
-                            {
-                                name: "Lucas Bernard",
-                                grade: "Sec. 3",
-                                pg: 3,
-                                status: "active",
-                            },
-                            {
-                                name: "Emma Tremblay",
-                                grade: "Sec. 4",
-                                pg: 2,
-                                status: "active",
-                            },
-                            {
-                                name: "Noah Gagnon",
-                                grade: "Sec. 5",
-                                pg: 4,
-                                status: "active",
-                            },
-                            {
-                                name: "Olivia Côté",
-                                grade: "Sec. 3",
-                                pg: 2,
-                                status: "active",
-                            },
-                            {
-                                name: "William Roy",
-                                grade: "Sec. 4",
-                                pg: 3,
-                                status: "active",
-                            },
-                        ].map((student, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                            >
-                                <div className="w-10 h-10 bg-gradient-to-br from-slate-300 to-slate-400 rounded-full"></div>
-                                <div className="flex-1">
-                                    <div className="font-semibold text-slate-900">
-                                        {student.name}
-                                    </div>
-                                    <div className="text-sm text-slate-600">
-                                        {student.grade} • {student.pg} PG
-                                    </div>
-                                </div>
-                                <CheckCircle
-                                    size={18}
-                                    className="text-green-500"
-                                />
+                    <div className="grid grid-cols-3 gap-4">
+                        {/* Example groups */}
+                        <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="font-semibold text-slate-900">Groupe Math Avancé</div>
+                                <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Avec tuteur</div>
                             </div>
-                        ))}
+                            <div className="text-sm text-slate-600 mb-2">
+                                Tuteur: Marie Dupont
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Users size={14} className="text-slate-400" />
+                                <span className="text-sm text-slate-600">4 élèves</span>
+                            </div>
+                        </div>
+
+                        <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="font-semibold text-slate-900">Groupe Sec. 3</div>
+                                <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Sans tuteur</div>
+                            </div>
+                            <div className="text-sm text-slate-600 mb-2">
+                                Niveau secondaire 3
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Users size={14} className="text-slate-400" />
+                                <span className="text-sm text-slate-600">6 élèves</span>
+                            </div>
+                        </div>
+
+                        <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="font-semibold text-slate-900">Groupe Sciences</div>
+                                <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Avec tuteur</div>
+                            </div>
+                            <div className="text-sm text-slate-600 mb-2">
+                                Tuteur: Sophie Chen
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Users size={14} className="text-slate-400" />
+                                <span className="text-sm text-slate-600">3 élèves</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Placement Page
     const PlacementPage = () => (
