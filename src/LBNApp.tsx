@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Calendar,
     Users,
@@ -54,6 +54,9 @@ const LBNApp = () => {
         students: number;
         subject: string;
         color: string;
+        groupId?: number;
+        studentNames?: string[];
+        attendance?: Record<string, boolean>;
     }
 
     interface TimeSlot {
@@ -90,6 +93,9 @@ const LBNApp = () => {
         phone: string;
         niveau: string;
         specialites: string[];
+        anneesConfortables: string[];
+        salaireHoraire: number;
+        capaciteGestion: number;
         prochainsCours: Array<{
             day: string;
             time: string;
@@ -149,17 +155,32 @@ const LBNApp = () => {
                 time: "8h00",
                 room: "Salle A",
                 tutor: "Marie Dupont",
-                students: 3,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
+                attendance: {
+                    "Lucas Bernard": true,
+                    "Emma Tremblay": true,
+                    "Noah Gagnon": false,
+                    "Olivia Côté": true,
+                },
             },
             {
                 time: "8h00",
                 room: "Salle B",
                 tutor: "Jean Martin",
-                students: 4,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
+                attendance: {
+                    "William Roy": true,
+                    "Sophie Martin": true,
+                    "Alex Leblanc": true,
+                },
             },
             {
                 time: "10h30",
@@ -168,6 +189,12 @@ const LBNApp = () => {
                 students: 2,
                 subject: "Sciences",
                 color: "bg-green-500",
+                groupId: 3,
+                studentNames: ["Emma Chen", "Marc Dubois"],
+                attendance: {
+                    "Emma Chen": true,
+                    "Marc Dubois": false,
+                },
             },
             {
                 time: "13h00",
@@ -189,9 +216,17 @@ const LBNApp = () => {
                 time: "15h30",
                 room: "Salle A",
                 tutor: "Marie Dupont",
-                students: 5,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
+                attendance: {
+                    "Lucas Bernard": true,
+                    "Emma Tremblay": false,
+                    "Noah Gagnon": true,
+                    "Olivia Côté": true,
+                },
             },
         ],
         Mardi: [
@@ -199,9 +234,11 @@ const LBNApp = () => {
                 time: "8h00",
                 room: "Salle C",
                 tutor: "Marie Dupont",
-                students: 3,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
                 time: "8h00",
@@ -210,14 +247,18 @@ const LBNApp = () => {
                 students: 2,
                 subject: "Sciences",
                 color: "bg-green-500",
+                groupId: 3,
+                studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
                 time: "10h30",
                 room: "Salle B",
                 tutor: "Jean Martin",
-                students: 4,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
                 time: "13h00",
@@ -231,9 +272,11 @@ const LBNApp = () => {
                 time: "15h30",
                 room: "Salle C",
                 tutor: "Marie Dupont",
-                students: 5,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
         ],
         Mercredi: [
@@ -241,17 +284,21 @@ const LBNApp = () => {
                 time: "8h00",
                 room: "Salle A",
                 tutor: "Jean Martin",
-                students: 4,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
                 time: "10h30",
                 room: "Salle B",
                 tutor: "Marie Dupont",
-                students: 3,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
                 time: "10h30",
@@ -260,6 +307,8 @@ const LBNApp = () => {
                 students: 2,
                 subject: "Sciences",
                 color: "bg-green-500",
+                groupId: 3,
+                studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
                 time: "13h00",
@@ -286,22 +335,28 @@ const LBNApp = () => {
                 students: 2,
                 subject: "Sciences",
                 color: "bg-green-500",
+                groupId: 3,
+                studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
                 time: "10h30",
                 room: "Salle A",
                 tutor: "Jean Martin",
-                students: 4,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
                 time: "10h30",
                 room: "Salle C",
                 tutor: "Marie Dupont",
-                students: 3,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
                 time: "13h00",
@@ -315,9 +370,11 @@ const LBNApp = () => {
                 time: "15h30",
                 room: "Salle B",
                 tutor: "Marie Dupont",
-                students: 5,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
         ],
         Vendredi: [
@@ -333,17 +390,21 @@ const LBNApp = () => {
                 time: "8h00",
                 room: "Salle D",
                 tutor: "Jean Martin",
-                students: 4,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
                 time: "10h30",
                 room: "Salle B",
                 tutor: "Marie Dupont",
-                students: 3,
+                students: 4,
                 subject: "Math",
                 color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
                 time: "13h00",
@@ -352,6 +413,8 @@ const LBNApp = () => {
                 students: 2,
                 subject: "Sciences",
                 color: "bg-green-500",
+                groupId: 3,
+                studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
                 time: "15h30",
@@ -561,17 +624,12 @@ const LBNApp = () => {
 
     // Helper function to get filtered rooms
     const getFilteredRooms = () => {
-        if (roomFilter === "all") return allRooms;
-
+        // Automatically filter out rooms that have no courses for the selected day
         const occupiedRooms = new Set(
             courses[selectedDay]?.map((c) => c.room) || []
         );
-
-        if (roomFilter === "occupied") {
-            return allRooms.filter((room) => occupiedRooms.has(room));
-        } else {
-            return allRooms.filter((room) => !occupiedRooms.has(room));
-        }
+        
+        return allRooms.filter((room) => occupiedRooms.has(room));
     };
 
     // Helper to get courses for a room in a time slot
@@ -597,6 +655,40 @@ const LBNApp = () => {
     const DashboardPage = () => {
         const [showStatsPicker, setShowStatsPicker] = useState(false);
         const [printRange, setPrintRange] = useState("week");
+        const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
+
+        // Mock groups (same as PlacementPage)
+        const groups = [
+            {
+                id: 1,
+                name: "Groupe Math Avancé",
+                tutor: "Marie Dupont",
+                students: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
+                totalPG: 12,
+                color: "blue"
+            },
+            {
+                id: 2,
+                name: "Groupe Sec. 3",
+                tutor: null,
+                students: ["William Roy", "Sophie Martin", "Alex Leblanc"],
+                totalPG: 9,
+                color: "purple"
+            },
+            {
+                id: 3,
+                name: "Groupe Sciences",
+                tutor: "Sophie Chen",
+                students: ["Emma Chen", "Marc Dubois"],
+                totalPG: 6,
+                color: "green"
+            }
+        ];
+
+        const getGroupForCourse = (course: Course) => {
+            if (!course.groupId) return null;
+            return groups.find(g => g.id === course.groupId) || null;
+        };
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 overflow-auto">
@@ -806,17 +898,6 @@ const LBNApp = () => {
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <select
-                                    value={roomFilter}
-                                    onChange={(e) =>
-                                        setRoomFilter(e.target.value as RoomFilter)
-                                    }
-                                    className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-                                >
-                                    <option value="all">Toutes les salles</option>
-                                    <option value="occupied">Salles occupées</option>
-                                    <option value="free">Salles libres</option>
-                                </select>
                                 <button
                                     onClick={() => window.print()}
                                     className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
@@ -824,7 +905,10 @@ const LBNApp = () => {
                                     <Printer size={16} />
                                     Imprimer
                                 </button>
-                                <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                                <button 
+                                    onClick={() => setCurrentPage("placement")}
+                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                                >
                                     <Plus size={16} />
                                     Nouveau cours
                                 </button>
@@ -892,6 +976,7 @@ const LBNApp = () => {
                                                                     (course, idx) => (
                                                                         <div
                                                                             key={idx}
+                                                                            onClick={() => setSelectedCourseForDetails(course)}
                                                                             className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer text-xs font-medium group hover:scale-105 border border-opacity-20 border-white`}
                                                                         >
                                                                             <div className="font-bold mb-1 group-hover:text-yellow-50">
@@ -928,6 +1013,102 @@ const LBNApp = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Course Details Modal */}
+                {selectedCourseForDetails && (
+                    <div 
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setSelectedCourseForDetails(null)}
+                    >
+                        <div 
+                            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-6 border-b border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-slate-900">Détails du cours</h3>
+                                    <button
+                                        onClick={() => setSelectedCourseForDetails(null)}
+                                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                    >
+                                        <X size={20} className="text-slate-500" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                {/* Course Info */}
+                                <div className="mb-6">
+                                    <div className={`${selectedCourseForDetails.color} text-white rounded-lg p-4 mb-4`}>
+                                        <div className="font-bold text-lg mb-1">{selectedCourseForDetails.subject}</div>
+                                        <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
+                                    </div>
+                                    
+                                    {(() => {
+                                        const group = getGroupForCourse(selectedCourseForDetails);
+                                        return (
+                                            <>
+                                                {/* Tutor Info */}
+                                                <div className="mb-4">
+                                                    <div className="text-sm font-semibold text-slate-700 mb-2">Tuteur:</div>
+                                                    <div className="text-lg font-medium text-slate-900">{selectedCourseForDetails.tutor}</div>
+                                                    {group && group.tutor && (
+                                                        <div className="text-xs text-slate-500 mt-1">Tuteur du groupe</div>
+                                                    )}
+                                                </div>
+
+                                                {/* Group Info */}
+                                                {group && (
+                                                    <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+                                                        <div className="text-sm font-semibold text-slate-700 mb-2">Groupe:</div>
+                                                        <div className="text-lg font-medium text-slate-900">{group.name}</div>
+                                                        <div className="text-xs text-slate-500 mt-1">{group.totalPG} PG</div>
+                                                    </div>
+                                                )}
+
+                                                {/* Students List */}
+                                                <div>
+                                                    <div className="text-sm font-semibold text-slate-700 mb-3">
+                                                        Élèves ({selectedCourseForDetails.studentNames?.length || selectedCourseForDetails.students}):
+                                                    </div>
+                                                    {selectedCourseForDetails.studentNames && selectedCourseForDetails.studentNames.length > 0 ? (
+                                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                            {selectedCourseForDetails.studentNames.map((studentName, idx) => {
+                                                                const isPresent = selectedCourseForDetails.attendance?.[studentName] ?? null;
+                                                                return (
+                                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                                                                        <Users size={16} className="text-slate-400" />
+                                                                        <span className="text-slate-900 flex-1">{studentName}</span>
+                                                                        {isPresent !== null && (
+                                                                            <div className="flex items-center gap-2">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isPresent}
+                                                                                    disabled
+                                                                                    className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 cursor-not-allowed opacity-60"
+                                                                                />
+                                                                                <span className="text-xs text-slate-600">
+                                                                                    {isPresent ? "Présent" : "Absent"}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-slate-500 text-sm">
+                                                            {selectedCourseForDetails.students} élève(s) non spécifié(s)
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
@@ -948,6 +1129,24 @@ const LBNApp = () => {
         const [gradeFilter, setGradeFilter] = useState<string[]>([]);
         const [pgFilter, setPgFilter] = useState<string>("");
 
+        // Export menu state
+        const [showExportMenu, setShowExportMenu] = useState(false);
+
+        // Close export menu when clicking outside
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                const target = event.target as HTMLElement;
+                if (showExportMenu && !target.closest('.export-menu-container')) {
+                    setShowExportMenu(false);
+                }
+            };
+
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [showExportMenu]);
+
         // Mock data for tuteurs
         const tuteurs = [
             {
@@ -962,6 +1161,9 @@ const LBNApp = () => {
                 phone: "514-555-0001",
                 niveau: "Sénior",
                 specialites: ["Mathématiques", "Sciences"],
+                anneesConfortables: ["Sec. 3", "Sec. 4", "Sec. 5"],
+                salaireHoraire: 35.50,
+                capaciteGestion: 15,
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle A", students: 3 },
                     { day: "Lundi", time: "15h30", room: "Salle A", students: 5 },
@@ -980,6 +1182,9 @@ const LBNApp = () => {
                 phone: "514-555-0002",
                 niveau: "Intermédiaire",
                 specialites: ["Français", "Histoire"],
+                anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3"],
+                salaireHoraire: 28.75,
+                capaciteGestion: 15,
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle B", students: 4 },
                     { day: "Lundi", time: "13h00", room: "Salle B", students: 4 },
@@ -997,6 +1202,9 @@ const LBNApp = () => {
                 phone: "514-555-0003",
                 niveau: "Sénior",
                 specialites: ["Sciences", "Chimie"],
+                anneesConfortables: ["Sec. 4", "Sec. 5"],
+                salaireHoraire: 42.00,
+                capaciteGestion: 15,
                 prochainsCours: [
                     { day: "Lundi", time: "10h30", room: "Salle A", students: 2 },
                     { day: "Mardi", time: "8h00", room: "Salle D", students: 2 },
@@ -1014,6 +1222,9 @@ const LBNApp = () => {
                 phone: "514-555-0004",
                 niveau: "Junior",
                 specialites: ["Anglais"],
+                anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4"],
+                salaireHoraire: 25.00,
+                capaciteGestion: 15,
                 prochainsCours: [
                     { day: "Lundi", time: "13h00", room: "Salle C", students: 3 },
                     { day: "Mardi", time: "13h00", room: "Salle A", students: 3 },
@@ -1101,8 +1312,24 @@ const LBNApp = () => {
             },
         ];
 
+        // Calculate PG used by tutors from their assigned students
+        const calculatePGUsed = (tuteurName: string): number => {
+            return eleves
+                .filter(eleve => eleve.tuteur === tuteurName)
+                .reduce((total, eleve) => total + eleve.pg, 0);
+        };
+
+        // Update tutor capacities based on assigned students
+        const tuteursWithUpdatedCapacity = tuteurs.map(tuteur => {
+            const pgUsed = calculatePGUsed(tuteur.name);
+            return {
+                ...tuteur,
+                capacity: `${pgUsed}/${tuteur.capaciteGestion} PG`
+            };
+        });
+
         // Filter personnel based on type, search query, and advanced filters
-        const filteredPersonnel = (personnelFilter === "tuteur" ? tuteurs : eleves).filter((person) => {
+        const filteredPersonnel = (personnelFilter === "tuteur" ? tuteursWithUpdatedCapacity : eleves).filter((person) => {
             // Search filter
             const matchesSearch = person.name.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -1128,6 +1355,115 @@ const LBNApp = () => {
             ? niveauFilter.length + specialiteFilter.length + statusFilter.length
             : gradeFilter.length + (pgFilter ? 1 : 0);
 
+        // Export functions
+        const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
+            if (filteredPersonnel.length === 0) {
+                alert('Aucune donnée à exporter');
+                setShowExportMenu(false);
+                return;
+            }
+
+            const dataToExport = personnelFilter === "tuteur" 
+                ? filteredPersonnel.map(t => ({
+                    Nom: t.name,
+                    Email: t.email,
+                    Téléphone: t.phone,
+                    Niveau: t.niveau,
+                    Spécialités: t.specialites.join(', '),
+                    "Années confortables": t.anneesConfortables.join(', '),
+                    "Salaire horaire": `$${t.salaireHoraire.toFixed(2)}/heure`,
+                    Capacité: t.capacity,
+                    Statut: t.status === "active" ? "Disponible" : "Complet",
+                    "Nombre de cours": t.courses
+                }))
+                : filteredPersonnel.map(e => ({
+                    Nom: e.name,
+                    Email: e.email,
+                    Téléphone: e.phone,
+                    Niveau: e.grade,
+                    PG: e.pg,
+                    Statut: e.status === "active" ? "Actif" : "Inactif",
+                    Tuteur: e.tuteur
+                }));
+
+            const typeName = personnelFilter === "tuteur" ? "tuteurs" : "eleves";
+            const timestamp = new Date().toISOString().split('T')[0];
+            
+            if (format === 'csv') {
+                const headers = Object.keys(dataToExport[0] || {});
+                const csvContent = [
+                    headers.join(','),
+                    ...dataToExport.map(row => 
+                        headers.map(header => {
+                            const value = row[header];
+                            return `"${String(value).replace(/"/g, '""')}"`;
+                        }).join(',')
+                    )
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${typeName}_${timestamp}.csv`;
+                link.click();
+            } else if (format === 'excel') {
+                // For Excel, we'll use CSV format (Excel can open CSV)
+                const headers = Object.keys(dataToExport[0] || {});
+                const csvContent = [
+                    headers.join(','),
+                    ...dataToExport.map(row => 
+                        headers.map(header => {
+                            const value = row[header];
+                            return `"${String(value).replace(/"/g, '""')}"`;
+                        }).join(',')
+                    )
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${typeName}_${timestamp}.csv`;
+                link.click();
+            } else {
+                // For PDF, create a simple HTML table
+                const htmlContent = `
+                    <html>
+                        <head>
+                            <title>${typeName}_${timestamp}</title>
+                            <style>
+                                table { border-collapse: collapse; width: 100%; }
+                                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                th { background-color: #f2f2f2; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>${typeName.charAt(0).toUpperCase() + typeName.slice(1)} - ${timestamp}</h1>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        ${Object.keys(dataToExport[0] || {}).map(key => `<th>${key}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dataToExport.map(row => 
+                                        `<tr>${Object.values(row).map(val => `<td>${val}</td>`).join('')}</tr>`
+                                    ).join('')}
+                                </tbody>
+                            </table>
+                        </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${typeName}_${timestamp}.html`;
+                link.click();
+            }
+            
+            setShowExportMenu(false);
+        };
+
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
                 {/* Page Header */}
@@ -1144,9 +1480,41 @@ const LBNApp = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <button className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2">
-                                <Download size={16} />
+                                <Upload size={16} />
                                 Import CSV
                             </button>
+                            <div className="relative export-menu-container">
+                                <button 
+                                    onClick={() => setShowExportMenu(!showExportMenu)}
+                                    className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                                >
+                                    <Download size={16} />
+                                    Exporter
+                                    <ChevronDown size={14} className={showExportMenu ? "transform rotate-180" : ""} />
+                                </button>
+                                {showExportMenu && (
+                                    <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20 min-w-[160px]">
+                                        <button
+                                            onClick={() => handleExport('csv')}
+                                            className="w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors text-sm"
+                                        >
+                                            Export CSV
+                                        </button>
+                                        <button
+                                            onClick={() => handleExport('excel')}
+                                            className="w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors text-sm"
+                                        >
+                                            Export Excel
+                                        </button>
+                                        <button
+                                            onClick={() => handleExport('pdf')}
+                                            className="w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors text-sm"
+                                        >
+                                            Export PDF
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
                                 <Plus size={16} />
                                 Ajouter
@@ -1164,7 +1532,7 @@ const LBNApp = () => {
                                     Recherche
                                 </h3>
                                 <div className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-medium">
-                                    {personnelFilter === "tuteur" ? `${tuteurs.length} tuteurs` : `${eleves.length} élèves`}
+                                    {personnelFilter === "tuteur" ? `${tuteursWithUpdatedCapacity.length} tuteurs` : `${eleves.length} élèves`}
                                 </div>
                             </div>
 
@@ -1308,7 +1676,7 @@ const LBNApp = () => {
                                                 </div>
 
                                                 <div className="border-t border-slate-200 pt-3">
-                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Périodes-Groupes (PG)</label>
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Points de Gestion (PG)</label>
                                                     <select
                                                         value={pgFilter}
                                                         onChange={(e) => setPgFilter(e.target.value)}
@@ -1420,7 +1788,7 @@ const LBNApp = () => {
                                                 </div>
                                                 <div className="text-xs text-slate-600">
                                                     {person.type === "tuteur"
-                                                        ? `${(person as Tuteur).courses} cours • ${(person as Tuteur).capacity}`
+                                                        ? `${(person as Tuteur).courses} cours`
                                                         : `${(person as Eleve).grade} • ${(person as Eleve).pg} PG`
                                                     }
                                                 </div>
@@ -1482,6 +1850,12 @@ const LBNApp = () => {
                                                 <div className="text-sm text-slate-600 mb-1">Téléphone</div>
                                                 <div className="text-slate-900">{selectedPerson.phone}</div>
                                             </div>
+                                            {selectedPerson.type === "tuteur" && (
+                                                <div>
+                                                    <div className="text-sm text-slate-600 mb-1">Salaire horaire</div>
+                                                    <div className="text-slate-900 font-semibold">${selectedPerson.salaireHoraire.toFixed(2)}/heure</div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1500,31 +1874,26 @@ const LBNApp = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Capacity */}
+                                            {/* Years comfortable */}
                                             <div className="mb-6">
-                                                <h4 className="font-semibold text-slate-900 mb-3">Capacité</h4>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-2xl font-bold text-slate-900">
-                                                        {selectedPerson.capacity}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-3 rounded-full ${selectedPerson.status === "full"
-                                                                    ? "bg-orange-500"
-                                                                    : "bg-green-500"
-                                                                    }`}
-                                                                style={{
-                                                                    width: `${(parseInt(selectedPerson.capacity.split('/')[0]) / parseInt(selectedPerson.capacity.split('/')[1])) * 100}%`
-                                                                }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${selectedPerson.status === "full"
-                                                        ? "bg-orange-100 text-orange-700"
-                                                        : "bg-green-100 text-green-700"
-                                                        }`}>
-                                                        {selectedPerson.status === "full" ? "Complet" : "Disponible"}
+                                                <h4 className="font-semibold text-slate-900 mb-3">Années confortables</h4>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {selectedPerson.anneesConfortables.map((annee: string, idx: number) => (
+                                                        <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                                            {annee}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Capacity Management */}
+                                            <div className="mb-6">
+                                                <h4 className="font-semibold text-slate-900 mb-3">Capacité de Gestion</h4>
+                                                <div className="bg-slate-50 rounded-xl p-4">
+                                                    <div className="text-sm text-slate-600 mb-2">Quantité d'élèves qu'il peut gérer</div>
+                                                    <div className="text-2xl font-bold text-slate-900 mb-2">{selectedPerson.capaciteGestion} PG</div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Les PG des élèves assignés s'additionnent jusqu'à atteindre {selectedPerson.capaciteGestion} PG
                                                     </div>
                                                 </div>
                                             </div>
@@ -1539,10 +1908,10 @@ const LBNApp = () => {
                                                     <div className="text-sm text-slate-600 mb-1">Niveau</div>
                                                     <div className="text-xl font-bold text-slate-900">{selectedPerson.grade}</div>
                                                 </div>
-                                                <div className="bg-slate-50 rounded-xl p-4">
-                                                    <div className="text-sm text-slate-600 mb-1">Périodes-Groupes</div>
-                                                    <div className="text-xl font-bold text-slate-900">{selectedPerson.pg} PG</div>
-                                                </div>
+                                            <div className="bg-slate-50 rounded-xl p-4">
+                                                <div className="text-sm text-slate-600 mb-1">Points de Gestion</div>
+                                                <div className="text-xl font-bold text-slate-900">{selectedPerson.pg} PG</div>
+                                            </div>
                                             </div>
 
                                             <div className="mb-6">
@@ -1613,13 +1982,116 @@ const LBNApp = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-full flex items-center justify-center text-slate-400">
-                                    <div className="text-center">
-                                        <Users size={48} className="mx-auto mb-4 opacity-50" />
-                                        <p className="text-lg font-medium">Sélectionnez une personne</p>
-                                        <p className="text-sm">pour voir les détails</p>
+                                personnelFilter === "eleve" ? (
+                                    // Example student display
+                                    <div>
+                                        <div className="mb-4 pb-4 border-b border-slate-200">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
+                                                    Exemple
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-20 h-20 bg-gradient-to-br from-slate-300 to-slate-400 rounded-2xl"></div>
+                                                <div>
+                                                    <h3 className="text-2xl font-bold text-slate-900">
+                                                        Exemple d'élève
+                                                    </h3>
+                                                    <div className="text-slate-600">
+                                                        Élève • Niveau Sec. 3
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Contact Information */}
+                                        <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                                            <h4 className="font-semibold text-slate-900 mb-3">Informations de contact</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <div className="text-sm text-slate-600 mb-1">Email</div>
+                                                    <div className="text-slate-900">exemple.eleve@student.com</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-slate-600 mb-1">Téléphone</div>
+                                                    <div className="text-slate-900">514-555-XXXX</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Student-specific information */}
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="bg-slate-50 rounded-xl p-4">
+                                                <div className="text-sm text-slate-600 mb-1">Niveau</div>
+                                                <div className="text-xl font-bold text-slate-900">Sec. 3</div>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-4">
+                                                <div className="text-sm text-slate-600 mb-1">Points de Gestion</div>
+                                                <div className="text-xl font-bold text-slate-900">3 PG</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold text-slate-900 mb-3">Tuteur assigné</h4>
+                                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                                                <div className="font-medium text-blue-900">Marie Dupont</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Upcoming Courses */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                                                    <Clock size={18} className="text-orange-500" />
+                                                    Prochains cours
+                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                                        2
+                                                    </span>
+                                                </h4>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 rounded-lg border border-slate-200">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <Calendar size={20} className="text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-semibold text-slate-900">
+                                                                Lundi - 8h00
+                                                            </div>
+                                                            <div className="text-sm text-slate-600">
+                                                                Math • Marie Dupont
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 rounded-lg border border-slate-200">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <Calendar size={20} className="text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-semibold text-slate-900">
+                                                                Mercredi - 10h30
+                                                            </div>
+                                                            <div className="text-sm text-slate-600">
+                                                                Français • Jean Martin
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-slate-400">
+                                        <div className="text-center">
+                                            <Users size={48} className="mx-auto mb-4 opacity-50" />
+                                            <p className="text-lg font-medium">Sélectionnez une personne</p>
+                                            <p className="text-sm">pour voir les détails</p>
+                                        </div>
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>
@@ -1700,6 +2172,8 @@ const LBNApp = () => {
         const [savedStates, setSavedStates] = useState<any[]>([]);
         const [showSaveHistory, setShowSaveHistory] = useState(false);
         const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+        const [selectedTimeSlotFilter, setSelectedTimeSlotFilter] = useState<string | null>(null);
+        const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
 
         // Accordion state - which sections are expanded
         const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -1769,7 +2243,11 @@ const LBNApp = () => {
             { id: 2, name: "Emma Tremblay", pg: 2, grade: "Sec. 4" },
             { id: 3, name: "Noah Gagnon", pg: 4, grade: "Sec. 5" },
             { id: 4, name: "Olivia Côté", pg: 2, grade: "Sec. 3" },
-            { id: 5, name: "William Roy", pg: 3, grade: "Sec. 4" }
+            { id: 5, name: "William Roy", pg: 3, grade: "Sec. 4" },
+            { id: 6, name: "Sophie Martin", pg: 3, grade: "Sec. 3" },
+            { id: 7, name: "Alex Leblanc", pg: 3, grade: "Sec. 3" },
+            { id: 8, name: "Emma Chen", pg: 3, grade: "Sec. 4" },
+            { id: 9, name: "Marc Dubois", pg: 3, grade: "Sec. 4" }
         ];
 
         const handleSaveState = () => {
@@ -1806,6 +2284,35 @@ const LBNApp = () => {
 
         const activeTutorFiltersCount = tutorAvailabilityFilter.length + tutorSpecialtyFilter.length;
         const activeStudentFiltersCount = studentGradeFilter.length + (studentPgFilter ? 1 : 0);
+
+        // Helper functions for groups and courses
+        const getGroupForCourse = (course: Course) => {
+            if (!course.groupId) return null;
+            return groups.find(g => g.id === course.groupId) || null;
+        };
+
+        const getGroupForPerson = (personName: string) => {
+            return groups.find(g => 
+                g.tutor === personName || 
+                g.students.includes(personName)
+            ) || null;
+        };
+
+        const getPlacementStatus = (personName: string, day: Day) => {
+            const dayCourses = courses[day] || [];
+            const personCourses = dayCourses.filter(c => 
+                c.tutor === personName || 
+                c.studentNames?.includes(personName)
+            );
+            
+            // For now, return mock status - this would need real availability data
+            const totalSlots = timeSlots.length;
+            const placedSlots = personCourses.length;
+            
+            if (placedSlots === 0) return { status: "unplaced", slots: 0, total: totalSlots };
+            if (placedSlots === totalSlots) return { status: "fully_placed", slots: placedSlots, total: totalSlots };
+            return { status: "partially_placed", slots: placedSlots, total: totalSlots };
+        };
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden flex flex-col">
@@ -2080,31 +2587,41 @@ const LBNApp = () => {
                                                 )}
                                             </div>
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                                {filteredTutors.map((tutor) => (
-                                                    <div
-                                                        key={tutor.id}
-                                                        draggable
-                                                        onDragStart={() => setDraggedItem({ type: 'tutor', data: tutor })}
-                                                        onDragEnd={() => setDraggedItem(null)}
-                                                        className={`p-3 rounded-lg border-2 cursor-move transition-all ${tutor.available
-                                                            ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg'
-                                                            : 'bg-slate-100 border-slate-300 opacity-60'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <div className="font-medium text-slate-900 text-sm">{tutor.name}</div>
-                                                            <div className={`w-2 h-2 rounded-full ${tutor.available ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                {filteredTutors.map((tutor) => {
+                                                    const tutorGroup = getGroupForPerson(tutor.name);
+                                                    return (
+                                                        <div
+                                                            key={tutor.id}
+                                                            draggable
+                                                            onDragStart={() => setDraggedItem({ type: 'tutor', data: tutor })}
+                                                            onDragEnd={() => setDraggedItem(null)}
+                                                            className={`p-3 rounded-lg border-2 cursor-move transition-all ${tutor.available
+                                                                ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg'
+                                                                : 'bg-slate-100 border-slate-300 opacity-60'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="font-medium text-slate-900 text-sm">{tutor.name}</div>
+                                                                <div className={`w-2 h-2 rounded-full ${tutor.available ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                            </div>
+                                                            {tutorGroup && (
+                                                                <div className="mb-1">
+                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                                                        {tutorGroup.name}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="text-xs text-slate-600 mb-1">{tutor.capacity} PG</div>
+                                                            <div className="flex gap-1 flex-wrap">
+                                                                {tutor.specialties.map((spec, idx) => (
+                                                                    <span key={idx} className="text-xs bg-white px-2 py-0.5 rounded-full">
+                                                                        {spec}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-xs text-slate-600 mb-1">{tutor.capacity} PG</div>
-                                                        <div className="flex gap-1 flex-wrap">
-                                                            {tutor.specialties.map((spec, idx) => (
-                                                                <span key={idx} className="text-xs bg-white px-2 py-0.5 rounded-full">
-                                                                    {spec}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
@@ -2189,7 +2706,7 @@ const LBNApp = () => {
                                                             </div>
 
                                                             <div className="border-t border-slate-200 pt-3">
-                                                                <label className="text-xs font-semibold text-slate-700 mb-2 block">Périodes-Groupes (PG)</label>
+                                                                <label className="text-xs font-semibold text-slate-700 mb-2 block">Points de Gestion (PG)</label>
                                                                 <select
                                                                     value={studentPgFilter}
                                                                     onChange={(e) => setStudentPgFilter(e.target.value)}
@@ -2225,20 +2742,30 @@ const LBNApp = () => {
                                                 )}
                                             </div>
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                                {filteredStudents.map((student) => (
-                                                    <div
-                                                        key={student.id}
-                                                        draggable
-                                                        onDragStart={() => setDraggedItem({ type: 'student', data: student })}
-                                                        onDragEnd={() => setDraggedItem(null)}
-                                                        className="p-3 bg-purple-50 border-2 border-purple-200 rounded-lg cursor-move hover:border-purple-400 hover:shadow-lg transition-all"
-                                                    >
-                                                        <div className="font-medium text-slate-900 text-sm mb-1">{student.name}</div>
-                                                        <div className="text-xs text-slate-600">
-                                                            {student.grade} • {student.pg} PG
+                                                {filteredStudents.map((student) => {
+                                                    const studentGroup = getGroupForPerson(student.name);
+                                                    return (
+                                                        <div
+                                                            key={student.id}
+                                                            draggable
+                                                            onDragStart={() => setDraggedItem({ type: 'student', data: student })}
+                                                            onDragEnd={() => setDraggedItem(null)}
+                                                            className="p-3 bg-purple-50 border-2 border-purple-200 rounded-lg cursor-move hover:border-purple-400 hover:shadow-lg transition-all"
+                                                        >
+                                                            <div className="font-medium text-slate-900 text-sm mb-1">{student.name}</div>
+                                                            {studentGroup && (
+                                                                <div className="mb-1">
+                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                                                        {studentGroup.name}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="text-xs text-slate-600">
+                                                                {student.grade} • {student.pg} PG
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
@@ -2295,6 +2822,27 @@ const LBNApp = () => {
                                 </div>
                             </div>
 
+                            {/* Time Slot Filter */}
+                            {placementView === "grid" && (
+                                <div className="mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-slate-600">Créneau:</span>
+                                        <select 
+                                            value={selectedTimeSlotFilter || ""} 
+                                            onChange={(e) => setSelectedTimeSlotFilter(e.target.value || null)}
+                                            className="px-3 py-2 bg-slate-100 rounded-lg text-sm border-0 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            <option value="">Tous les créneaux</option>
+                                            {timeSlots.map((slot) => (
+                                                <option key={slot.id} value={slot.id}>
+                                                    {slot.label} ({slot.startTime} - {slot.endTime})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Day Selector */}
                             <div className="flex gap-2">
                                 {days.map((day) => (
@@ -2313,7 +2861,8 @@ const LBNApp = () => {
                         </div>
 
                         {/* Grid Layout - All Rooms */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        {placementView === "grid" && (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse">
                                     <thead>
@@ -2321,7 +2870,9 @@ const LBNApp = () => {
                                             <th className="p-4 text-left font-semibold text-slate-700 border-b-2 border-slate-200 sticky left-0 bg-slate-100 z-10">
                                                 Salles
                                             </th>
-                                            {timeSlots.map((slot) => (
+                                            {timeSlots
+                                                .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
+                                                .map((slot) => (
                                                 <th
                                                     key={slot.id}
                                                     className="p-4 text-center font-semibold text-slate-700 border-b-2 border-slate-200 min-w-[250px]"
@@ -2347,7 +2898,9 @@ const LBNApp = () => {
                                                         {room}
                                                     </div>
                                                 </td>
-                                                {timeSlots.map((slot) => {
+                                                {timeSlots
+                                                    .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
+                                                    .map((slot) => {
                                                     const roomCourses = getCoursesForRoomAndSlot(room, slot.startTime);
                                                     return (
                                                         <td
@@ -2365,29 +2918,39 @@ const LBNApp = () => {
                                                         >
                                                             {roomCourses.length > 0 ? (
                                                                 <div className="space-y-2">
-                                                                    {roomCourses.map((course, idx) => (
-                                                                        <div
-                                                                            key={idx}
-                                                                            className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all cursor-pointer group relative`}
-                                                                        >
-                                                                            <div className="font-bold mb-1 text-sm">
-                                                                                {course.tutor}
-                                                                            </div>
-                                                                            <div className="text-xs opacity-90 flex items-center gap-1">
-                                                                                <Users size={12} />
-                                                                                <span>{course.students} élèves • {course.subject}</span>
-                                                                            </div>
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    setSelectedSlot(slot.id);
-                                                                                    setSelectedRoom(room);
-                                                                                }}
-                                                                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white text-slate-700 rounded p-1 transition-opacity"
+                                                                    {roomCourses.map((course, idx) => {
+                                                                        const group = getGroupForCourse(course);
+                                                                        return (
+                                                                            <div
+                                                                                key={idx}
+                                                                                onClick={() => setSelectedCourseForDetails(course)}
+                                                                                className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all cursor-pointer group relative`}
                                                                             >
-                                                                                <Settings size={12} />
-                                                                            </button>
-                                                                        </div>
-                                                                    ))}
+                                                                                {group && (
+                                                                                    <div className="text-xs font-semibold mb-1 opacity-95">
+                                                                                        {group.name}
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="font-bold mb-1 text-sm">
+                                                                                    {course.tutor}
+                                                                                </div>
+                                                                                <div className="text-xs opacity-90 flex items-center gap-1">
+                                                                                    <Users size={12} />
+                                                                                    <span>{course.students} élèves • {course.subject}</span>
+                                                                                </div>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setSelectedSlot(slot.id);
+                                                                                        setSelectedRoom(room);
+                                                                                    }}
+                                                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white text-slate-700 rounded p-1 transition-opacity"
+                                                                                >
+                                                                                    <Settings size={12} />
+                                                                                </button>
+                                                                            </div>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             ) : (
                                                                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center text-slate-400 hover:border-orange-400 hover:bg-orange-50 transition-all cursor-pointer min-h-[100px] flex items-center justify-center">
@@ -2406,35 +2969,253 @@ const LBNApp = () => {
                                 </table>
                             </div>
                         </div>
+                        )}
 
                         {/* Legend */}
-                        <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                            <div className="flex items-center gap-6">
-                                <span className="text-sm font-semibold text-slate-700">Légende:</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                                    <span className="text-xs text-slate-600">Mathématiques</span>
+                        {placementView === "grid" && (
+                            <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                                <div className="flex items-center gap-6">
+                                    <span className="text-sm font-semibold text-slate-700">Légende:</span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                                        <span className="text-xs text-slate-600">Mathématiques</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-purple-500 rounded"></div>
+                                        <span className="text-xs text-slate-600">Français</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-green-500 rounded"></div>
+                                        <span className="text-xs text-slate-600">Sciences</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                                        <span className="text-xs text-slate-600">Anglais</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-dashed border-slate-300 rounded"></div>
+                                        <span className="text-xs text-slate-600">Salle libre</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                                    <span className="text-xs text-slate-600">Français</span>
+                            </div>
+                        )}
+
+                        {/* Detailed View */}
+                        {placementView === "detailed" && (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4">Statut de placement - {placementDay}</h3>
+                                
+                                {/* Tutors Section */}
+                                <div className="mb-6">
+                                    <h4 className="text-md font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                        <Users size={18} className="text-blue-500" />
+                                        Tuteurs ({tutors.length})
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {tutors.map((tutor) => {
+                                            const status = getPlacementStatus(tutor.name, placementDay);
+                                            const group = getGroupForPerson(tutor.name);
+                                            return (
+                                                <div key={tutor.id} className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-all">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="font-semibold text-slate-900">{tutor.name}</span>
+                                                                {group && (
+                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                                                        {group.name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-sm text-slate-600 mb-2">
+                                                                {tutor.specialties.join(", ")} • {tutor.capacity} PG
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">
+                                                                Placé dans {status.slots} sur {status.total} créneaux disponibles
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            {status.status === "fully_placed" && (
+                                                                <div className="flex items-center gap-2 text-green-600">
+                                                                    <CheckCircle size={20} />
+                                                                    <span className="text-sm font-medium">Complet</span>
+                                                                </div>
+                                                            )}
+                                                            {status.status === "partially_placed" && (
+                                                                <div className="flex items-center gap-2 text-amber-600">
+                                                                    <AlertCircle size={20} />
+                                                                    <span className="text-sm font-medium">Partiel</span>
+                                                                </div>
+                                                            )}
+                                                            {status.status === "unplaced" && (
+                                                                <div className="flex items-center gap-2 text-red-600">
+                                                                    <X size={20} />
+                                                                    <span className="text-sm font-medium">Non placé</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 bg-green-500 rounded"></div>
-                                    <span className="text-xs text-slate-600">Sciences</span>
+
+                                {/* Students Section */}
+                                <div>
+                                    <h4 className="text-md font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                        <BookOpen size={18} className="text-purple-500" />
+                                        Élèves ({students.length})
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {students.map((student) => {
+                                            const status = getPlacementStatus(student.name, placementDay);
+                                            const group = getGroupForPerson(student.name);
+                                            return (
+                                                <div key={student.id} className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-all">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="font-semibold text-slate-900">{student.name}</span>
+                                                                {group && (
+                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                                                        {group.name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-sm text-slate-600 mb-2">
+                                                                {student.grade} • {student.pg} PG
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">
+                                                                Placé dans {status.slots} sur {status.total} créneaux disponibles
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            {status.status === "fully_placed" && (
+                                                                <div className="flex items-center gap-2 text-green-600">
+                                                                    <CheckCircle size={20} />
+                                                                    <span className="text-sm font-medium">Complet</span>
+                                                                </div>
+                                                            )}
+                                                            {status.status === "partially_placed" && (
+                                                                <div className="flex items-center gap-2 text-amber-600">
+                                                                    <AlertCircle size={20} />
+                                                                    <span className="text-sm font-medium">Partiel</span>
+                                                                </div>
+                                                            )}
+                                                            {status.status === "unplaced" && (
+                                                                <div className="flex items-center gap-2 text-red-600">
+                                                                    <X size={20} />
+                                                                    <span className="text-sm font-medium">Non placé</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                                    <span className="text-xs text-slate-600">Anglais</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Course Details Modal */}
+                {selectedCourseForDetails && (
+                    <div 
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setSelectedCourseForDetails(null)}
+                    >
+                        <div 
+                            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-6 border-b border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-slate-900">Détails du cours</h3>
+                                    <button
+                                        onClick={() => setSelectedCourseForDetails(null)}
+                                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                    >
+                                        <X size={20} className="text-slate-500" />
+                                    </button>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-dashed border-slate-300 rounded"></div>
-                                    <span className="text-xs text-slate-600">Salle libre</span>
+                            </div>
+                            <div className="p-6">
+                                {/* Course Info */}
+                                <div className="mb-6">
+                                    <div className={`${selectedCourseForDetails.color} text-white rounded-lg p-4 mb-4`}>
+                                        <div className="font-bold text-lg mb-1">{selectedCourseForDetails.subject}</div>
+                                        <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
+                                    </div>
+                                    
+                                    {(() => {
+                                        const group = getGroupForCourse(selectedCourseForDetails);
+                                        return (
+                                            <>
+                                                {/* Tutor Info */}
+                                                <div className="mb-4">
+                                                    <div className="text-sm font-semibold text-slate-700 mb-2">Tuteur:</div>
+                                                    <div className="text-lg font-medium text-slate-900">{selectedCourseForDetails.tutor}</div>
+                                                    {group && group.tutor && (
+                                                        <div className="text-xs text-slate-500 mt-1">Tuteur du groupe</div>
+                                                    )}
+                                                </div>
+
+                                                {/* Group Info */}
+                                                {group && (
+                                                    <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+                                                        <div className="text-sm font-semibold text-slate-700 mb-2">Groupe:</div>
+                                                        <div className="text-lg font-medium text-slate-900">{group.name}</div>
+                                                        <div className="text-xs text-slate-500 mt-1">{group.totalPG} PG</div>
+                                                    </div>
+                                                )}
+
+                                                {/* Students List */}
+                                                <div>
+                                                    <div className="text-sm font-semibold text-slate-700 mb-3">
+                                                        Élèves ({selectedCourseForDetails.studentNames?.length || selectedCourseForDetails.students}):
+                                                    </div>
+                                                    {selectedCourseForDetails.studentNames && selectedCourseForDetails.studentNames.length > 0 ? (
+                                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                            {selectedCourseForDetails.studentNames.map((studentName, idx) => {
+                                                                const isPresent = selectedCourseForDetails.attendance?.[studentName] ?? null;
+                                                                return (
+                                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                                                                        <Users size={16} className="text-slate-400" />
+                                                                        <span className="text-slate-900 flex-1">{studentName}</span>
+                                                                        {isPresent !== null && (
+                                                                            <div className="flex items-center gap-2">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isPresent}
+                                                                                    disabled
+                                                                                    className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 cursor-not-allowed opacity-60"
+                                                                                />
+                                                                                <span className="text-xs text-slate-600">
+                                                                                    {isPresent ? "Présent" : "Absent"}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-slate-500 text-sm">
+                                                            {selectedCourseForDetails.students} élève(s) non spécifié(s)
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         );
     };
