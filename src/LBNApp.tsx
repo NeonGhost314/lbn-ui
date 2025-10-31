@@ -41,6 +41,8 @@ import {
     Upload,
     ChevronRight,
     Ban,
+    FileText,
+    LogIn,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -79,6 +81,16 @@ const LBNApp = () => {
         id: string;
         name: string;
         visible: boolean;
+    }
+
+    interface Log {
+        id: string;
+        timestamp: Date;
+        type: "connexion" | "deconnexion" | "creation" | "modification" | "suppression" | "erreur" | "admin";
+        user: string;
+        description: string;
+        status: "success" | "error" | "warning";
+        details?: string;
     }
 
     interface Tuteur {
@@ -125,7 +137,7 @@ const LBNApp = () => {
 
     type Personnel = Tuteur | Eleve;
 
-    const [currentPage, setCurrentPage] = useState("dashboard");
+    const [currentPage, setCurrentPage] = useState("landing");
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
     const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
     const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
@@ -143,6 +155,71 @@ const LBNApp = () => {
         { id: "3", startTime: "13:00", endTime: "15:15", label: "13h-15h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
         { id: "4", startTime: "15:30", endTime: "17:30", label: "15h30-17h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
     ]);
+
+    // Mock logs data - historique complet de toutes les actions
+    const generateMockLogs = (): Log[] => {
+        const now = new Date();
+        const logs: Log[] = [];
+        
+        // Logs des dernières 24 heures
+        for (let i = 0; i < 50; i++) {
+            const hoursAgo = Math.floor(Math.random() * 24);
+            const minutesAgo = Math.floor(Math.random() * 60);
+            const timestamp = new Date(now);
+            timestamp.setHours(timestamp.getHours() - hoursAgo);
+            timestamp.setMinutes(timestamp.getMinutes() - minutesAgo);
+            
+            const types: Log["type"][] = ["connexion", "deconnexion", "creation", "modification", "suppression", "erreur", "admin"];
+            const statuses: Log["status"][] = ["success", "error", "warning"];
+            const users = ["admin@labonnenote.com", "marie.dupont@labonnenote.com", "jean.martin@labonnenote.com", "sophie.chen@labonnenote.com"];
+            
+            const type = types[Math.floor(Math.random() * types.length)];
+            const status = type === "erreur" ? "error" : (Math.random() > 0.8 ? "warning" : "success");
+            const user = users[Math.floor(Math.random() * users.length)];
+            
+            let description = "";
+            switch (type) {
+                case "connexion":
+                    description = `Connexion réussie pour ${user}`;
+                    break;
+                case "deconnexion":
+                    description = `Déconnexion de ${user}`;
+                    break;
+                case "creation":
+                    const createdItems = ["un nouveau tuteur", "un nouvel élève", "un nouveau groupe", "un nouveau cours", "un créneau horaire"];
+                    description = `Création de ${createdItems[Math.floor(Math.random() * createdItems.length)]}`;
+                    break;
+                case "modification":
+                    const modifiedItems = ["les informations d'un tuteur", "les informations d'un élève", "les paramètres d'un groupe", "un cours", "les paramètres de la compagnie"];
+                    description = `Modification de ${modifiedItems[Math.floor(Math.random() * modifiedItems.length)]}`;
+                    break;
+                case "suppression":
+                    const deletedItems = ["un tuteur", "un élève", "un groupe", "un cours"];
+                    description = `Suppression de ${deletedItems[Math.floor(Math.random() * deletedItems.length)]}`;
+                    break;
+                case "erreur":
+                    description = `Erreur système lors de l'opération`;
+                    break;
+                case "admin":
+                    description = `Action administrative effectuée`;
+                    break;
+            }
+            
+            logs.push({
+                id: `log-${timestamp.getTime()}-${i}`,
+                timestamp,
+                type,
+                user,
+                description,
+                status,
+                details: status === "error" ? "Une erreur technique s'est produite" : undefined,
+            });
+        }
+        
+        return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    };
+
+    const [logs, setLogs] = useState<Log[]>(generateMockLogs());
 
     const days: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
@@ -503,6 +580,20 @@ const LBNApp = () => {
                     <span>Statistiques</span>
                 </button>
 
+                <button
+                    onClick={() => setCurrentPage("logs")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "logs"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "logs" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <FileText size={20} className="group-hover:scale-110 transition-transform" />
+                    <span>Logs</span>
+                </button>
+
                 {/* Notifications Button */}
                 <div className="pt-4 mt-4 border-t border-slate-700/50">
                     <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group hover:bg-slate-800/50 text-slate-300 hover:text-white">
@@ -548,7 +639,7 @@ const LBNApp = () => {
 
             {/* Footer/User Section */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 mb-3">
                     <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md flex items-center justify-center text-sm font-bold">
                         A
                     </div>
@@ -557,70 +648,162 @@ const LBNApp = () => {
                         <div className="text-xs text-slate-400 truncate">admin@labonnenote.com</div>
                     </div>
                 </div>
+                <button
+                    onClick={() => {
+                        setCurrentPage("landing");
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-red-500/20 text-slate-300 hover:text-red-400"
+                >
+                    <DoorOpen size={20} />
+                    <span>Se déconnecter</span>
+                </button>
             </div>
         </div>
     );
 
     // Page Login
-    const LoginPage = () => (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md border border-white/20 shadow-2xl">
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center font-bold text-4xl text-white mx-auto mb-4 shadow-lg">
-                        LBN
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">
-                        La Bonne Note
-                    </h1>
-                    <p className="text-slate-300">
-                        Système de gestion de cours
-                    </p>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Identifiant
-                        </label>
-                        <input
-                            type="email"
-                            placeholder="email@exemple.com"
-                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Mot de passe
-                        </label>
-                        <input
-                            type="password"
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                    </div>
-
-                    <button className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-                        Se connecter
-                    </button>
-
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-white/20"></div>
+    const LoginPage = () => {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md border border-white/20 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center font-bold text-4xl text-white mx-auto mb-4 shadow-lg">
+                            LBN
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-slate-900 text-slate-400">
-                                ou
-                            </span>
-                        </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            La Bonne Note
+                        </h1>
+                        <p className="text-slate-300">
+                            Système de gestion de cours
+                        </p>
                     </div>
 
-                    <button className="w-full py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-all">
-                        Connexion avec Google
-                    </button>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Identifiant
+                            </label>
+                            <input
+                                type="email"
+                                placeholder="email@exemple.com"
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Mot de passe
+                            </label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <button 
+                            onClick={() => setCurrentPage("dashboard")}
+                            className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                        >
+                            Se connecter
+                        </button>
+
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/20"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-slate-900 text-slate-400">
+                                    ou
+                                </span>
+                            </div>
+                        </div>
+
+                        <button className="w-full py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-all">
+                            Connexion avec Google
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
+
+    // Landing Page - Page d'ouverture publique
+    const LandingPage = () => {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                {/* Hero Section */}
+                <div className="container mx-auto px-4 py-20">
+                    <div className="text-center mb-16">
+                        <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-pink-500 rounded-3xl flex items-center justify-center font-bold text-5xl text-white mx-auto mb-6 shadow-2xl">
+                            LBN
+                        </div>
+                        <h1 className="text-6xl font-bold text-white mb-4">
+                            La Bonne Note
+                        </h1>
+                        <p className="text-2xl text-slate-300 mb-8">
+                            Système de gestion de cours intelligent
+                        </p>
+                        <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12">
+                            Gérez efficacement votre personnel, vos cours et vos salles avec une interface moderne et intuitive.
+                        </p>
+                        <button
+                            onClick={() => setCurrentPage("login")}
+                            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                        >
+                            <LogIn size={24} />
+                            Se connecter
+                        </button>
+                    </div>
+
+                    {/* Features Section */}
+                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-20">
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                <Users size={28} className="text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Gestion du Personnel</h3>
+                            <p className="text-slate-300">
+                                Gérez facilement vos tuteurs et élèves avec des profils détaillés et une vue d'ensemble complète.
+                            </p>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                <Calendar size={28} className="text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Planification des Cours</h3>
+                            <p className="text-slate-300">
+                                Organisez vos cours avec un calendrier interactif et une gestion intelligente des salles.
+                            </p>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                <BarChart3 size={28} className="text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Statistiques Avancées</h3>
+                            <p className="text-slate-300">
+                                Suivez vos performances avec des tableaux de bord détaillés et des analyses en temps réel.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* CTA Section */}
+                    <div className="text-center mt-20">
+                        <p className="text-slate-400 mb-6">
+                            Prêt à optimiser votre gestion de cours ?
+                        </p>
+                        <button
+                            onClick={() => setCurrentPage("login")}
+                            className="px-8 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-all"
+                        >
+                            Commencer maintenant
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     // Helper function to get filtered rooms
     const getFilteredRooms = () => {
@@ -4656,9 +4839,275 @@ const LBNApp = () => {
         );
     };
 
+    // Logs Page - Historique complet de toutes les actions
+    const LogsPage = () => {
+        const [searchQuery, setSearchQuery] = useState("");
+        const [filterType, setFilterType] = useState<Log["type"] | "all">("all");
+        const [filterStatus, setFilterStatus] = useState<Log["status"] | "all">("all");
+        const [filterUser, setFilterUser] = useState<string>("all");
+        const [currentPageNum, setCurrentPageNum] = useState(1);
+        const logsPerPage = 20;
+
+        const uniqueUsers = Array.from(new Set(logs.map(log => log.user)));
+
+        const filteredLogs = logs.filter(log => {
+            const matchesSearch = log.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                               log.user.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesType = filterType === "all" || log.type === filterType;
+            const matchesStatus = filterStatus === "all" || log.status === filterStatus;
+            const matchesUser = filterUser === "all" || log.user === filterUser;
+            return matchesSearch && matchesType && matchesStatus && matchesUser;
+        });
+
+        const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+        const paginatedLogs = filteredLogs.slice(
+            (currentPageNum - 1) * logsPerPage,
+            currentPageNum * logsPerPage
+        );
+
+        const getTypeColor = (type: Log["type"]) => {
+            switch (type) {
+                case "connexion":
+                    return "bg-green-500/20 text-green-600 border-green-500/30";
+                case "deconnexion":
+                    return "bg-slate-500/20 text-slate-600 border-slate-500/30";
+                case "creation":
+                    return "bg-blue-500/20 text-blue-600 border-blue-500/30";
+                case "modification":
+                    return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30";
+                case "suppression":
+                    return "bg-red-500/20 text-red-600 border-red-500/30";
+                case "erreur":
+                    return "bg-red-600/20 text-red-700 border-red-600/30";
+                case "admin":
+                    return "bg-purple-500/20 text-purple-600 border-purple-500/30";
+                default:
+                    return "bg-slate-500/20 text-slate-600 border-slate-500/30";
+            }
+        };
+
+        const getStatusIcon = (status: Log["status"]) => {
+            switch (status) {
+                case "success":
+                    return <CheckCircle size={16} className="text-green-500" />;
+                case "error":
+                    return <AlertCircle size={16} className="text-red-500" />;
+                case "warning":
+                    return <AlertCircle size={16} className="text-yellow-500" />;
+            }
+        };
+
+        const exportLogs = () => {
+            const csvContent = [
+                ["Date", "Heure", "Type", "Utilisateur", "Description", "Statut"].join(","),
+                ...filteredLogs.map(log => [
+                    log.timestamp.toLocaleDateString("fr-FR"),
+                    log.timestamp.toLocaleTimeString("fr-FR"),
+                    log.type,
+                    log.user,
+                    `"${log.description}"`,
+                    log.status
+                ].join(","))
+            ].join("\n");
+
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `logs-${new Date().toISOString().split("T")[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        return (
+            <div className="p-8">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-4xl font-bold text-slate-900 mb-2">Journal des activités</h1>
+                            <p className="text-slate-600">Historique complet de toutes les actions du système</p>
+                        </div>
+                        <button
+                            onClick={exportLogs}
+                            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                        >
+                            <Download size={20} />
+                            Exporter les logs
+                        </button>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Search */}
+                            <div className="relative">
+                                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Type Filter */}
+                            <select
+                                value={filterType}
+                                onChange={(e) => {
+                                    setFilterType(e.target.value as Log["type"] | "all");
+                                    setCurrentPageNum(1);
+                                }}
+                                className="px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            >
+                                <option value="all">Tous les types</option>
+                                <option value="connexion">Connexion</option>
+                                <option value="deconnexion">Déconnexion</option>
+                                <option value="creation">Création</option>
+                                <option value="modification">Modification</option>
+                                <option value="suppression">Suppression</option>
+                                <option value="erreur">Erreur</option>
+                                <option value="admin">Admin</option>
+                            </select>
+
+                            {/* Status Filter */}
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => {
+                                    setFilterStatus(e.target.value as Log["status"] | "all");
+                                    setCurrentPageNum(1);
+                                }}
+                                className="px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            >
+                                <option value="all">Tous les statuts</option>
+                                <option value="success">Succès</option>
+                                <option value="error">Erreur</option>
+                                <option value="warning">Avertissement</option>
+                            </select>
+
+                            {/* User Filter */}
+                            <select
+                                value={filterUser}
+                                onChange={(e) => {
+                                    setFilterUser(e.target.value);
+                                    setCurrentPageNum(1);
+                                }}
+                                className="px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            >
+                                <option value="all">Tous les utilisateurs</option>
+                                {uniqueUsers.map(user => (
+                                    <option key={user} value={user}>{user}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="mt-4 text-sm text-slate-600">
+                            {filteredLogs.length} log{filteredLogs.length !== 1 ? "s" : ""} trouvé{filteredLogs.length !== 1 ? "s" : ""}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Logs List */}
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date/Heure</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Type</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Utilisateur</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {paginatedLogs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                            Aucun log trouvé
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedLogs.map((log) => (
+                                        <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-slate-900">
+                                                    {log.timestamp.toLocaleDateString("fr-FR", { 
+                                                        day: "2-digit", 
+                                                        month: "short", 
+                                                        year: "numeric" 
+                                                    })}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {log.timestamp.toLocaleTimeString("fr-FR", { 
+                                                        hour: "2-digit", 
+                                                        minute: "2-digit" 
+                                                    })}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getTypeColor(log.type)}`}>
+                                                    {log.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-slate-900">{log.user}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-slate-900">{log.description}</div>
+                                                {log.details && (
+                                                    <div className="text-xs text-slate-500 mt-1">{log.details}</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    {getStatusIcon(log.status)}
+                                                    <span className="text-sm text-slate-900 capitalize">{log.status}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <div className="text-sm text-slate-600">
+                                Page {currentPageNum} sur {totalPages}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCurrentPageNum(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPageNum === 1}
+                                    className="px-4 py-2 rounded-lg border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 transition-colors"
+                                >
+                                    Précédent
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPageNum(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPageNum === totalPages}
+                                    className="px-4 py-2 rounded-lg border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 transition-colors"
+                                >
+                                    Suivant
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     // Main render
     if (currentPage === "login") {
         return <LoginPage />;
+    }
+
+    if (currentPage === "landing") {
+        return <LandingPage />;
     }
 
     return (
@@ -4669,6 +5118,7 @@ const LBNApp = () => {
                 {currentPage === "personnel" && <PersonnelPage />}
                 {currentPage === "placement" && <PlacementPage />}
                 {currentPage === "stats" && <StatsPage />}
+                {currentPage === "logs" && <LogsPage />}
                 {currentPage === "settings" && <SettingsPage />}
                 {currentPage === "companySettings" && <CompanySettingsPage />}
             </div>
