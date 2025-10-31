@@ -40,6 +40,7 @@ import {
     Send,
     Upload,
     ChevronRight,
+    Ban,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -60,6 +61,15 @@ const LBNApp = () => {
         startTime: string;
         endTime: string;
         label: string;
+        daysOfWeek: string[];
+        startDate: string;
+        endDate: string;
+    }
+
+    interface BlacklistEntry {
+        id: string;
+        roomName: string;
+        date: string;
     }
 
     interface StatisticConfig {
@@ -122,10 +132,10 @@ const LBNApp = () => {
     });
 
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
-        { id: "1", startTime: "08:00", endTime: "10:15", label: "8h-10h15" },
-        { id: "2", startTime: "10:30", endTime: "12:30", label: "10h30-12h30" },
-        { id: "3", startTime: "13:00", endTime: "15:15", label: "13h-15h15" },
-        { id: "4", startTime: "15:30", endTime: "17:30", label: "15h30-17h30" },
+        { id: "1", startTime: "08:00", endTime: "10:15", label: "8h-10h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "2", startTime: "10:30", endTime: "12:30", label: "10h30-12h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "3", startTime: "13:00", endTime: "15:15", label: "13h-15h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "4", startTime: "15:30", endTime: "17:30", label: "15h30-17h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
     ]);
 
     const days: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
@@ -2430,36 +2440,218 @@ const LBNApp = () => {
     };
 
     // Stats Page
-    const StatsPage = () => (
-        <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
-            {/* Page Header */}
-            <div className="bg-white border-b border-slate-200 px-8 py-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                            <BarChart3 className="text-orange-500" size={28} />
-                            Statistiques et rapports
-                        </h2>
-                        <p className="text-sm text-slate-600 mt-1">
-                            Analysez les performances et tendances pour optimiser vos ressources
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <select className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-sm">
-                            <option>Cette semaine</option>
-                            <option>Ce mois</option>
-                            <option>Ce trimestre</option>
-                            <option>Cette année</option>
-                        </select>
-                        <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                            <Download size={16} />
-                            Exporter
-                        </button>
+    const StatsPage = () => {
+        // Données des élèves (même structure que dans PersonnelPage)
+        const eleves = [
+            {
+                id: 5,
+                name: "Lucas Bernard",
+                type: "eleve",
+                grade: "Sec. 3",
+                pg: 3,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "lucas.bernard@student.com",
+                phone: "514-555-1001",
+                tuteur: "Marie Dupont",
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", subject: "Math", tuteur: "Marie Dupont" },
+                    { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
+                ],
+            },
+            {
+                id: 6,
+                name: "Emma Tremblay",
+                type: "eleve",
+                grade: "Sec. 4",
+                pg: 2,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "emma.tremblay@student.com",
+                phone: "514-555-1002",
+                tuteur: "Jean Martin",
+                prochainsCours: [
+                    { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
+                ],
+            },
+            {
+                id: 7,
+                name: "Noah Gagnon",
+                type: "eleve",
+                grade: "Sec. 5",
+                pg: 4,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "noah.gagnon@student.com",
+                phone: "514-555-1003",
+                tuteur: "Sophie Chen",
+                prochainsCours: [
+                    { day: "Mardi", time: "10h30", subject: "Sciences", tuteur: "Sophie Chen" },
+                ],
+            },
+            {
+                id: 8,
+                name: "Olivia Côté",
+                type: "eleve",
+                grade: "Sec. 3",
+                pg: 2,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "olivia.cote@student.com",
+                phone: "514-555-1004",
+                tuteur: "Thomas Roy",
+                prochainsCours: [
+                    { day: "Lundi", time: "13h00", subject: "Anglais", tuteur: "Thomas Roy" },
+                ],
+            },
+            {
+                id: 9,
+                name: "William Roy",
+                type: "eleve",
+                grade: "Sec. 4",
+                pg: 3,
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: "william.roy@student.com",
+                phone: "514-555-1005",
+                tuteur: "Marie Dupont",
+                prochainsCours: [
+                    { day: "Lundi", time: "15h30", subject: "Math", tuteur: "Marie Dupont" },
+                ],
+            },
+        ];
+
+        // Données des tuteurs pour calculer les PG utilisés
+        const tuteurs = [
+            { name: "Marie Dupont", used: 14, total: 15 },
+            { name: "Sophie Chen", used: 15, total: 15 },
+            { name: "Jean Martin", used: 10, total: 12 },
+            { name: "Thomas Roy", used: 6, total: 10 },
+        ];
+
+        // Fonction pour calculer la répartition par matière
+        const calculateSubjectDistribution = () => {
+            const subjectMap: { [key: string]: { pg: number; count: number } } = {};
+            
+            eleves.forEach((eleve) => {
+                eleve.prochainsCours?.forEach((cours) => {
+                    const subject = cours.subject;
+                    // Normaliser les noms de matières
+                    let normalizedSubject = subject;
+                    if (subject === "Math") normalizedSubject = "Mathématiques";
+                    
+                    if (!subjectMap[normalizedSubject]) {
+                        subjectMap[normalizedSubject] = { pg: 0, count: 0 };
+                    }
+                    
+                    // Attribuer les PG de l'élève à cette matière
+                    // Si un élève a plusieurs cours, on divise les PG proportionnellement
+                    const pgPerCourse = eleve.pg / (eleve.prochainsCours?.length || 1);
+                    subjectMap[normalizedSubject].pg += pgPerCourse;
+                    subjectMap[normalizedSubject].count += 1;
+                });
+            });
+
+            // Calculer les totaux et pourcentages
+            const totalPG = Object.values(subjectMap).reduce((sum, subj) => sum + subj.pg, 0);
+            
+            const subjectColors: { [key: string]: { color: string; textColor: string; bgColor: string } } = {
+                "Mathématiques": { color: "bg-blue-500", textColor: "text-blue-700", bgColor: "bg-blue-50" },
+                "Français": { color: "bg-purple-500", textColor: "text-purple-700", bgColor: "bg-purple-50" },
+                "Sciences": { color: "bg-green-500", textColor: "text-green-700", bgColor: "bg-green-50" },
+                "Anglais": { color: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
+            };
+
+            return Object.entries(subjectMap).map(([subject, data]) => ({
+                subject,
+                pg: Math.round(data.pg),
+                count: data.count,
+                percentage: totalPG > 0 ? Math.round((data.pg / totalPG) * 100) : 0,
+                ...subjectColors[subject] || { color: "bg-slate-500", textColor: "text-slate-700", bgColor: "bg-slate-50" },
+            })).sort((a, b) => b.pg - a.pg);
+        };
+
+        // Fonction pour calculer la répartition par difficulté
+        const calculateDifficultyDistribution = () => {
+            const difficultyMap: { [key: string]: { count: number; pg: number } } = {
+                "Facile": { count: 0, pg: 0 },
+                "Moyen": { count: 0, pg: 0 },
+                "Difficile": { count: 0, pg: 0 },
+                "Très difficile": { count: 0, pg: 0 },
+            };
+
+            eleves.forEach((eleve) => {
+                let difficulty: string;
+                if (eleve.pg === 2) {
+                    difficulty = "Facile";
+                } else if (eleve.pg === 3) {
+                    difficulty = "Moyen";
+                } else if (eleve.pg === 4) {
+                    difficulty = "Difficile";
+                } else {
+                    difficulty = "Très difficile";
+                }
+
+                difficultyMap[difficulty].count += 1;
+                difficultyMap[difficulty].pg += eleve.pg;
+            });
+
+            // Calculer les totaux et pourcentages
+            const totalStudents = eleves.length;
+            const totalPG = eleves.reduce((sum, eleve) => sum + eleve.pg, 0);
+
+            const difficultyColors: { [key: string]: { color: string; textColor: string; bgColor: string } } = {
+                "Facile": { color: "bg-green-500", textColor: "text-green-700", bgColor: "bg-green-50" },
+                "Moyen": { color: "bg-blue-500", textColor: "text-blue-700", bgColor: "bg-blue-50" },
+                "Difficile": { color: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
+                "Très difficile": { color: "bg-red-500", textColor: "text-red-700", bgColor: "bg-red-50" },
+            };
+
+            return Object.entries(difficultyMap)
+                .filter(([_, data]) => data.count > 0)
+                .map(([difficulty, data]) => ({
+                    difficulty,
+                    count: data.count,
+                    pg: data.pg,
+                    percentage: totalStudents > 0 ? Math.round((data.count / totalStudents) * 100) : 0,
+                    pgPercentage: totalPG > 0 ? Math.round((data.pg / totalPG) * 100) : 0,
+                    ...difficultyColors[difficulty],
+                }));
+        };
+
+        const subjectDistribution = calculateSubjectDistribution();
+        const difficultyDistribution = calculateDifficultyDistribution();
+
+        return (
+            <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
+                {/* Page Header */}
+                <div className="bg-white border-b border-slate-200 px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                <BarChart3 className="text-orange-500" size={28} />
+                                Statistiques et rapports
+                            </h2>
+                            <p className="text-sm text-slate-600 mt-1">
+                                Analysez les performances et tendances pour optimiser vos ressources
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <select className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-sm">
+                                <option>Cette semaine</option>
+                                <option>Ce mois</option>
+                                <option>Ce trimestre</option>
+                                <option>Cette année</option>
+                            </select>
+                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                                <Download size={16} />
+                                Exporter
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6">
                 {/* KPIs - Indicateurs clés */}
                 <div className="grid grid-cols-4 gap-4">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -2773,27 +2965,55 @@ const LBNApp = () => {
                         <PieChart className="text-indigo-500" size={20} />
                         Répartition par matières
                     </h3>
-                    <div className="grid grid-cols-5 gap-4">
-                        {[
-                            { subject: "Mathématiques", count: 45, percentage: 35, color: "bg-blue-500", textColor: "text-blue-700", bgColor: "bg-blue-50" },
-                            { subject: "Français", count: 32, percentage: 25, color: "bg-purple-500", textColor: "text-purple-700", bgColor: "bg-purple-50" },
-                            { subject: "Sciences", count: 28, percentage: 22, color: "bg-green-500", textColor: "text-green-700", bgColor: "bg-green-50" },
-                            { subject: "Anglais", count: 18, percentage: 14, color: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
-                            { subject: "Autres", count: 5, percentage: 4, color: "bg-slate-500", textColor: "text-slate-700", bgColor: "bg-slate-50" },
-                        ].map((subject, idx) => (
-                            <div key={idx} className={`${subject.bgColor} rounded-lg p-4 border border-slate-200`}>
-                                <div className={`w-12 h-12 ${subject.color} rounded-lg flex items-center justify-center text-white font-bold text-lg mb-3`}>
-                                    {subject.count}
+                    <div className={`grid gap-4 ${subjectDistribution.length <= 5 ? 'grid-cols-5' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`}>
+                        {subjectDistribution.length > 0 ? (
+                            subjectDistribution.map((subject, idx) => (
+                                <div key={idx} className={`${subject.bgColor} rounded-lg p-4 border border-slate-200`}>
+                                    <div className={`w-12 h-12 ${subject.color} rounded-lg flex items-center justify-center text-white font-bold text-lg mb-3`}>
+                                        {subject.pg}
+                                    </div>
+                                    <div className="font-medium text-slate-900 text-sm mb-1">{subject.subject}</div>
+                                    <div className={`text-xs ${subject.textColor} font-semibold`}>{subject.percentage}% du total</div>
+                                    <div className="text-xs text-slate-600 mt-1">{subject.count} cours</div>
                                 </div>
-                                <div className="font-medium text-slate-900 text-sm mb-1">{subject.subject}</div>
-                                <div className={`text-xs ${subject.textColor} font-semibold`}>{subject.percentage}% du total</div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center text-slate-500 py-8">
+                                Aucune donnée disponible
                             </div>
-                        ))}
+                        )}
+                    </div>
+                </div>
+
+                {/* Répartition par difficultés */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="text-purple-500" size={20} />
+                        Répartition par difficultés
+                    </h3>
+                    <div className={`grid gap-4 ${difficultyDistribution.length <= 4 ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4'}`}>
+                        {difficultyDistribution.length > 0 ? (
+                            difficultyDistribution.map((difficulty, idx) => (
+                                <div key={idx} className={`${difficulty.bgColor} rounded-lg p-4 border border-slate-200`}>
+                                    <div className={`w-12 h-12 ${difficulty.color} rounded-lg flex items-center justify-center text-white font-bold text-lg mb-3`}>
+                                        {difficulty.count}
+                                    </div>
+                                    <div className="font-medium text-slate-900 text-sm mb-1">{difficulty.difficulty}</div>
+                                    <div className={`text-xs ${difficulty.textColor} font-semibold`}>{difficulty.percentage}% des élèves</div>
+                                    <div className="text-xs text-slate-600 mt-1">{difficulty.pg} PG totaux ({difficulty.pgPercentage}%)</div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center text-slate-500 py-8">
+                                Aucune donnée disponible
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
+    };
 
     // Settings Page - Manager Profile
     const SettingsPage = () => {
@@ -3140,22 +3360,43 @@ const LBNApp = () => {
         const [newSlotStart, setNewSlotStart] = useState("");
         const [newSlotEnd, setNewSlotEnd] = useState("");
         const [newSlotLabel, setNewSlotLabel] = useState("");
+        const [newSlotDays, setNewSlotDays] = useState<string[]>([]);
+        const [newSlotStartDate, setNewSlotStartDate] = useState("");
+        const [newSlotEndDate, setNewSlotEndDate] = useState("");
         const [newRoomName, setNewRoomName] = useState("");
         const [newRoomCapacity, setNewRoomCapacity] = useState("");
         const [newRoomAccommodations, setNewRoomAccommodations] = useState<string[]>([]);
+        const [blacklistEntries, setBlacklistEntries] = useState<BlacklistEntry[]>([]);
+        const [newBlacklistRoom, setNewBlacklistRoom] = useState("");
+        const [newBlacklistDate, setNewBlacklistDate] = useState("");
+
+        const availableRooms = ["A-101", "A-102", "B-201", "B-202"];
+        const daysOfWeekOptions = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+
+        const toggleDay = (day: string) => {
+            setNewSlotDays(prev =>
+                prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+            );
+        };
 
         const handleAddTimeSlot = () => {
-            if (newSlotStart && newSlotEnd && newSlotLabel) {
+            if (newSlotStart && newSlotEnd && newSlotLabel && newSlotDays.length > 0 && newSlotStartDate && newSlotEndDate) {
                 const newSlot: TimeSlot = {
                     id: Date.now().toString(),
                     startTime: newSlotStart,
                     endTime: newSlotEnd,
                     label: newSlotLabel,
+                    daysOfWeek: newSlotDays,
+                    startDate: newSlotStartDate,
+                    endDate: newSlotEndDate,
                 };
                 setTimeSlots([...timeSlots, newSlot]);
                 setNewSlotStart("");
                 setNewSlotEnd("");
                 setNewSlotLabel("");
+                setNewSlotDays([]);
+                setNewSlotStartDate("");
+                setNewSlotEndDate("");
             }
         };
 
@@ -3163,9 +3404,25 @@ const LBNApp = () => {
             setTimeSlots(timeSlots.filter((slot) => slot.id !== id));
         };
 
+        const handleAddBlacklist = () => {
+            if (newBlacklistRoom && newBlacklistDate) {
+                const newEntry: BlacklistEntry = {
+                    id: Date.now().toString(),
+                    roomName: newBlacklistRoom,
+                    date: newBlacklistDate,
+                };
+                setBlacklistEntries([...blacklistEntries, newEntry]);
+                setNewBlacklistRoom("");
+                setNewBlacklistDate("");
+            }
+        };
+
+        const handleDeleteBlacklist = (id: string) => {
+            setBlacklistEntries(blacklistEntries.filter((entry) => entry.id !== id));
+        };
+
         const accommodationOptions = [
             { id: "windows", label: "Fenêtres", icon: Wind },
-            { id: "wifi", label: "WiFi", icon: Wifi },
             { id: "projector", label: "Projecteur", icon: Monitor },
             { id: "whiteboard", label: "Tableau blanc", icon: Activity },
             { id: "restroom", label: "Proximité toilettes", icon: DoorOpen },
@@ -3258,73 +3515,6 @@ const LBNApp = () => {
                                 </div>
                             </div>
 
-                            {/* Operating Hours */}
-                            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl shadow-lg border border-blue-100 p-6">
-                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-                                    <div className="p-2 bg-blue-500 rounded-lg">
-                                        <Clock size={20} className="text-white" />
-                                    </div>
-                                    Heures d'opération
-                                </h3>
-                                <div className="grid grid-cols-3 gap-4 mb-5">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
-                                            Cours/jour
-                                        </label>
-                                        <input
-                                            type="number"
-                                            defaultValue="4"
-                                            min="1"
-                                            max="10"
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
-                                            Durée (min)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            defaultValue="90"
-                                            step="15"
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
-                                            Pause (min)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            defaultValue="15"
-                                            step="5"
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-center font-bold text-lg"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                        Jours d'opération
-                                    </label>
-                                    <div className="flex gap-2">
-                                        {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map((day) => {
-                                            const isActive = !day.includes("Samedi") && !day.includes("Dimanche");
-                                            return (
-                                                <button
-                                                    key={day}
-                                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isActive
-                                                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg"
-                                                        : "bg-slate-100 text-slate-400 hover:bg-slate-200"
-                                                        }`}
-                                                >
-                                                    {day.substring(0, 3)}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Time Slots Configuration */}
                             <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-2xl shadow-lg border border-purple-100 p-6">
                                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -3375,6 +3565,54 @@ const LBNApp = () => {
                                             />
                                         </div>
                                     </div>
+                                    <div className="mb-3">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Jours de la semaine
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {daysOfWeekOptions.map((day) => {
+                                                const isSelected = newSlotDays.includes(day);
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        type="button"
+                                                        onClick={() => toggleDay(day)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                                            isSelected
+                                                                ? "bg-purple-500 text-white shadow-md"
+                                                                : "bg-white border-2 border-slate-200 text-slate-600 hover:border-purple-300"
+                                                        }`}
+                                                    >
+                                                        {day.substring(0, 3)}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date de début
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={newSlotStartDate}
+                                                onChange={(e) => setNewSlotStartDate(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date de fin
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={newSlotEndDate}
+                                                onChange={(e) => setNewSlotEndDate(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
                                     <button
                                         onClick={handleAddTimeSlot}
                                         className="w-full py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -3391,10 +3629,16 @@ const LBNApp = () => {
                                             key={slot.id}
                                             className="flex items-center justify-between p-3 bg-white/80 backdrop-blur rounded-lg border border-purple-100 hover:shadow-md transition-all group"
                                         >
-                                            <div>
+                                            <div className="flex-1">
                                                 <div className="font-bold text-slate-900">{slot.label}</div>
                                                 <div className="text-xs text-slate-500">
                                                     {slot.startTime} - {slot.endTime}
+                                                </div>
+                                                <div className="text-xs text-slate-400 mt-1">
+                                                    {slot.daysOfWeek.map(d => d.substring(0, 3)).join(", ")}
+                                                </div>
+                                                <div className="text-xs text-slate-400">
+                                                    Du {slot.startDate} au {slot.endDate}
                                                 </div>
                                             </div>
                                             <button
@@ -3531,40 +3775,86 @@ const LBNApp = () => {
                                 </div>
                             </div>
 
-                            {/* Additional Settings */}
-                            <div className="bg-gradient-to-br from-white to-amber-50/30 rounded-2xl shadow-lg border border-amber-100 p-6">
-                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-                                    <div className="p-2 bg-amber-500 rounded-lg">
-                                        <Settings size={20} className="text-white" />
+                            {/* Blacklist */}
+                            <div className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl shadow-lg border border-red-100 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <div className="p-2 bg-red-500 rounded-lg">
+                                        <Ban size={20} className="text-white" />
                                     </div>
-                                    Paramètres additionnels
+                                    Blacklist
                                 </h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                            Capacité par défaut (PG)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            defaultValue="15"
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white shadow-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                            Seuil d'alerte de capacité (%)
-                                        </label>
-                                        <div className="relative">
+                                <p className="text-sm text-slate-600 mb-5">
+                                    Bloquez des dates spécifiques pour des salles spécifiques
+                                </p>
+
+                                {/* Add new blacklist entry form */}
+                                <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-red-100">
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Salle
+                                            </label>
+                                            <select
+                                                value={newBlacklistRoom}
+                                                onChange={(e) => setNewBlacklistRoom(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                                            >
+                                                <option value="">Sélectionner une salle</option>
+                                                {availableRooms.map((room) => (
+                                                    <option key={room} value={room}>
+                                                        {room}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date
+                                            </label>
                                             <input
-                                                type="number"
-                                                defaultValue="85"
-                                                min="0"
-                                                max="100"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white shadow-sm"
+                                                type="date"
+                                                value={newBlacklistDate}
+                                                onChange={(e) => setNewBlacklistDate(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                             />
-                                            <div className="absolute right-4 top-3.5 text-amber-600 font-bold">%</div>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={handleAddBlacklist}
+                                        className="w-full py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={18} />
+                                        Ajouter à la blacklist
+                                    </button>
+                                </div>
+
+                                {/* List of blacklist entries */}
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {blacklistEntries.length === 0 ? (
+                                        <div className="text-center py-8 text-slate-400 text-sm">
+                                            Aucune entrée dans la blacklist
+                                        </div>
+                                    ) : (
+                                        blacklistEntries.map((entry) => (
+                                            <div
+                                                key={entry.id}
+                                                className="flex items-center justify-between p-3 bg-white/80 backdrop-blur rounded-lg border border-red-100 hover:shadow-md transition-all group"
+                                            >
+                                                <div>
+                                                    <div className="font-bold text-slate-900">{entry.roomName}</div>
+                                                    <div className="text-xs text-slate-500">
+                                                        {new Date(entry.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteBlacklist(entry.id)}
+                                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
