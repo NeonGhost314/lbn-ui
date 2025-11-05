@@ -43,6 +43,13 @@ import {
     Ban,
     FileText,
     LogIn,
+    Globe,
+    Home,
+    Phone,
+    MapPin as MapPinIcon,
+    Info,
+    Shield,
+    ExternalLink,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -138,6 +145,7 @@ const LBNApp = () => {
     type Personnel = Tuteur | Eleve;
 
     const [currentPage, setCurrentPage] = useState("landing");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
     const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
     const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
@@ -510,8 +518,11 @@ const LBNApp = () => {
     const Sidebar = () => (
         <div className="fixed left-0 top-0 w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white h-screen overflow-y-auto shadow-2xl border-r border-slate-700/50 z-40">
             {/* Logo Section */}
-            <div className="p-6 border-b border-slate-700/50">
-                <div className="flex items-center gap-3">
+            <button 
+                onClick={() => setCurrentPage("landing")}
+                className="w-full p-6 border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors"
+            >
+                <div className="flex items-center gap-3 cursor-pointer">
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-lg ring-2 ring-orange-400/20">
                         LBN
                     </div>
@@ -520,7 +531,7 @@ const LBNApp = () => {
                         <span className="text-xs text-slate-400">Gestion de cours</span>
                     </div>
                 </div>
-            </div>
+            </button>
 
             {/* Navigation */}
             <nav className="p-4 space-y-1.5">
@@ -650,6 +661,7 @@ const LBNApp = () => {
                 </div>
                 <button
                     onClick={() => {
+                        setIsLoggedIn(false);
                         setCurrentPage("landing");
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-red-500/20 text-slate-300 hover:text-red-400"
@@ -701,7 +713,10 @@ const LBNApp = () => {
                         </div>
 
                         <button 
-                            onClick={() => setCurrentPage("dashboard")}
+                            onClick={() => {
+                                setIsLoggedIn(true);
+                                setCurrentPage("dashboard");
+                            }}
                             className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                         >
                             Se connecter
@@ -729,77 +744,622 @@ const LBNApp = () => {
 
     // Landing Page - Page d'ouverture publique
     const LandingPage = () => {
+        const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "es">("fr");
+        const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+        const [contactFormData, setContactFormData] = useState({
+            name: "",
+            email: "",
+            message: ""
+        });
+        const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+        const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+        const [formMessage, setFormMessage] = useState("");
+
+        // Determine if user is authenticated (UI state only)
+        const isAuthenticated = isLoggedIn;
+
+        // Language options
+        const languages = [
+            { code: "fr", name: "Français", flag: "🇫🇷" },
+            { code: "en", name: "English", flag: "🇬🇧" },
+            { code: "es", name: "Español", flag: "🇪🇸" }
+        ];
+
+        const selectedLang = languages.find(l => l.code === selectedLanguage) || languages[0];
+
+        // Contact form validation
+        const validateForm = () => {
+            const errors: Record<string, string> = {};
+            
+            if (!contactFormData.name.trim()) {
+                errors.name = "Le nom est requis";
+            }
+            
+            if (!contactFormData.email.trim()) {
+                errors.email = "L'adresse courriel est requise";
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactFormData.email)) {
+                errors.email = "Adresse courriel invalide";
+            }
+            
+            if (!contactFormData.message.trim()) {
+                errors.message = "Le message est requis";
+            }
+            
+            setFormErrors(errors);
+            return Object.keys(errors).length === 0;
+        };
+
+        // Handle form submission (UI simulation only)
+        const handleSubmit = (e: React.FormEvent) => {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+
+            setFormStatus("submitting");
+            setFormMessage("");
+
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Simulate success (90% chance) or error (10% chance)
+                const isSuccess = Math.random() > 0.1;
+                
+                if (isSuccess) {
+                    setFormStatus("success");
+                    setFormMessage("Votre message a été envoyé avec succès! Nous vous répondrons dans les plus brefs délais.");
+                    setContactFormData({ name: "", email: "", message: "" });
+                    setFormErrors({});
+                    
+                    // Reset to idle after 5 seconds
+                    setTimeout(() => {
+                        setFormStatus("idle");
+                        setFormMessage("");
+                    }, 5000);
+                } else {
+                    setFormStatus("error");
+                    setFormMessage("Une erreur s'est produite lors de l'envoi. Veuillez réessayer plus tard.");
+                    
+                    // Reset to idle after 5 seconds
+                    setTimeout(() => {
+                        setFormStatus("idle");
+                        setFormMessage("");
+                    }, 5000);
+                }
+            }, 1500);
+        };
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-                {/* Hero Section */}
-                <div className="container mx-auto px-4 py-20">
-                    <div className="text-center mb-16">
-                        <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-pink-500 rounded-3xl flex items-center justify-center font-bold text-5xl text-white mx-auto mb-6 shadow-2xl">
-                            LBN
-                        </div>
-                        <h1 className="text-6xl font-bold text-white mb-4">
-                            La Bonne Note
-                        </h1>
-                        <p className="text-2xl text-slate-300 mb-8">
-                            Système de gestion de cours intelligent
-                        </p>
-                        <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12">
-                            Gérez efficacement votre personnel, vos cours et vos salles avec une interface moderne et intuitive.
-                        </p>
-                        <button
-                            onClick={() => setCurrentPage("login")}
-                            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
-                        >
-                            <LogIn size={24} />
-                            Se connecter
-                        </button>
-                    </div>
-
-                    {/* Features Section */}
-                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-20">
-                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                <Users size={28} className="text-white" />
+                {/* Fixed Header */}
+                <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-b border-slate-700/50">
+                    <div className="container mx-auto px-4 py-4">
+                        <div className="flex items-center justify-between">
+                            {/* Logo and Platform Name */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-lg">
+                                    LBN
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-lg font-bold text-white">La Bonne Note</span>
+                                    <span className="text-xs text-slate-400 hidden sm:block">Plateforme de gestion</span>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Gestion du Personnel</h3>
-                            <p className="text-slate-300">
-                                Gérez facilement vos tuteurs et élèves avec des profils détaillés et une vue d'ensemble complète.
-                            </p>
-                        </div>
 
-                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                <Calendar size={28} className="text-white" />
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Planification des Cours</h3>
-                            <p className="text-slate-300">
-                                Organisez vos cours avec un calendrier interactif et une gestion intelligente des salles.
-                            </p>
-                        </div>
+                            {/* Language Selector and Auth Button */}
+                            <div className="flex items-center gap-4">
+                                {/* Language Selector */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white transition-all"
+                                    >
+                                        <Globe size={18} />
+                                        <span className="hidden sm:inline">{selectedLang.flag} {selectedLang.name}</span>
+                                        <span className="sm:hidden">{selectedLang.flag}</span>
+                                        <ChevronDown size={16} className={showLanguageDropdown ? "transform rotate-180" : ""} />
+                                    </button>
+                                    
+                                    {showLanguageDropdown && (
+                                        <>
+                                            <div 
+                                                className="fixed inset-0 z-40" 
+                                                onClick={() => setShowLanguageDropdown(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                                                {languages.map((lang) => (
+                                                    <button
+                                                        key={lang.code}
+                                                        onClick={() => {
+                                                            setSelectedLanguage(lang.code as "fr" | "en" | "es");
+                                                            setShowLanguageDropdown(false);
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
+                                                            selectedLanguage === lang.code 
+                                                                ? "bg-slate-700 border-l-2 border-orange-500" 
+                                                                : "text-slate-200"
+                                                        }`}
+                                                    >
+                                                        <span className="text-xl">{lang.flag}</span>
+                                                        <span className="flex-1">{lang.name}</span>
+                                                        {selectedLanguage === lang.code && (
+                                                            <CheckCircle size={16} className="text-orange-500" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
 
-                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                <BarChart3 size={28} className="text-white" />
+                                {/* Conditional Auth Button */}
+                                {isAuthenticated ? (
+                                    <button
+                                        onClick={() => setCurrentPage("dashboard")}
+                                        className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2"
+                                    >
+                                        <Home size={18} />
+                                        <span className="hidden sm:inline">Accéder à la plateforme</span>
+                                        <span className="sm:hidden">Plateforme</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setCurrentPage("login")}
+                                        className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2"
+                                    >
+                                        <LogIn size={18} />
+                                        <span className="hidden sm:inline">Se connecter</span>
+                                        <span className="sm:hidden">Connexion</span>
+                                    </button>
+                                )}
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Statistiques Avancées</h3>
-                            <p className="text-slate-300">
-                                Suivez vos performances avec des tableaux de bord détaillés et des analyses en temps réel.
-                            </p>
                         </div>
                     </div>
+                </header>
 
-                    {/* CTA Section */}
-                    <div className="text-center mt-20">
-                        <p className="text-slate-400 mb-6">
-                            Prêt à optimiser votre gestion de cours ?
-                        </p>
-                        <button
-                            onClick={() => setCurrentPage("login")}
-                            className="px-8 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-all"
-                        >
-                            Commencer maintenant
-                        </button>
-                    </div>
+                {/* Main Content - All sections in one page */}
+                <div className="pt-20">
+                    {/* Hero Section */}
+                    <section className="container mx-auto px-4 py-20">
+                        <div className="text-center mb-16">
+                            <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-pink-500 rounded-3xl flex items-center justify-center font-bold text-5xl text-white mx-auto mb-6 shadow-2xl animate-pulse">
+                                LBN
+                            </div>
+                            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
+                                La Bonne Note
+                            </h1>
+                            <p className="text-xl md:text-2xl text-slate-300 mb-8">
+                                Système de gestion de cours intelligent
+                            </p>
+                            <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto mb-12">
+                                Gérez efficacement votre personnel, vos cours et vos salles avec une interface moderne et intuitive. 
+                                Une plateforme tout-en-un pour optimiser votre gestion éducative.
+                            </p>
+                            <button
+                                onClick={() => {
+                                    if (isAuthenticated) {
+                                        setCurrentPage("dashboard");
+                                    } else {
+                                        setCurrentPage("login");
+                                    }
+                                }}
+                                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                            >
+                                <ChevronRight size={24} />
+                                Accéder à la plateforme
+                            </button>
+                        </div>
+                    </section>
+
+                    {/* Company Information Section */}
+                    <section className="container mx-auto px-4 py-16">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+                                    <Info size={32} className="text-orange-500" />
+                                    À propos de La Bonne Note
+                                </h2>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-white/20">
+                                <p className="text-lg text-slate-300 mb-6 leading-relaxed">
+                                    La Bonne Note est une plateforme innovante conçue pour révolutionner la gestion des établissements éducatifs. 
+                                    Notre système offre une solution complète pour la planification, l'organisation et le suivi des cours, 
+                                    permettant aux administrateurs de gagner du temps et d'améliorer l'efficacité opérationnelle.
+                                </p>
+                                <p className="text-lg text-slate-300 leading-relaxed">
+                                    Grâce à une interface intuitive et des outils puissants, transformez votre façon de gérer les ressources 
+                                    pédagogiques, le personnel et les étudiants. La Bonne Note simplifie les tâches complexes et vous permet 
+                                    de vous concentrer sur ce qui compte vraiment : l'éducation.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Benefits Section */}
+                    <section className="container mx-auto px-4 py-16">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Pourquoi La Bonne Note ?</h2>
+                                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+                                    Des avantages concrets pour transformer votre gestion éducative
+                                </p>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <Clock size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Gain de Temps Énorme</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Réduisez jusqu'à 70% du temps passé sur les tâches administratives. Automatisez la planification, 
+                                                l'allocation des ressources et la génération de rapports pour vous concentrer sur l'essentiel.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <TrendingUp size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Efficacité Maximale</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Optimisez l'utilisation de vos ressources avec des algorithmes intelligents qui éliminent 
+                                                les conflits d'horaire et maximisent l'occupation des salles automatiquement.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <Target size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Prise de Décision Éclairée</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Accédez à des analyses en temps réel et des rapports détaillés qui vous donnent une vision 
+                                                complète de vos opérations pour prendre des décisions stratégiques fondées sur les données.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <Activity size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Interface Intuitive</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Une plateforme moderne et facile à utiliser qui nécessite peu ou pas de formation. 
+                                                Vos équipes seront opérationnelles en quelques minutes grâce à une interface pensée pour l'utilisateur.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <Wifi size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Synchronisation en Temps Réel</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Tous les changements sont synchronisés instantanément sur tous les appareils. Plus de problèmes 
+                                                de versions ou de données obsolètes. Votre équipe travaille toujours avec les informations les plus récentes.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                                            <Shield size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-2">Sécurité et Fiabilité</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Vos données sont protégées avec les meilleures pratiques de sécurité. Sauvegardes automatiques 
+                                                et infrastructure robuste garantissent une disponibilité maximale de votre système.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Enhanced Platform Features Section */}
+                    <section className="container mx-auto px-4 py-16">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Fonctionnalités Principales</h2>
+                                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+                                    Découvrez les capacités puissantes de notre plateforme
+                                </p>
+                            </div>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <Users size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Gestion du Personnel</h3>
+                                    <p className="text-slate-300">
+                                        Gérez facilement vos tuteurs et élèves avec des profils détaillés, suivi des disponibilités, 
+                                        et une vue d'ensemble complète de votre équipe pédagogique.
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <Calendar size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Planification des Cours</h3>
+                                    <p className="text-slate-300">
+                                        Organisez vos cours avec un calendrier interactif, gestion intelligente des salles, 
+                                        et détection automatique des conflits d'horaire.
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <BarChart3 size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Statistiques Avancées</h3>
+                                    <p className="text-slate-300">
+                                        Suivez vos performances avec des tableaux de bord détaillés, analyses en temps réel, 
+                                        et rapports personnalisables pour une prise de décision éclairée.
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <MapPin size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Gestion des Salles</h3>
+                                    <p className="text-slate-300">
+                                        Optimisez l'utilisation de vos espaces avec un système intelligent d'allocation des salles, 
+                                        suivi de disponibilité et gestion des équipements.
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <Clock size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Gestion des Horaires</h3>
+                                    <p className="text-slate-300">
+                                        Créez et modifiez facilement les horaires avec une interface intuitive, 
+                                        notifications automatiques et synchronisation en temps réel.
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                                        <TrendingUp size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Optimisation Continue</h3>
+                                    <p className="text-slate-300">
+                                        Améliorez constamment vos opérations grâce à des analyses prédictives, 
+                                        suggestions d'optimisation et suivi des tendances.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Contact Form Section */}
+                    <section className="container mx-auto px-4 py-16">
+                        <div className="max-w-2xl mx-auto">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+                                    <MessageSquare size={32} className="text-orange-500" />
+                                    Contactez-nous
+                                </h2>
+                                <p className="text-lg text-slate-400">
+                                    Une question? Une suggestion? N'hésitez pas à nous écrire!
+                                </p>
+                            </div>
+                            <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-white/20">
+                                <div className="space-y-6">
+                                    {/* Name Field */}
+                                    <div>
+                                        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
+                                            Nom <span className="text-orange-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            value={contactFormData.name}
+                                            onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
+                                                formErrors.name ? "border-red-500" : "border-white/20"
+                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                                            placeholder="Votre nom"
+                                        />
+                                        {formErrors.name && (
+                                            <p className="mt-1 text-sm text-red-400">{formErrors.name}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Email Field */}
+                                    <div>
+                                        <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                                            Adresse courriel <span className="text-orange-500">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            value={contactFormData.email}
+                                            onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
+                                                formErrors.email ? "border-red-500" : "border-white/20"
+                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                                            placeholder="votre@courriel.com"
+                                        />
+                                        {formErrors.email && (
+                                            <p className="mt-1 text-sm text-red-400">{formErrors.email}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Message Field */}
+                                    <div>
+                                        <label htmlFor="message" className="block text-sm font-medium text-slate-300 mb-2">
+                                            Message <span className="text-orange-500">*</span>
+                                        </label>
+                                        <textarea
+                                            id="message"
+                                            value={contactFormData.message}
+                                            onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
+                                            rows={6}
+                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
+                                                formErrors.message ? "border-red-500" : "border-white/20"
+                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none`}
+                                            placeholder="Votre message..."
+                                        />
+                                        {formErrors.message && (
+                                            <p className="mt-1 text-sm text-red-400">{formErrors.message}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Status Messages */}
+                                    {formStatus === "success" && formMessage && (
+                                        <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg flex items-start gap-3">
+                                            <CheckCircle size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
+                                            <p className="text-green-300 text-sm">{formMessage}</p>
+                                        </div>
+                                    )}
+
+                                    {formStatus === "error" && formMessage && (
+                                        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">
+                                            <AlertCircle size={20} className="text-red-400 mt-0.5 flex-shrink-0" />
+                                            <p className="text-red-300 text-sm">{formMessage}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Submit Button */}
+                                    <button
+                                        type="submit"
+                                        disabled={formStatus === "submitting"}
+                                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                                    >
+                                        {formStatus === "submitting" ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                <span>Envoi en cours...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send size={20} />
+                                                <span>Envoyer le message</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/50 mt-20">
+                        <div className="container mx-auto px-4 py-12">
+                            <div className="grid md:grid-cols-3 gap-8 mb-8">
+                                {/* Company Info */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-pink-500 rounded-lg flex items-center justify-center font-bold text-white text-sm">
+                                            LBN
+                                        </div>
+                                        La Bonne Note
+                                    </h3>
+                                    <p className="text-slate-400 text-sm mb-4">
+                                        Plateforme de gestion éducative intelligente pour optimiser votre établissement.
+                                    </p>
+                                    <div className="space-y-2 text-sm text-slate-400">
+                                        <div className="flex items-center gap-2">
+                                            <MapPinIcon size={16} className="text-orange-500" />
+                                            <span>123 Rue de l'Éducation, Montréal, QC, Canada</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Phone size={16} className="text-orange-500" />
+                                            <span>+1 (514) 123-4567</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Mail size={16} className="text-orange-500" />
+                                            <span>contact@labonnenote.com</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Legal Links */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-4">Mentions Légales</h3>
+                                    <ul className="space-y-2">
+                                        <li>
+                                            <button 
+                                                onClick={() => {/* Placeholder for privacy policy */}}
+                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                            >
+                                                <Shield size={14} />
+                                                Politique de confidentialité
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                onClick={() => {/* Placeholder for terms */}}
+                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                            >
+                                                <FileText size={14} />
+                                                Conditions d'utilisation
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                onClick={() => {/* Placeholder for legal mentions */}}
+                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                            >
+                                                <Info size={14} />
+                                                Mentions légales
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Contact Info */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
+                                    <p className="text-slate-400 text-sm mb-4">
+                                        Besoin d'aide? Notre équipe est là pour vous.
+                                    </p>
+                                    <button 
+                                        onClick={() => {
+                                            document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 rounded-lg text-sm transition-colors flex items-center gap-2"
+                                    >
+                                        <MessageSquare size={16} />
+                                        Formulaire de contact
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Copyright */}
+                            <div className="border-t border-slate-700/50 pt-8 text-center">
+                                <p className="text-slate-400 text-sm">
+                                    © {new Date().getFullYear()} La Bonne Note. Tous droits réservés.
+                                </p>
+                            </div>
+                        </div>
+                    </footer>
                 </div>
             </div>
         );
