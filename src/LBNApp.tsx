@@ -830,7 +830,7 @@ const LBNApp = () => {
         };
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
                 {/* Fixed Header */}
                 <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-b border-slate-700/50">
                     <div className="container mx-auto px-4 py-4">
@@ -919,159 +919,123 @@ const LBNApp = () => {
 
                 {/* Main Content - All sections in one page */}
                 <div className="pt-20">
-                    {/* Hero Section */}
-                    <section className="container mx-auto px-4 py-20">
-                        <div className="text-center mb-16">
-                            <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-pink-500 rounded-3xl flex items-center justify-center font-bold text-5xl text-white mx-auto mb-6 shadow-2xl animate-pulse">
-                                LBN
+                    {/* Hero Section - Enhanced with parallax and animations */}
+                    <section className="relative container mx-auto px-4 py-32">
+                        <div className="relative z-10">
+                            <div className="text-center mb-16">
+                                {/* Animated Logo */}
+                                <div className="relative inline-block mb-8">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-pink-500 rounded-3xl blur-2xl opacity-50 animate-pulse" />
+                                    <div className="relative w-28 h-28 bg-gradient-to-br from-orange-500 via-orange-600 to-pink-500 rounded-3xl flex items-center justify-center font-bold text-5xl text-white shadow-2xl transform transition-transform hover:scale-110 hover:rotate-3">
+                                        LBN
+                                    </div>
+                                </div>
+
+                                {/* Main Heading with Gradient */}
+                                <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 bg-gradient-to-r from-white via-slate-100 to-white bg-clip-text text-transparent animate-fade-in">
+                                    La Bonne Note
+                                </h1>
+                                
+                                {/* Subtitle with typing effect feel */}
+                                <div className="mb-8">
+                                    <p className="text-2xl md:text-3xl font-semibold text-transparent bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text mb-4">
+                                        Système de gestion de cours intelligent
+                                    </p>
+                                    <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-pink-500 mx-auto rounded-full" />
+                                </div>
+
+                                {/* Description */}
+                                <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed">
+                                    Transformez votre gestion éducative avec une plateforme tout-en-un. 
+                                    Gérez efficacement votre personnel, vos cours et vos salles avec une interface 
+                                    <span className="text-transparent bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text font-semibold"> moderne et intuitive</span>.
+                                </p>
+
+                                {/* CTA Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+                                    <button
+                                        onClick={() => {
+                                            if (isAuthenticated) {
+                                                setCurrentPage("dashboard");
+                                            } else {
+                                                setCurrentPage("login");
+                                            }
+                                        }}
+                                        className="group relative px-10 py-5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+                                    >
+                                        <span>Accéder à la plateforme</span>
+                                        <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                                        <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => {
+                                            document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="px-10 py-5 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-2xl font-semibold text-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+                                    >
+                                        <Info size={20} />
+                                        <span>En savoir plus</span>
+                                    </button>
+                                </div>
                             </div>
-                            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-                                La Bonne Note
-                            </h1>
-                            <p className="text-xl md:text-2xl text-slate-300 mb-8">
-                                Système de gestion de cours intelligent
-                            </p>
-                            <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto mb-12">
-                                Gérez efficacement votre personnel, vos cours et vos salles avec une interface moderne et intuitive. 
-                                Une plateforme tout-en-un pour optimiser votre gestion éducative.
-                            </p>
-                            <button
-                                onClick={() => {
-                                    if (isAuthenticated) {
-                                        setCurrentPage("dashboard");
-                                    } else {
-                                        setCurrentPage("login");
-                                    }
-                                }}
-                                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
-                            >
-                                <ChevronRight size={24} />
-                                Accéder à la plateforme
-                            </button>
+                        </div>
+
+                        {/* Scroll Indicator */}
+                        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                            <ChevronDown size={32} className="text-slate-400" />
                         </div>
                     </section>
 
                     {/* Company Information Section */}
-                    <section className="container mx-auto px-4 py-16">
-                        <div className="max-w-4xl mx-auto">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-                                    <Info size={32} className="text-orange-500" />
-                                    À propos de La Bonne Note
-                                </h2>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-white/20">
-                                <p className="text-lg text-slate-300 mb-6 leading-relaxed">
-                                    La Bonne Note est une plateforme innovante conçue pour révolutionner la gestion des établissements éducatifs. 
-                                    Notre système offre une solution complète pour la planification, l'organisation et le suivi des cours, 
-                                    permettant aux administrateurs de gagner du temps et d'améliorer l'efficacité opérationnelle.
-                                </p>
-                                <p className="text-lg text-slate-300 leading-relaxed">
-                                    Grâce à une interface intuitive et des outils puissants, transformez votre façon de gérer les ressources 
-                                    pédagogiques, le personnel et les étudiants. La Bonne Note simplifie les tâches complexes et vous permet 
-                                    de vous concentrer sur ce qui compte vraiment : l'éducation.
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Benefits Section */}
-                    <section className="container mx-auto px-4 py-16">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Pourquoi La Bonne Note ?</h2>
-                                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                                    Des avantages concrets pour transformer votre gestion éducative
-                                </p>
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <Clock size={24} className="text-white" />
+                    <section className="container mx-auto px-4 py-24">
+                        <div className="max-w-5xl mx-auto">
+                            <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-12 md:p-16 border border-slate-700/50 overflow-hidden">
+                                {/* Decorative Elements */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl" />
+                                <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/5 rounded-full blur-3xl" />
+                                
+                                <div className="relative z-10">
+                                    <div className="text-center mb-12">
+                                        <div className="inline-flex items-center gap-3 mb-6">
+                                            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
+                                                <Info size={32} className="text-white" />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Gain de Temps Énorme</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Réduisez jusqu'à 70% du temps passé sur les tâches administratives. Automatisez la planification, 
-                                                l'allocation des ressources et la génération de rapports pour vous concentrer sur l'essentiel.
-                                            </p>
-                                        </div>
+                                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                                            À propos de La Bonne Note
+                                        </h2>
+                                        <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-pink-500 mx-auto rounded-full mb-8" />
                                     </div>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <TrendingUp size={24} className="text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Efficacité Maximale</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Optimisez l'utilisation de vos ressources avec des algorithmes intelligents qui éliminent 
-                                                les conflits d'horaire et maximisent l'occupation des salles automatiquement.
-                                            </p>
-                                        </div>
+                                    
+                                    <div className="space-y-6">
+                                        <p className="text-lg text-slate-300 leading-relaxed text-center max-w-3xl mx-auto">
+                                            La Bonne Note est une <span className="text-transparent bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text font-semibold">plateforme innovante</span> conçue pour révolutionner la gestion des établissements éducatifs. 
+                                            Notre système offre une solution complète pour la planification, l'organisation et le suivi des cours, 
+                                            permettant aux administrateurs de gagner du temps et d'améliorer l'efficacité opérationnelle.
+                                        </p>
+                                        <p className="text-lg text-slate-300 leading-relaxed text-center max-w-3xl mx-auto">
+                                            Grâce à une interface intuitive et des outils puissants, transformez votre façon de gérer les ressources 
+                                            pédagogiques, le personnel et les étudiants. La Bonne Note simplifie les tâches complexes et vous permet 
+                                            de vous concentrer sur ce qui compte vraiment : <span className="text-transparent bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text font-semibold">l'éducation</span>.
+                                        </p>
                                     </div>
-                                </div>
 
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <Target size={24} className="text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Prise de Décision Éclairée</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Accédez à des analyses en temps réel et des rapports détaillés qui vous donnent une vision 
-                                                complète de vos opérations pour prendre des décisions stratégiques fondées sur les données.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <Activity size={24} className="text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Interface Intuitive</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Une plateforme moderne et facile à utiliser qui nécessite peu ou pas de formation. 
-                                                Vos équipes seront opérationnelles en quelques minutes grâce à une interface pensée pour l'utilisateur.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <Wifi size={24} className="text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Synchronisation en Temps Réel</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Tous les changements sont synchronisés instantanément sur tous les appareils. Plus de problèmes 
-                                                de versions ou de données obsolètes. Votre équipe travaille toujours avec les informations les plus récentes.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 hover:border-orange-500/50 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                                            <Shield size={24} className="text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-2">Sécurité et Fiabilité</h3>
-                                            <p className="text-slate-300 leading-relaxed">
-                                                Vos données sont protégées avec les meilleures pratiques de sécurité. Sauvegardes automatiques 
-                                                et infrastructure robuste garantissent une disponibilité maximale de votre système.
-                                            </p>
-                                        </div>
+                                    {/* CTA Button */}
+                                    <div className="flex justify-center mt-12">
+                                        <button
+                                            onClick={() => {
+                                                if (isAuthenticated) {
+                                                    setCurrentPage("dashboard");
+                                                } else {
+                                                    setCurrentPage("login");
+                                                }
+                                            }}
+                                            className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                                        >
+                                            <span>Découvrir la plateforme</span>
+                                            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1079,253 +1043,406 @@ const LBNApp = () => {
                     </section>
 
                     {/* Enhanced Platform Features Section */}
-                    <section className="container mx-auto px-4 py-16">
+                    <section id="features" className="container mx-auto px-4 py-24">
                         <div className="max-w-6xl mx-auto">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Fonctionnalités Principales</h2>
+                            <div className="text-center mb-16">
+                                <div className="inline-block px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full mb-4">
+                                    <span className="text-orange-400 font-semibold text-sm">Fonctionnalités</span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                                    Tout ce dont vous avez besoin
+                                </h2>
                                 <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                                    Découvrez les capacités puissantes de notre plateforme
+                                    Une suite complète d'outils puissants pour transformer votre gestion éducative
                                 </p>
                             </div>
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <Users size={28} className="text-white" />
+                            
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {/* Feature Card 1 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <Users size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Gestion du Personnel
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Gérez facilement vos tuteurs et élèves avec des profils détaillés, suivi des disponibilités, 
+                                            et une vue d'ensemble complète de votre équipe pédagogique.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Gestion du Personnel</h3>
-                                    <p className="text-slate-300">
-                                        Gérez facilement vos tuteurs et élèves avec des profils détaillés, suivi des disponibilités, 
-                                        et une vue d'ensemble complète de votre équipe pédagogique.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <Calendar size={28} className="text-white" />
+                                {/* Feature Card 2 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <Calendar size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Planification des Cours
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Organisez vos cours avec un calendrier interactif, gestion intelligente des salles, 
+                                            et détection automatique des conflits d'horaire.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Planification des Cours</h3>
-                                    <p className="text-slate-300">
-                                        Organisez vos cours avec un calendrier interactif, gestion intelligente des salles, 
-                                        et détection automatique des conflits d'horaire.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <BarChart3 size={28} className="text-white" />
+                                {/* Feature Card 3 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <BarChart3 size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Statistiques Avancées
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Suivez vos performances avec des tableaux de bord détaillés, analyses en temps réel, 
+                                            et rapports personnalisables pour une prise de décision éclairée.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Statistiques Avancées</h3>
-                                    <p className="text-slate-300">
-                                        Suivez vos performances avec des tableaux de bord détaillés, analyses en temps réel, 
-                                        et rapports personnalisables pour une prise de décision éclairée.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <MapPin size={28} className="text-white" />
+                                {/* Feature Card 4 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <MapPin size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Gestion des Salles
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Optimisez l'utilisation de vos espaces avec un système intelligent d'allocation des salles, 
+                                            suivi de disponibilité et gestion des équipements.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Gestion des Salles</h3>
-                                    <p className="text-slate-300">
-                                        Optimisez l'utilisation de vos espaces avec un système intelligent d'allocation des salles, 
-                                        suivi de disponibilité et gestion des équipements.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <Clock size={28} className="text-white" />
+                                {/* Feature Card 5 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <Clock size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Gestion des Horaires
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Créez et modifiez facilement les horaires avec une interface intuitive, 
+                                            notifications automatiques et synchronisation en temps réel.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Gestion des Horaires</h3>
-                                    <p className="text-slate-300">
-                                        Créez et modifiez facilement les horaires avec une interface intuitive, 
-                                        notifications automatiques et synchronisation en temps réel.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all hover:scale-105">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
-                                        <TrendingUp size={28} className="text-white" />
+                                {/* Feature Card 6 */}
+                                <div className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-pink-500/0 group-hover:from-orange-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                                    <div className="relative z-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-orange-500/50">
+                                            <TrendingUp size={32} className="text-white" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-orange-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
+                                            Optimisation Continue
+                                        </h3>
+                                        <p className="text-slate-300 leading-relaxed">
+                                            Améliorez constamment vos opérations grâce à des analyses prédictives, 
+                                            suggestions d'optimisation et suivi des tendances.
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Optimisation Continue</h3>
-                                    <p className="text-slate-300">
-                                        Améliorez constamment vos opérations grâce à des analyses prédictives, 
-                                        suggestions d'optimisation et suivi des tendances.
-                                    </p>
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
                     {/* Contact Form Section */}
-                    <section className="container mx-auto px-4 py-16">
-                        <div className="max-w-2xl mx-auto">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-                                    <MessageSquare size={32} className="text-orange-500" />
-                                    Contactez-nous
+                    <section className="container mx-auto px-4 py-24">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="text-center mb-16">
+                                <div className="inline-block px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full mb-4">
+                                    <span className="text-orange-400 font-semibold text-sm">Contact</span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                                    Parlons de votre projet
                                 </h2>
-                                <p className="text-lg text-slate-400">
-                                    Une question? Une suggestion? N'hésitez pas à nous écrire!
+                                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+                                    Une question? Une suggestion? Notre équipe est là pour vous accompagner.
                                 </p>
                             </div>
-                            <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-white/20">
+
+                            <div className="grid md:grid-cols-2 gap-8">
+                                {/* Contact Info Cards */}
                                 <div className="space-y-6">
-                                    {/* Name Field */}
-                                    <div>
-                                        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
-                                            Nom <span className="text-orange-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            value={contactFormData.name}
-                                            onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
-                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
-                                                formErrors.name ? "border-red-500" : "border-white/20"
-                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500`}
-                                            placeholder="Votre nom"
-                                        />
-                                        {formErrors.name && (
-                                            <p className="mt-1 text-sm text-red-400">{formErrors.name}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Email Field */}
-                                    <div>
-                                        <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                                            Adresse courriel <span className="text-orange-500">*</span>
-                                        </label>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            value={contactFormData.email}
-                                            onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
-                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
-                                                formErrors.email ? "border-red-500" : "border-white/20"
-                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500`}
-                                            placeholder="votre@courriel.com"
-                                        />
-                                        {formErrors.email && (
-                                            <p className="mt-1 text-sm text-red-400">{formErrors.email}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Message Field */}
-                                    <div>
-                                        <label htmlFor="message" className="block text-sm font-medium text-slate-300 mb-2">
-                                            Message <span className="text-orange-500">*</span>
-                                        </label>
-                                        <textarea
-                                            id="message"
-                                            value={contactFormData.message}
-                                            onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
-                                            rows={6}
-                                            className={`w-full px-4 py-3 rounded-lg bg-white/10 border ${
-                                                formErrors.message ? "border-red-500" : "border-white/20"
-                                            } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none`}
-                                            placeholder="Votre message..."
-                                        />
-                                        {formErrors.message && (
-                                            <p className="mt-1 text-sm text-red-400">{formErrors.message}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Status Messages */}
-                                    {formStatus === "success" && formMessage && (
-                                        <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg flex items-start gap-3">
-                                            <CheckCircle size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
-                                            <p className="text-green-300 text-sm">{formMessage}</p>
+                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Mail size={24} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white mb-1">Email</h3>
+                                                <p className="text-slate-400 text-sm mb-2">Notre équipe vous répond sous 24h</p>
+                                                <a href="mailto:contact@labonnenote.com" className="text-orange-400 hover:text-orange-300 transition-colors">
+                                                    contact@labonnenote.com
+                                                </a>
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {formStatus === "error" && formMessage && (
-                                        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">
-                                            <AlertCircle size={20} className="text-red-400 mt-0.5 flex-shrink-0" />
-                                            <p className="text-red-300 text-sm">{formMessage}</p>
+                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Phone size={24} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white mb-1">Téléphone</h3>
+                                                <p className="text-slate-400 text-sm mb-2">Disponible du lundi au vendredi</p>
+                                                <a href="tel:+15141234567" className="text-orange-400 hover:text-orange-300 transition-colors">
+                                                    +1 (514) 123-4567
+                                                </a>
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {/* Submit Button */}
-                                    <button
-                                        type="submit"
-                                        disabled={formStatus === "submitting"}
-                                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-                                    >
-                                        {formStatus === "submitting" ? (
-                                            <>
-                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                <span>Envoi en cours...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Send size={20} />
-                                                <span>Envoyer le message</span>
-                                            </>
-                                        )}
-                                    </button>
+                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <MapPinIcon size={24} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white mb-1">Adresse</h3>
+                                                <p className="text-slate-400 text-sm">
+                                                    123 Rue de l'Éducation<br />
+                                                    Montréal, QC, Canada
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </form>
+
+                                {/* Contact Form */}
+                                <form onSubmit={handleSubmit} className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50">
+                                    <div className="space-y-6">
+                                        <h3 className="text-xl font-bold text-white mb-6">Envoyez-nous un message</h3>
+                                        
+                                        {/* Name Field */}
+                                        <div>
+                                            <label htmlFor="name" className="block text-sm font-semibold text-slate-300 mb-2">
+                                                Nom complet <span className="text-orange-400">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                value={contactFormData.name}
+                                                onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                    formErrors.name ? "border-red-500" : "border-slate-700 focus:border-orange-500"
+                                                } text-white placeholder-slate-500 focus:outline-none transition-all`}
+                                                placeholder="Jean Dupont"
+                                            />
+                                            {formErrors.name && (
+                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {formErrors.name}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Email Field */}
+                                        <div>
+                                            <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
+                                                Adresse courriel <span className="text-orange-400">*</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                value={contactFormData.email}
+                                                onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                    formErrors.email ? "border-red-500" : "border-slate-700 focus:border-orange-500"
+                                                } text-white placeholder-slate-500 focus:outline-none transition-all`}
+                                                placeholder="jean.dupont@exemple.com"
+                                            />
+                                            {formErrors.email && (
+                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {formErrors.email}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Message Field */}
+                                        <div>
+                                            <label htmlFor="message" className="block text-sm font-semibold text-slate-300 mb-2">
+                                                Votre message <span className="text-orange-400">*</span>
+                                            </label>
+                                            <textarea
+                                                id="message"
+                                                value={contactFormData.message}
+                                                onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
+                                                rows={5}
+                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                    formErrors.message ? "border-red-500" : "border-slate-700 focus:border-orange-500"
+                                                } text-white placeholder-slate-500 focus:outline-none transition-all resize-none`}
+                                                placeholder="Parlez-nous de votre projet..."
+                                            />
+                                            {formErrors.message && (
+                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                    <AlertCircle size={14} />
+                                                    {formErrors.message}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Status Messages */}
+                                        {formStatus === "success" && formMessage && (
+                                            <div className="p-4 bg-green-500/10 border-2 border-green-500/30 rounded-xl flex items-start gap-3">
+                                                <CheckCircle size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
+                                                <p className="text-green-300 text-sm">{formMessage}</p>
+                                            </div>
+                                        )}
+
+                                        {formStatus === "error" && formMessage && (
+                                            <div className="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-xl flex items-start gap-3">
+                                                <AlertCircle size={20} className="text-red-400 mt-0.5 flex-shrink-0" />
+                                                <p className="text-red-300 text-sm">{formMessage}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Submit Button */}
+                                        <button
+                                            type="submit"
+                                            disabled={formStatus === "submitting"}
+                                            className="group w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-xl flex items-center justify-center gap-2"
+                                        >
+                                            {formStatus === "submitting" ? (
+                                                <>
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Envoi en cours...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send size={20} className="group-hover:translate-x-1 transition-transform" />
+                                                    <span>Envoyer le message</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </section>
 
                     {/* Footer */}
-                    <footer className="bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/50 mt-20">
-                        <div className="container mx-auto px-4 py-12">
-                            <div className="grid md:grid-cols-3 gap-8 mb-8">
+                    <footer className="relative bg-gradient-to-b from-slate-900 to-black border-t border-slate-800">
+                        <div className="container mx-auto px-4 py-8">
+                            <div className="grid md:grid-cols-4 gap-8 mb-6">
                                 {/* Company Info */}
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-pink-500 rounded-lg flex items-center justify-center font-bold text-white text-sm">
+                                <div className="md:col-span-2">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">
                                             LBN
                                         </div>
-                                        La Bonne Note
-                                    </h3>
-                                    <p className="text-slate-400 text-sm mb-4">
-                                        Plateforme de gestion éducative intelligente pour optimiser votre établissement.
-                                    </p>
-                                    <div className="space-y-2 text-sm text-slate-400">
-                                        <div className="flex items-center gap-2">
-                                            <MapPinIcon size={16} className="text-orange-500" />
-                                            <span>123 Rue de l'Éducation, Montréal, QC, Canada</span>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white">La Bonne Note</h3>
+                                            <p className="text-xs text-slate-400">Gestion éducative intelligente</p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Phone size={16} className="text-orange-500" />
-                                            <span>+1 (514) 123-4567</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Mail size={16} className="text-orange-500" />
+                                    </div>
+                                    <div className="space-y-2 text-sm">
+                                        <a href="mailto:contact@labonnenote.com" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
+                                            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                                                <Mail size={16} className="text-orange-500" />
+                                            </div>
                                             <span>contact@labonnenote.com</span>
+                                        </a>
+                                        <a href="tel:+15141234567" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
+                                            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                                                <Phone size={16} className="text-orange-500" />
+                                            </div>
+                                            <span>+1 (514) 123-4567</span>
+                                        </a>
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
+                                                <MapPinIcon size={16} className="text-orange-500" />
+                                            </div>
+                                            <span>Montréal, QC, Canada</span>
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* Quick Links */}
+                                <div>
+                                    <h3 className="text-base font-bold text-white mb-3">Navigation</h3>
+                                    <ul className="space-y-2">
+                                        <li>
+                                            <button 
+                                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
+                                            >
+                                                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                Accueil
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
+                                            >
+                                                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                Fonctionnalités
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                onClick={() => document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' })}
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
+                                            >
+                                                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                Contact
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
                                 {/* Legal Links */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Mentions Légales</h3>
+                                    <h3 className="text-base font-bold text-white mb-3">Légal</h3>
                                     <ul className="space-y-2">
                                         <li>
                                             <button 
                                                 onClick={() => {/* Placeholder for privacy policy */}}
-                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
                                             >
                                                 <Shield size={14} />
-                                                Politique de confidentialité
+                                                Confidentialité
                                             </button>
                                         </li>
                                         <li>
                                             <button 
                                                 onClick={() => {/* Placeholder for terms */}}
-                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
                                             >
                                                 <FileText size={14} />
-                                                Conditions d'utilisation
+                                                Conditions
                                             </button>
                                         </li>
                                         <li>
                                             <button 
                                                 onClick={() => {/* Placeholder for legal mentions */}}
-                                                className="text-slate-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-2"
+                                                className="text-slate-400 hover:text-orange-400 transition-colors text-sm flex items-center gap-2 group"
                                             >
                                                 <Info size={14} />
                                                 Mentions légales
@@ -1333,32 +1450,18 @@ const LBNApp = () => {
                                         </li>
                                     </ul>
                                 </div>
-
-                                {/* Contact Info */}
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
-                                    <p className="text-slate-400 text-sm mb-4">
-                                        Besoin d'aide? Notre équipe est là pour vous.
-                                    </p>
-                                    <button 
-                                        onClick={() => {
-                                            document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
-                                        }}
-                                        className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 rounded-lg text-sm transition-colors flex items-center gap-2"
-                                    >
-                                        <MessageSquare size={16} />
-                                        Formulaire de contact
-                                    </button>
-                                </div>
                             </div>
 
-                            {/* Copyright */}
-                            <div className="border-t border-slate-700/50 pt-8 text-center">
+                            {/* Bottom Bar */}
+                            <div className="border-t border-slate-800 pt-6 text-center">
                                 <p className="text-slate-400 text-sm">
                                     © {new Date().getFullYear()} La Bonne Note. Tous droits réservés.
                                 </p>
                             </div>
                         </div>
+
+                        {/* Decorative gradient */}
+                        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-20" />
                     </footer>
                 </div>
             </div>
