@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
     Calendar,
     Users,
+    User,
     BookOpen,
     BarChart3,
     Settings,
@@ -693,7 +694,7 @@ const LBNApp = () => {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Identifiant
+                                Adresse courriel
                             </label>
                             <input
                                 type="email"
@@ -702,9 +703,17 @@ const LBNApp = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Mot de passe
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium text-slate-300">
+                                    Mot de passe
+                                </label>
+                                <button
+                                    onClick={() => setCurrentPage("reset-password")}
+                                    className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                                >
+                                    Mot de passe oublié ?
+                                </button>
+                            </div>
                             <input
                                 type="password"
                                 placeholder="••••••••"
@@ -722,21 +731,363 @@ const LBNApp = () => {
                             Se connecter
                         </button>
 
-                        <div className="relative my-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-white/20"></div>
+                        <div className="text-center pt-4">
+                            <span className="text-slate-400 text-sm">Nouveau compte ? </span>
+                            <button
+                                onClick={() => setCurrentPage("invitation-check")}
+                                className="text-orange-400 hover:text-orange-300 transition-colors text-sm font-medium"
+                            >
+                                Créer votre compte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Page Invitation Check - Vérification d'invitation
+    const InvitationCheckPage = () => {
+        const [email, setEmail] = useState("");
+
+        const handleVerify = () => {
+            // Redirection directe vers la page d'inscription
+            setCurrentPage("signup");
+        };
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 w-full max-w-lg border border-white/20 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center font-bold text-4xl text-white mx-auto mb-4 shadow-lg">
+                            LBN
+                        </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            Créer un compte
+                        </h1>
+                        <p className="text-orange-400 font-medium mb-4">
+                            Invitation requise
+                        </p>
+                    </div>
+
+                    <div className="bg-blue-500/20 border border-blue-400/50 rounded-xl p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-1">
+                                <Info className="w-5 h-5 text-blue-300" />
                             </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-slate-900 text-slate-400">
-                                    ou
-                                </span>
+                            <div className="text-slate-200 text-sm space-y-2">
+                                <p>
+                                    La création de compte à <strong>La Bonne Note</strong> se fait uniquement sur invitation. 
+                                </p>
+                                <p>
+                                    Si vous n'avez pas encore reçu d'invitation, un courriel vous sera envoyé prochainement par notre équipe.
+                                </p>
                             </div>
                         </div>
-
-                        <button className="w-full py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-all">
-                            Connexion avec Google
-                        </button>
                     </div>
+
+                    <div className="space-y-4">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-300 text-sm">
+                                Si vous pensez avoir reçu une invitation, entrez votre adresse courriel ci-dessous pour vérifier.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Adresse courriel
+                            </label>
+                            <input
+                                type="email"
+                                placeholder="email@exemple.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <button 
+                            onClick={handleVerify}
+                            className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                        >
+                            Vérifier mon invitation
+                        </button>
+
+                        <div className="text-center pt-4">
+                            <button
+                                onClick={() => setCurrentPage("login")}
+                                className="text-orange-400 hover:text-orange-300 transition-colors text-sm font-medium"
+                            >
+                                ← Retour à la connexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Page Signup - Inscription
+    const SignupPage = () => {
+        const [formData, setFormData] = useState({
+            prenom: "",
+            nom: "",
+            email: "",
+            password: "",
+            confirmPassword: ""
+        });
+        const [error, setError] = useState("");
+
+        const handleSubmit = () => {
+            // Validation minimale
+            if (!formData.prenom || !formData.nom || !formData.email || !formData.password || !formData.confirmPassword) {
+                setError("Veuillez remplir tous les champs");
+                return;
+            }
+            if (formData.password !== formData.confirmPassword) {
+                setError("Les mots de passe ne correspondent pas");
+                return;
+            }
+            
+            // UI seulement - redirection directe vers dashboard
+            setIsLoggedIn(true);
+            setCurrentPage("dashboard");
+        };
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md border border-white/20 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center font-bold text-4xl text-white mx-auto mb-4 shadow-lg">
+                            LBN
+                        </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            Créer un compte
+                        </h1>
+                        <p className="text-slate-300">
+                            Rejoignez La Bonne Note
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {error && (
+                            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Prénom
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Jean"
+                                value={formData.prenom}
+                                onChange={(e) => {
+                                    setFormData({...formData, prenom: e.target.value});
+                                    setError("");
+                                }}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Nom
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Dupont"
+                                value={formData.nom}
+                                onChange={(e) => {
+                                    setFormData({...formData, nom: e.target.value});
+                                    setError("");
+                                }}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
+                                Poste
+                                <Lock className="w-4 h-4 text-slate-400" />
+                            </label>
+                            <input
+                                type="text"
+                                value="Tuteur"
+                                disabled
+                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-slate-400 cursor-not-allowed"
+                            />
+                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                <Shield className="w-3 h-3" />
+                                Assigné par l'administrateur
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Adresse courriel
+                            </label>
+                            <input
+                                type="email"
+                                placeholder="email@exemple.com"
+                                value={formData.email}
+                                onChange={(e) => {
+                                    setFormData({...formData, email: e.target.value});
+                                    setError("");
+                                }}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Mot de passe
+                            </label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={(e) => {
+                                    setFormData({...formData, password: e.target.value});
+                                    setError("");
+                                }}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Confirmer le mot de passe
+                            </label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.confirmPassword}
+                                onChange={(e) => {
+                                    setFormData({...formData, confirmPassword: e.target.value});
+                                    setError("");
+                                }}
+                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        <button 
+                            onClick={handleSubmit}
+                            className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                        >
+                            Créer le compte
+                        </button>
+
+                        <div className="text-center pt-4">
+                            <span className="text-slate-400 text-sm">Déjà un compte ? </span>
+                            <button
+                                onClick={() => setCurrentPage("login")}
+                                className="text-orange-400 hover:text-orange-300 transition-colors text-sm font-medium"
+                            >
+                                Se connecter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Page Reset Password - Réinitialisation du mot de passe
+    const ResetPasswordPage = () => {
+        const [email, setEmail] = useState("");
+        const [submitted, setSubmitted] = useState(false);
+        const [error, setError] = useState("");
+
+        const handleSubmit = () => {
+            // Validation minimale
+            if (!email) {
+                setError("Veuillez entrer votre adresse courriel");
+                return;
+            }
+            
+            // UI seulement - afficher message de succès
+            setSubmitted(true);
+        };
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md border border-white/20 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center font-bold text-4xl text-white mx-auto mb-4 shadow-lg">
+                            LBN
+                        </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            Mot de passe oublié ?
+                        </h1>
+                        <p className="text-slate-300">
+                            {submitted 
+                                ? "Vérifiez votre boîte courriel" 
+                                : "Entrez votre adresse courriel pour réinitialiser votre mot de passe"}
+                        </p>
+                    </div>
+
+                    {!submitted ? (
+                        <div className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Adresse courriel
+                                </label>
+                                <input
+                                    type="email"
+                                    placeholder="email@exemple.com"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setError("");
+                                    }}
+                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+
+                            <button 
+                                onClick={handleSubmit}
+                                className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                            >
+                                Envoyer le lien de réinitialisation
+                            </button>
+
+                            <div className="text-center pt-4">
+                                <button
+                                    onClick={() => setCurrentPage("login")}
+                                    className="text-orange-400 hover:text-orange-300 transition-colors text-sm font-medium"
+                                >
+                                    ← Retour à la connexion
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-xl text-sm text-center">
+                                <p className="mb-2">
+                                    Un lien de réinitialisation a été envoyé à <strong>{email}</strong>
+                                </p>
+                                <p className="text-xs text-green-300">
+                                    Le lien expirera dans 24 heures.
+                                </p>
+                            </div>
+
+                            <button 
+                                onClick={() => setCurrentPage("login")}
+                                className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                            >
+                                Retour à la connexion
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -746,6 +1097,7 @@ const LBNApp = () => {
     const LandingPage = () => {
         const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "es">("fr");
         const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+        const [showUserMenu, setShowUserMenu] = useState(false);
         const [contactFormData, setContactFormData] = useState({
             name: "",
             email: "",
@@ -892,16 +1244,48 @@ const LBNApp = () => {
                                     )}
                                 </div>
 
-                                {/* Conditional Auth Button */}
+                                {/* Conditional Auth Button or User Menu */}
                                 {isAuthenticated ? (
-                                    <button
-                                        onClick={() => setCurrentPage("dashboard")}
-                                        className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2"
-                                    >
-                                        <Home size={18} />
-                                        <span className="hidden sm:inline">Accéder à la plateforme</span>
-                                        <span className="sm:hidden">Plateforme</span>
-                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowUserMenu(!showUserMenu)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white transition-all"
+                                        >
+                                            <User size={20} />
+                                            <ChevronDown size={16} className={showUserMenu ? "transform rotate-180" : ""} />
+                                        </button>
+                                        
+                                        {showUserMenu && (
+                                            <>
+                                                <div 
+                                                    className="fixed inset-0 z-40" 
+                                                    onClick={() => setShowUserMenu(false)}
+                                                ></div>
+                                                <div className="absolute right-0 mt-2 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                                                    <button
+                                                        onClick={() => {
+                                                            setCurrentPage("settings");
+                                                            setShowUserMenu(false);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors text-slate-200"
+                                                    >
+                                                        <Settings size={18} />
+                                                        <span>Paramètres</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setCurrentPage("dashboard");
+                                                            setShowUserMenu(false);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors text-slate-200"
+                                                    >
+                                                        <Home size={18} />
+                                                        <span>Accéder à la plateforme</span>
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 ) : (
                                     <button
                                         onClick={() => setCurrentPage("login")}
@@ -5767,6 +6151,18 @@ const LBNApp = () => {
     // Main render
     if (currentPage === "login") {
         return <LoginPage />;
+    }
+
+    if (currentPage === "invitation-check") {
+        return <InvitationCheckPage />;
+    }
+
+    if (currentPage === "signup") {
+        return <SignupPage />;
+    }
+
+    if (currentPage === "reset-password") {
+        return <ResetPasswordPage />;
     }
 
     if (currentPage === "landing") {
