@@ -150,6 +150,7 @@ const LBNApp = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
     const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
+    const [targetStatsSection, setTargetStatsSection] = useState<string | null>(null);
     const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
         activeStudents: true,
         plannedCourses: true,
@@ -2145,10 +2146,20 @@ const LBNApp = () => {
                         {/* KPIs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             {visibleStats.activeStudents && (
-                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-5 shadow-md border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105 relative">
+                                <div 
+                                    className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-5 shadow-md border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105 relative cursor-pointer"
+                                    onClick={() => {
+                                        setTargetStatsSection("activeStudents");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, activeStudents: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, activeStudents: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -2172,10 +2183,20 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.plannedCourses && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("plannedCourses");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, plannedCourses: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, plannedCourses: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -2198,10 +2219,20 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.occupancyRate && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("occupancyRate");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, occupancyRate: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, occupancyRate: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -2227,10 +2258,20 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.overages && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("overages");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, overages: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, overages: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -2256,10 +2297,20 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.tutorCapacity && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("tutorCapacity");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, tutorCapacity: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, tutorCapacity: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -2282,10 +2333,20 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.roomUsage && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("roomUsage");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
                                     <button
-                                        onClick={() => setVisibleStats({ ...visibleStats, roomUsage: false })}
-                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, roomUsage: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
                                         title="Fermer cette statistique"
                                     >
                                         <X size={14} />
@@ -4761,6 +4822,26 @@ const LBNApp = () => {
 
     // Stats Page
     const StatsPage = () => {
+        // Scroll vers la section ciblée quand on arrive depuis le dashboard
+        useEffect(() => {
+            if (targetStatsSection) {
+                // Attendre que le DOM soit rendu
+                setTimeout(() => {
+                    const element = document.getElementById(`stats-section-${targetStatsSection}`);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Mettre en surbrillance temporairement
+                        element.classList.add('ring-4', 'ring-orange-300', 'ring-offset-2');
+                        setTimeout(() => {
+                            element.classList.remove('ring-4', 'ring-orange-300', 'ring-offset-2');
+                        }, 2000);
+                    }
+                    // Réinitialiser le target après le scroll
+                    setTargetStatsSection(null);
+                }, 100);
+            }
+        }, [targetStatsSection]);
+
         // Données des élèves (même structure que dans PersonnelPage)
         const eleves = [
             {
@@ -4974,6 +5055,18 @@ const LBNApp = () => {
                 <div className="p-6 space-y-6">
                 {/* KPIs - Indicateurs clés */}
                 <div className="grid grid-cols-4 gap-4">
+                    <div id="stats-section-activeStudents" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Élèves actifs</span>
+                            <Users className="text-blue-500" size={20} />
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900">142</div>
+                        <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                            <TrendingUp size={14} />
+                            <span>+12% ce mois</span>
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-slate-600">Taux utilisation tuteurs</span>
@@ -5001,7 +5094,7 @@ const LBNApp = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div id="stats-section-occupancyRate" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-slate-600">Salles occupation moy.</span>
                             <MapPin className="text-purple-500" size={20} />
@@ -5032,7 +5125,7 @@ const LBNApp = () => {
 
                 <div className="grid grid-cols-3 gap-6">
                     {/* Remplissage des tuteurs */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div id="stats-section-tutorCapacity" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <Users className="text-blue-500" size={20} />
                             Remplissage des tuteurs
@@ -5082,7 +5175,7 @@ const LBNApp = () => {
                     </div>
 
                     {/* Occupation des salles */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div id="stats-section-roomUsage" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <MapPin className="text-purple-500" size={20} />
                             Occupation des salles
@@ -5120,7 +5213,7 @@ const LBNApp = () => {
                     </div>
 
                     {/* Dépassements et alertes */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div id="stats-section-overages" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <AlertCircle className="text-red-500" size={20} />
                             Dépassements
@@ -5167,7 +5260,7 @@ const LBNApp = () => {
                 {/* Tendances et recommandations */}
                 <div className="grid grid-cols-2 gap-6">
                     {/* Évolution hebdomadaire */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div id="stats-section-plannedCourses" className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 scroll-mt-6">
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <TrendingUp className="text-green-500" size={20} />
                             Tendances hebdomadaires
