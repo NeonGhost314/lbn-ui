@@ -2511,7 +2511,7 @@ const LBNApp = () => {
                                                                                 
                                                                                 {/* Students Section */}
                                                                                 {course.studentNames && course.studentNames.length > 0 ? (
-                                                                                    <div className="p-2 flex flex-wrap gap-1.5 min-h-[60px]">
+                                                                                    <div className="p-2 flex flex-col gap-1.5 min-h-[60px]">
                                                                                         {course.studentNames.map((studentName, studentIdx) => {
                                                                                             const grade = getStudentGrade(studentName);
                                                                                             const formattedName = formatStudentName(studentName, grade);
