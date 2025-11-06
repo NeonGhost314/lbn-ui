@@ -53,6 +53,7 @@ import {
     Shield,
     ExternalLink,
     Check,
+    Copy,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -3001,10 +3002,57 @@ const LBNApp = () => {
 
                                                 {/* Group Info */}
                                                 {group && (
-                                                    <div className="mb-4 p-4 bg-slate-50 rounded-lg">
-                                                        <div className="text-sm font-semibold text-slate-700 mb-2">Groupe:</div>
-                                                        <div className="text-lg font-medium text-slate-900">{group.name}</div>
-                                                        <div className="text-xs text-slate-500 mt-1">{group.totalPG} PG</div>
+                                                    <div className="mb-4 border-2 rounded-xl p-4 border-slate-200 bg-white">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="font-semibold text-slate-900">{group.name}</div>
+                                                            <div className={`text-xs px-2 py-1 rounded-full ${
+                                                                group.tutor ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                            }`}>
+                                                                {group.tutor ? "Avec tuteur" : "Sans tuteur"}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-sm text-slate-600 mb-2">
+                                                            {group.tutor ? `Tuteur: ${group.tutor}` : "Aucun tuteur assigné"}
+                                                        </div>
+                                                        {/* Students Section */}
+                                                        {group.students && group.students.length > 0 ? (
+                                                            <div className="mb-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Users size={14} className="text-slate-400" />
+                                                                    <span className="text-xs text-slate-600 font-medium">{group.students.length} élève(s)</span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {group.students.slice(0, 4).map((studentName, idx) => {
+                                                                        const grade = getStudentGrade(studentName);
+                                                                        const formattedName = formatStudentName(studentName, grade);
+                                                                        return (
+                                                                            <div
+                                                                                key={idx}
+                                                                                className="px-2 py-1 rounded-full text-[10px] font-medium bg-green-50 text-green-700 border border-green-200"
+                                                                                title={studentName}
+                                                                            >
+                                                                                {formattedName}
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                    {group.students.length > 4 && (
+                                                                        <div className="px-2 py-1 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                                            +{group.students.length - 4}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <Users size={14} className="text-slate-400" />
+                                                                <span className="text-sm text-slate-600">0 élève(s)</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-end">
+                                                            <div className="text-xs text-slate-500 font-medium">
+                                                                {group.totalPG} PG
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
 
@@ -5922,6 +5970,9 @@ const LBNApp = () => {
         const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
         const [selectedTimeSlotFilter, setSelectedTimeSlotFilter] = useState<string | null>(null);
         const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
+        const [placementCourses, setPlacementCourses] = useState<Partial<Record<Day, Course[]>>>({});
+        const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+        const [duplicateTargetDate, setDuplicateTargetDate] = useState<Date | null>(null);
 
         // Accordion state - which sections are expanded
         const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -5941,6 +5992,103 @@ const LBNApp = () => {
         // Student filters
         const [studentGradeFilter, setStudentGradeFilter] = useState<string[]>([]);
         const [studentPgFilter, setStudentPgFilter] = useState<string>("");
+
+        // Week navigation state and functions
+        const getCurrentWeekStart = (): Date => {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            const monday = new Date(today);
+            monday.setDate(diff);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        };
+        
+        const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getCurrentWeekStart());
+        
+        // Utility functions for week management
+        const getWeekStart = (date: Date): Date => {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(d);
+            monday.setDate(diff);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        };
+        
+        const getWeekDates = (weekStart: Date): Record<Day, Date> => {
+            const monday = new Date(weekStart);
+            monday.setHours(0, 0, 0, 0);
+            
+            const dates: Record<string, Date> = {};
+            const dayOrder: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+            
+            dayOrder.forEach((day, index) => {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + index);
+                dates[day] = date;
+            });
+            
+            return dates as Record<Day, Date>;
+        };
+        
+        const formatWeekRange = (weekStart: Date): string => {
+            const weekDates = getWeekDates(weekStart);
+            const monday = weekDates["Lundi"];
+            const sunday = weekDates["Dimanche"];
+            
+            const formatDate = (date: Date): string => {
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            };
+            
+            const mondayStr = formatDate(monday);
+            const sundayStr = formatDate(sunday);
+            
+            // If same month, show "14 - 20 octobre 2025"
+            if (monday.getMonth() === sunday.getMonth() && monday.getFullYear() === sunday.getFullYear()) {
+                const day1 = monday.getDate();
+                const day2 = sunday.getDate();
+                const monthYear = monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                return `${day1} - ${day2} ${monthYear}`;
+            } else {
+                // Different months or years
+                return `${mondayStr} - ${sundayStr}`;
+            }
+        };
+        
+        const formatDayWithDate = (day: Day, weekStart: Date): string => {
+            const weekDates = getWeekDates(weekStart);
+            const date = weekDates[day];
+            const dayName = day;
+            const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+            return `${dayName} ${dateStr}`;
+        };
+        
+        const goToPreviousWeek = () => {
+            setCurrentWeekStart(prev => {
+                const newDate = new Date(prev);
+                newDate.setDate(prev.getDate() - 7);
+                return newDate;
+            });
+        };
+        
+        const goToNextWeek = () => {
+            setCurrentWeekStart(prev => {
+                const newDate = new Date(prev);
+                newDate.setDate(prev.getDate() + 7);
+                return newDate;
+            });
+        };
+        
+        const goToCurrentWeek = () => {
+            setCurrentWeekStart(getCurrentWeekStart());
+        };
+        
+        const isCurrentWeek = (): boolean => {
+            const currentWeek = getCurrentWeekStart();
+            return currentWeekStart.getTime() === currentWeek.getTime();
+        };
 
         const toggleSection = (section: string) => {
             setExpandedSections(prev => ({
@@ -6014,6 +6162,46 @@ const LBNApp = () => {
             setShowSaveHistory(false);
         };
 
+        const handlePrint = () => {
+            window.print();
+        };
+
+        const handleDuplicate = () => {
+            setShowDuplicateModal(true);
+            // Set default target date to next week
+            const nextWeek = new Date(currentWeekStart);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            setDuplicateTargetDate(nextWeek);
+        };
+
+        const confirmDuplicate = () => {
+            if (!duplicateTargetDate) return;
+            
+            const targetWeekStart = getWeekStart(duplicateTargetDate);
+            
+            // Create a copy of current week's courses for the target week
+            const duplicatedCourses: Partial<Record<Day, Course[]>> = {};
+            
+            Object.keys(placementCourses).forEach((day) => {
+                const dayKey = day as Day;
+                const dayCourses = placementCourses[dayKey];
+                if (dayCourses && dayCourses.length > 0) {
+                    // Deep copy the courses
+                    duplicatedCourses[dayKey] = dayCourses.map(course => ({
+                        ...course,
+                        // Keep all properties but create a new object
+                    }));
+                }
+            });
+            
+            // Navigate to the target week and set the duplicated courses
+            setCurrentWeekStart(targetWeekStart);
+            setPlacementCourses(duplicatedCourses);
+            setShowDuplicateModal(false);
+            setDuplicateTargetDate(null);
+            setHasUnsavedChanges(true);
+        };
+
         const filteredTutors = tutors.filter(t => {
             const matchesSearch = t.name.toLowerCase().includes(tutorSearch.toLowerCase());
             const matchesAvailability = tutorAvailabilityFilter.length === 0 ||
@@ -6033,6 +6221,22 @@ const LBNApp = () => {
         const activeTutorFiltersCount = tutorAvailabilityFilter.length + tutorSpecialtyFilter.length;
         const activeStudentFiltersCount = studentGradeFilter.length + (studentPgFilter ? 1 : 0);
 
+        // Helper functions for student name formatting
+        const formatStudentName = (studentName: string, grade: string | null): string => {
+            const parts = studentName.trim().split(/\s+/);
+            if (parts.length < 2) {
+                return grade ? `${studentName}, ${grade}` : studentName;
+            }
+            const firstName = parts[0];
+            const lastNameInitial = parts[parts.length - 1][0].toUpperCase();
+            return grade ? `${firstName} ${lastNameInitial}., ${grade}` : `${firstName} ${lastNameInitial}.`;
+        };
+
+        const getStudentGrade = (studentName: string): string | null => {
+            const student = students.find(s => s.name === studentName);
+            return student ? student.grade : null;
+        };
+
         // Helper functions for groups and courses
         const getGroupForCourse = (course: Course) => {
             if (!course.groupId) return null;
@@ -6047,7 +6251,7 @@ const LBNApp = () => {
         };
 
         const getPlacementStatus = (personName: string, day: Day) => {
-            const dayCourses = courses[day] || [];
+            const dayCourses = placementCourses[day] || [];
             const personCourses = dayCourses.filter(c => 
                 c.tutor === personName || 
                 c.studentNames?.includes(personName)
@@ -6073,6 +6277,161 @@ const LBNApp = () => {
         
         const filteredPlacementTimeSlots = getTimeSlotsForPlacementDay(placementDay);
         
+        // Helper to get courses for a room in a time slot for placement page
+        const getPlacementCoursesForRoomAndSlot = (room: string, slotStart: string, day: Day) => {
+            return (
+                placementCourses[day]?.filter(
+                    (c) => c.room === room && c.time.startsWith(slotStart.split(":")[0])
+                ) || []
+            );
+        };
+
+        // Helper to get course title based on tutor presence
+        const getCourseTitle = (course: Course, day: Day, slot: TimeSlot): string => {
+            if (course.tutor && course.tutor.trim() !== "") {
+                return `Tutorat avec ${course.tutor}`;
+            }
+            return `Salle ${course.room} - ${day} - ${slot.startTime}`;
+        };
+
+        // Handle drop to create or update course
+        const handleDrop = (room: string, slot: TimeSlot, day: Day) => {
+            if (!draggedItem) return;
+
+            const dayCourses = placementCourses[day] || [];
+            const existingCourses = dayCourses.filter(
+                (c) => c.room === room && c.time.startsWith(slot.startTime.split(":")[0])
+            );
+
+            let updatedCourses: Course[] = [...dayCourses];
+            let courseToUpdate: Course | null = existingCourses.length > 0 ? existingCourses[0] : null;
+
+            if (!courseToUpdate) {
+                // Create new course
+                const newCourse: Course = {
+                    time: slot.startTime,
+                    room: room,
+                    tutor: "",
+                    students: 0,
+                    subject: "",
+                    color: "bg-blue-500",
+                    studentNames: [],
+                };
+                courseToUpdate = newCourse;
+                updatedCourses.push(newCourse);
+            }
+
+            // Update course based on dragged item type
+            if (!courseToUpdate) return; // Safety check
+            
+            const currentCourse = courseToUpdate; // Store reference for TypeScript
+            
+            if (draggedItem.type === 'group') {
+                const group = draggedItem.data;
+                currentCourse.groupId = group.id;
+                currentCourse.tutor = group.tutor || currentCourse.tutor || "";
+                const existingStudentNames = currentCourse.studentNames || [];
+                currentCourse.studentNames = [
+                    ...existingStudentNames,
+                    ...(group.students || []).filter((s: string) => !existingStudentNames.includes(s))
+                ];
+                currentCourse.students = currentCourse.studentNames.length;
+                currentCourse.color = group.color === "blue" ? "bg-blue-500" : 
+                                      group.color === "purple" ? "bg-purple-500" : 
+                                      group.color === "green" ? "bg-green-500" : "bg-orange-500";
+            } else if (draggedItem.type === 'tutor') {
+                const tutor = draggedItem.data;
+                if (!currentCourse.tutor || currentCourse.tutor === "") {
+                    currentCourse.tutor = tutor.name;
+                }
+            } else if (draggedItem.type === 'student') {
+                const student = draggedItem.data;
+                if (!currentCourse.studentNames) {
+                    currentCourse.studentNames = [];
+                }
+                if (!currentCourse.studentNames.includes(student.name)) {
+                    currentCourse.studentNames.push(student.name);
+                    currentCourse.students = currentCourse.studentNames.length;
+                }
+            }
+
+            // Update the course in the array
+            const courseIndex = updatedCourses.findIndex(
+                (c) => c.room === currentCourse.room && 
+                       c.time.startsWith(currentCourse.time.split(":")[0]) &&
+                       c === currentCourse
+            );
+            if (courseIndex >= 0) {
+                updatedCourses[courseIndex] = currentCourse;
+            }
+
+            setPlacementCourses({
+                ...placementCourses,
+                [day]: updatedCourses
+            });
+            setHasUnsavedChanges(true);
+        };
+
+        // Handle removing a person from a course
+        const handleRemovePersonFromCourse = (course: Course, personName: string, personType: 'student' | 'tutor', day: Day) => {
+            const dayCourses = placementCourses[day] || [];
+            // Find course by matching room, time slot, and having the same student names (for uniqueness)
+            const courseIndex = dayCourses.findIndex(
+                (c) => c.room === course.room && 
+                       c.time.startsWith(course.time.split(":")[0]) &&
+                       c.tutor === course.tutor &&
+                       JSON.stringify(c.studentNames?.sort()) === JSON.stringify(course.studentNames?.sort())
+            );
+
+            if (courseIndex === -1) return;
+
+            const updatedCourses = [...dayCourses];
+            const courseToUpdate = { ...updatedCourses[courseIndex] };
+
+            if (personType === 'student') {
+                // Remove student from course
+                courseToUpdate.studentNames = (courseToUpdate.studentNames || []).filter(name => name !== personName);
+                courseToUpdate.students = courseToUpdate.studentNames.length;
+                
+                // Check if all students from the group are still present
+                if (courseToUpdate.groupId) {
+                    const group = groups.find(g => g.id === courseToUpdate.groupId);
+                    if (group) {
+                        const remainingGroupStudents = courseToUpdate.studentNames.filter(name => 
+                            group.students.includes(name)
+                        );
+                        // If no students from the group remain, remove the groupId
+                        if (remainingGroupStudents.length === 0) {
+                            courseToUpdate.groupId = undefined;
+                        }
+                    }
+                }
+                
+                // If no students left and no tutor, remove the course
+                if (courseToUpdate.studentNames.length === 0 && (!courseToUpdate.tutor || courseToUpdate.tutor.trim() === "")) {
+                    updatedCourses.splice(courseIndex, 1);
+                } else {
+                    updatedCourses[courseIndex] = courseToUpdate;
+                }
+            } else if (personType === 'tutor') {
+                // Remove tutor from course
+                courseToUpdate.tutor = "";
+                
+                // If no students left, remove the course
+                if (!courseToUpdate.studentNames || courseToUpdate.studentNames.length === 0) {
+                    updatedCourses.splice(courseIndex, 1);
+                } else {
+                    updatedCourses[courseIndex] = courseToUpdate;
+                }
+            }
+
+            setPlacementCourses({
+                ...placementCourses,
+                [day]: updatedCourses
+            });
+            setHasUnsavedChanges(true);
+        };
+        
         // Ensure placementDay is valid (has time slots)
         useEffect(() => {
             const availableDays = getDaysWithTimeSlots(timeSlots);
@@ -6081,16 +6440,78 @@ const LBNApp = () => {
             }
         }, [timeSlots]);
 
+        // Update selected course details when placementCourses changes
+        useEffect(() => {
+            if (selectedCourseForDetails) {
+                const dayCourses = placementCourses[placementDay] || [];
+                // Try to find the course by room and time slot
+                const matchingCourses = dayCourses.filter(c => 
+                    c.room === selectedCourseForDetails.room && 
+                    c.time.startsWith(selectedCourseForDetails.time.split(":")[0])
+                );
+                
+                if (matchingCourses.length === 0) {
+                    // Course was removed, close modal
+                    setSelectedCourseForDetails(null);
+                } else if (matchingCourses.length === 1) {
+                    // Update with the found course
+                    setSelectedCourseForDetails(matchingCourses[0]);
+                } else {
+                    // Multiple courses in same slot, try to find exact match
+                    const exactMatch = matchingCourses.find(c =>
+                        c.tutor === selectedCourseForDetails.tutor &&
+                        JSON.stringify(c.studentNames?.sort()) === JSON.stringify(selectedCourseForDetails.studentNames?.sort())
+                    );
+                    if (exactMatch) {
+                        setSelectedCourseForDetails(exactMatch);
+                    } else {
+                        // Use first match if no exact match
+                        setSelectedCourseForDetails(matchingCourses[0]);
+                    }
+                }
+            }
+        }, [placementCourses, placementDay]);
+
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden flex flex-col">
                 {/* Top Action Bar */}
                 <div className="bg-white border-b border-slate-200 px-6 py-4">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                                <BookOpen className="text-orange-500" size={28} />
-                                Gestion des placements
-                            </h2>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-4 mb-2">
+                                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                    <BookOpen className="text-orange-500" size={28} />
+                                    Gestion des placements
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={goToPreviousWeek}
+                                        className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center"
+                                        title="Semaine précédente"
+                                    >
+                                        <ChevronLeft size={18} className="text-slate-700" />
+                                    </button>
+                                    <button
+                                        onClick={goToCurrentWeek}
+                                        disabled={isCurrentWeek()}
+                                        className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                            isCurrentWeek() 
+                                                ? 'bg-slate-100 text-slate-500 cursor-default' 
+                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                        }`}
+                                        title={isCurrentWeek() ? "Semaine actuelle" : "Retour à cette semaine"}
+                                    >
+                                        {formatWeekRange(currentWeekStart)}
+                                    </button>
+                                    <button
+                                        onClick={goToNextWeek}
+                                        className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center"
+                                        title="Semaine suivante"
+                                    >
+                                        <ChevronRight size={18} className="text-slate-700" />
+                                    </button>
+                                </div>
+                            </div>
                             <p className="text-sm text-slate-600 mt-1">
                                 Organisez les groupes, tuteurs et élèves dans les salles
                             </p>
@@ -6121,9 +6542,19 @@ const LBNApp = () => {
                                 <CheckCircle size={16} />
                                 Sauvegarder
                             </button>
-                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                                <Download size={16} />
-                                Exporter
+                            <button
+                                onClick={handlePrint}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                            >
+                                <Printer size={16} />
+                                Imprimer
+                            </button>
+                            <button
+                                onClick={handleDuplicate}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                            >
+                                <Copy size={16} />
+                                Dupliquer
                             </button>
                         </div>
                     </div>
@@ -6154,6 +6585,76 @@ const LBNApp = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Duplicate Modal */}
+                    {showDuplicateModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 p-6 w-96">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-slate-900 text-lg">Dupliquer la configuration</h3>
+                                    <button 
+                                        onClick={() => {
+                                            setShowDuplicateModal(false);
+                                            setDuplicateTargetDate(null);
+                                        }}
+                                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                                    >
+                                        <X size={18} className="text-slate-400 hover:text-slate-700" />
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                                            Semaine actuelle
+                                        </label>
+                                        <div className="px-3 py-2 bg-slate-50 rounded-lg text-sm text-slate-600">
+                                            {formatWeekRange(currentWeekStart)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                                            Dupliquer vers la semaine du
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={duplicateTargetDate ? duplicateTargetDate.toISOString().split('T')[0] : ''}
+                                            onChange={(e) => {
+                                                const date = new Date(e.target.value);
+                                                if (!isNaN(date.getTime())) {
+                                                    setDuplicateTargetDate(date);
+                                                }
+                                            }}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        />
+                                        {duplicateTargetDate && (
+                                            <div className="mt-2 text-sm text-slate-600">
+                                                {formatWeekRange(getWeekStart(duplicateTargetDate))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowDuplicateModal(false);
+                                                setDuplicateTargetDate(null);
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                                        >
+                                            Annuler
+                                        </button>
+                                        <button
+                                            onClick={confirmDuplicate}
+                                            disabled={!duplicateTargetDate}
+                                            className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium disabled:bg-slate-300 disabled:cursor-not-allowed"
+                                        >
+                                            Dupliquer
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -6196,34 +6697,72 @@ const LBNApp = () => {
                                         />
                                     </button>
                                     {expandedSections.groups && (
-                                        <div className="px-4 pb-4 space-y-2 max-h-96 overflow-y-auto">
-                                            {groups.map((group) => (
+                                        <div className="px-4 pb-4 space-y-3 max-h-96 overflow-y-auto">
+                                            {groups.map((group) => {
+                                                const groupTitle = group.tutor ? `Tutorat avec ${group.tutor}` : group.name;
+                                                return (
                                                 <div
                                                     key={group.id}
                                                     draggable
                                                     onDragStart={() => setDraggedItem({ type: 'group', data: group })}
                                                     onDragEnd={() => setDraggedItem(null)}
-                                                    className={`p-3 border-2 rounded-lg cursor-move hover:shadow-lg transition-all ${group.color === 'blue' ? 'bg-blue-50 border-blue-200 hover:border-blue-400' :
-                                                        group.color === 'purple' ? 'bg-purple-50 border-purple-200 hover:border-purple-400' :
-                                                            'bg-green-50 border-green-200 hover:border-green-400'
-                                                        }`}
+                                                    className="border-2 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-move border-slate-200 bg-white hover:shadow-lg"
                                                 >
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="font-semibold text-slate-900 text-sm">{group.name}</div>
-                                                        <div className="text-xs bg-white px-2 py-0.5 rounded-full font-medium">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="font-semibold text-slate-900">{groupTitle}</div>
+                                                        <div className={`text-xs px-2 py-1 rounded-full ${
+                                                            group.tutor ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                        }`}>
+                                                            {group.tutor ? "Avec tuteur" : "Sans tuteur"}
+                                                        </div>
+                                                    </div>
+                                                    {!group.tutor && (
+                                                        <div className="text-sm text-slate-600 mb-2">
+                                                            Aucun tuteur assigné
+                                                        </div>
+                                                    )}
+                                                    {/* Students Section */}
+                                                    {group.students && group.students.length > 0 ? (
+                                                        <div className="mb-3">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <Users size={14} className="text-slate-400" />
+                                                                <span className="text-xs text-slate-600 font-medium">{group.students.length} élève(s)</span>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {group.students.slice(0, 4).map((studentName, idx) => {
+                                                                    const grade = getStudentGrade(studentName);
+                                                                    const formattedName = formatStudentName(studentName, grade);
+                                                                    return (
+                                                                        <div
+                                                                            key={idx}
+                                                                            className="px-2 py-1 rounded-full text-[10px] font-medium bg-green-50 text-green-700 border border-green-200"
+                                                                            title={studentName}
+                                                                        >
+                                                                            {formattedName}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                {group.students.length > 4 && (
+                                                                    <div className="px-2 py-1 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                                        +{group.students.length - 4}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <Users size={14} className="text-slate-400" />
+                                                            <span className="text-sm text-slate-600">0 élève(s)</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center justify-end">
+                                                        <div className="text-xs text-slate-500 font-medium">
                                                             {group.totalPG} PG
                                                         </div>
                                                     </div>
-                                                    {group.tutor && (
-                                                        <div className="text-xs text-slate-600 mb-1">
-                                                            👨‍🏫 {group.tutor}
-                                                        </div>
-                                                    )}
-                                                    <div className="text-xs text-slate-600">
-                                                        👥 {group.students.length} élèves
-                                                    </div>
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -6628,7 +7167,7 @@ const LBNApp = () => {
                                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                             }`}
                                     >
-                                        {day}
+                                        {formatDayWithDate(day, currentWeekStart)}
                                     </button>
                                 ))}
                             </div>
@@ -6682,7 +7221,7 @@ const LBNApp = () => {
                                                     filteredPlacementTimeSlots
                                                         .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
                                                         .map((slot) => {
-                                                        const roomCourses = getCoursesForRoomAndSlot(room, slot.startTime, placementDay);
+                                                        const roomCourses = getPlacementCoursesForRoomAndSlot(room, slot.startTime, placementDay);
                                                         return (
                                                             <td
                                                                 key={`${room}-${slot.id}`}
@@ -6690,45 +7229,75 @@ const LBNApp = () => {
                                                                 onDragOver={(e) => e.preventDefault()}
                                                                 onDrop={(e) => {
                                                                     e.preventDefault();
-                                                                    if (draggedItem) {
-                                                                        setHasUnsavedChanges(true);
-                                                                        // Handle drop logic here
-                                                                        console.log(`Dropped ${draggedItem.type}:`, draggedItem.data, 'in', room, slot.label);
-                                                                    }
+                                                                    handleDrop(room, slot, placementDay);
+                                                                    setDraggedItem(null);
                                                                 }}
                                                             >
                                                             {roomCourses.length > 0 ? (
                                                                 <div className="space-y-2">
                                                                     {roomCourses.map((course, idx) => {
                                                                         const group = getGroupForCourse(course);
+                                                                        const courseTitle = getCourseTitle(course, placementDay, slot);
                                                                         return (
                                                                             <div
                                                                                 key={idx}
                                                                                 onClick={() => setSelectedCourseForDetails(course)}
-                                                                                className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all cursor-pointer group relative`}
+                                                                                className="bg-white rounded-lg shadow-sm overflow-hidden relative border border-slate-200 cursor-pointer hover:shadow-md transition-all"
                                                                             >
-                                                                                {group && (
-                                                                                    <div className="text-xs font-semibold mb-1 opacity-95">
-                                                                                        {group.name}
+                                                                                {/* Course Header Section */}
+                                                                                <div 
+                                                                                    className={`${course.color || 'bg-blue-500'} text-white px-3 py-2 text-xs font-semibold relative`}
+                                                                                >
+                                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                                        <span className="opacity-90">{courseTitle}</span>
+                                                                                        {course.tutor && course.tutor.trim() !== "" && (
+                                                                                            <button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handleRemovePersonFromCourse(course, course.tutor, 'tutor', placementDay);
+                                                                                                }}
+                                                                                                className="opacity-70 hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-white/20"
+                                                                                                title="Retirer le tuteur"
+                                                                                            >
+                                                                                                <X size={12} />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                                
+                                                                                {/* Students Section - Planning mode (no attendance) */}
+                                                                                {course.studentNames && course.studentNames.length > 0 ? (
+                                                                                    <div className="p-2 flex flex-col gap-1.5 min-h-[60px]">
+                                                                                        {course.studentNames.map((studentName, studentIdx) => {
+                                                                                            const grade = getStudentGrade(studentName);
+                                                                                            const formattedName = formatStudentName(studentName, grade);
+                                                                                            
+                                                                                            return (
+                                                                                                <div
+                                                                                                    key={studentIdx}
+                                                                                                    className="px-2.5 py-1.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 flex items-center gap-1.5 group"
+                                                                                                >
+                                                                                                    <Check size={12} className="text-green-600" />
+                                                                                                    <span className="flex-1">{formattedName}</span>
+                                                                                                    <button
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            handleRemovePersonFromCourse(course, studentName, 'student', placementDay);
+                                                                                                        }}
+                                                                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-100 text-red-600"
+                                                                                                        title="Retirer l'élève"
+                                                                                                    >
+                                                                                                        <X size={12} />
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            );
+                                                                                        })}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="p-3 text-center text-xs text-slate-400">
+                                                                                        Aucun élève assigné
                                                                                     </div>
                                                                                 )}
-                                                                                <div className="font-bold mb-1 text-sm">
-                                                                                    Tutorat avec {course.tutor}
-                                                                                </div>
-                                                                                <div className="text-xs opacity-90 flex items-center gap-1">
-                                                                                    <Users size={12} />
-                                                                                    <span>{course.students} élèves • {course.subject}</span>
-                                                                                </div>
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setSelectedSlot(slot.id);
-                                                                                        setSelectedRoom(room);
-                                                                                    }}
-                                                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white text-slate-700 rounded p-1 transition-opacity"
-                                                                                >
-                                                                                    <Settings size={12} />
-                                                                                </button>
                                                                             </div>
                                                                         );
                                                                     })}
@@ -6757,34 +7326,6 @@ const LBNApp = () => {
                         </div>
                         )}
 
-                        {/* Legend */}
-                        {placementView === "grid" && (
-                            <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                                <div className="flex items-center gap-6">
-                                    <span className="text-sm font-semibold text-slate-700">Légende:</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                                        <span className="text-xs text-slate-600">Mathématiques</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                                        <span className="text-xs text-slate-600">Français</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-green-500 rounded"></div>
-                                        <span className="text-xs text-slate-600">Sciences</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                                        <span className="text-xs text-slate-600">Anglais</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-dashed border-slate-300 rounded"></div>
-                                        <span className="text-xs text-slate-600">Salle libre</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Detailed View */}
                         {placementView === "detailed" && (
@@ -6931,66 +7472,103 @@ const LBNApp = () => {
                             <div className="p-6">
                                 {/* Course Info */}
                                 <div className="mb-6">
-                                    <div className={`${selectedCourseForDetails.color} text-white rounded-lg p-4 mb-4`}>
-                                        <div className="font-bold text-lg mb-1">Tutorat avec {selectedCourseForDetails.tutor}</div>
-                                        <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
-                                    </div>
-                                    
                                     {(() => {
                                         const group = getGroupForCourse(selectedCourseForDetails);
+                                        const slot = filteredPlacementTimeSlots.find(s => s.startTime === selectedCourseForDetails.time || selectedCourseForDetails.time.startsWith(s.startTime.split(":")[0]));
+                                        const courseTitle = slot ? getCourseTitle(selectedCourseForDetails, placementDay, slot) : (selectedCourseForDetails.tutor ? `Tutorat avec ${selectedCourseForDetails.tutor}` : `Salle ${selectedCourseForDetails.room}`);
+                                        
+                                        // Check if all students from the group are still present in the course
+                                        const shouldShowGroup = group && selectedCourseForDetails.groupId && selectedCourseForDetails.studentNames && 
+                                            group.students.every(studentName => selectedCourseForDetails.studentNames?.includes(studentName));
+                                        
+                                        // Get actual student count
+                                        const actualStudentCount = selectedCourseForDetails.studentNames?.length || 0;
+                                        
                                         return (
                                             <>
-                                                {/* Tutor Info */}
-                                                <div className="mb-4">
-                                                    <div className="text-sm font-semibold text-slate-700 mb-2">Tuteur:</div>
-                                                    <div className="text-lg font-medium text-slate-900">{selectedCourseForDetails.tutor}</div>
-                                                    {group && group.tutor && (
-                                                        <div className="text-xs text-slate-500 mt-1">Tuteur du groupe</div>
-                                                    )}
+                                                <div className={`${selectedCourseForDetails.color || 'bg-blue-500'} text-white rounded-lg p-4 mb-4`}>
+                                                    <div className="font-bold text-lg mb-1">{courseTitle}</div>
+                                                    <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
                                                 </div>
+                                                
+                                                {/* Tutor Info */}
+                                                {selectedCourseForDetails.tutor && selectedCourseForDetails.tutor.trim() !== "" && (
+                                                    <div className="mb-4">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="text-sm font-semibold text-slate-700">Tuteur:</div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemovePersonFromCourse(selectedCourseForDetails, selectedCourseForDetails.tutor, 'tutor', placementDay);
+                                                                }}
+                                                                className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                title="Retirer le tuteur"
+                                                            >
+                                                                Retirer
+                                                            </button>
+                                                        </div>
+                                                        <div className="text-lg font-medium text-slate-900">{selectedCourseForDetails.tutor}</div>
+                                                        {shouldShowGroup && group && group.tutor && group.tutor === selectedCourseForDetails.tutor && (
+                                                            <div className="text-xs text-slate-500 mt-1">Tuteur du groupe</div>
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                                {/* Group Info */}
-                                                {group && (
-                                                    <div className="mb-4 p-4 bg-slate-50 rounded-lg">
-                                                        <div className="text-sm font-semibold text-slate-700 mb-2">Groupe:</div>
-                                                        <div className="text-lg font-medium text-slate-900">{group.name}</div>
-                                                        <div className="text-xs text-slate-500 mt-1">{group.totalPG} PG</div>
+                                                {/* Group Info - Only show if all group students are present */}
+                                                {shouldShowGroup && group && (
+                                                    <div className="mb-4 border-2 rounded-xl p-4 border-slate-200 bg-white">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="font-semibold text-slate-900">Groupe: {group.name}</div>
+                                                            <div className={`text-xs px-2 py-1 rounded-full ${
+                                                                group.tutor ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                            }`}>
+                                                                {group.tutor ? "Avec tuteur" : "Sans tuteur"}
+                                                            </div>
+                                                        </div>
+                                                        {group.tutor && (
+                                                            <div className="text-sm text-slate-600 mb-2">
+                                                                Tuteur: {group.tutor}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-end mb-2">
+                                                            <div className="text-xs text-slate-500 font-medium">
+                                                                {group.totalPG} PG
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
 
                                                 {/* Students List */}
                                                 <div>
                                                     <div className="text-sm font-semibold text-slate-700 mb-3">
-                                                        Élèves ({selectedCourseForDetails.studentNames?.length || selectedCourseForDetails.students}):
+                                                        Élèves ({actualStudentCount}):
                                                     </div>
                                                     {selectedCourseForDetails.studentNames && selectedCourseForDetails.studentNames.length > 0 ? (
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {selectedCourseForDetails.studentNames.map((studentName, idx) => {
-                                                                const isPresent = selectedCourseForDetails.attendance?.[studentName] ?? null;
+                                                                const grade = getStudentGrade(studentName);
+                                                                const formattedName = formatStudentName(studentName, grade);
                                                                 return (
-                                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
-                                                                        <Users size={16} className="text-slate-400" />
-                                                                        <span className="text-slate-900 flex-1">{studentName}</span>
-                                                                        {isPresent !== null && (
-                                                                            <div className="flex items-center gap-2">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={isPresent}
-                                                                                    disabled
-                                                                                    className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 cursor-not-allowed opacity-60"
-                                                                                />
-                                                                                <span className="text-xs text-slate-600">
-                                                                                    {isPresent ? "Présent" : "Absent"}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
+                                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg group">
+                                                                        <Check size={16} className="text-green-600" />
+                                                                        <span className="text-slate-900 flex-1">{formattedName}</span>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleRemovePersonFromCourse(selectedCourseForDetails, studentName, 'student', placementDay);
+                                                                            }}
+                                                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-red-100 text-red-600"
+                                                                            title="Retirer l'élève"
+                                                                        >
+                                                                            <X size={14} />
+                                                                        </button>
                                                                     </div>
                                                                 );
                                                             })}
                                                         </div>
                                                     ) : (
                                                         <div className="text-slate-500 text-sm">
-                                                            {selectedCourseForDetails.students} élève(s) non spécifié(s)
+                                                            Aucun élève assigné
                                                         </div>
                                                     )}
                                                 </div>
