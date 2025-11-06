@@ -83,8 +83,10 @@ const LBNApp = () => {
 
     interface BlacklistEntry {
         id: string;
-        roomName: string;
-        date: string;
+        roomName?: string; // Optional: if empty, blocks all rooms
+        startDate?: string; // Optional: if empty, blocks for all dates
+        endDate?: string; // Optional: if empty, blocks only the startDate
+        comment?: string; // Reason/comment for the blacklist entry
     }
 
     interface StatisticConfig {
@@ -7966,9 +7968,55 @@ const LBNApp = () => {
         const [newRoomName, setNewRoomName] = useState("");
         const [newRoomCapacity, setNewRoomCapacity] = useState("");
         const [newRoomAccommodations, setNewRoomAccommodations] = useState<string[]>([]);
-        const [blacklistEntries, setBlacklistEntries] = useState<BlacklistEntry[]>([]);
+        const [roomFilterStartDate, setRoomFilterStartDate] = useState("");
+        const [roomFilterEndDate, setRoomFilterEndDate] = useState("");
+        const [roomFilterNoEndDate, setRoomFilterNoEndDate] = useState(false);
+        const [filteredRooms, setFilteredRooms] = useState<any[]>([]);
+        const [showFilteredRooms, setShowFilteredRooms] = useState(false);
+        const [blacklistEntries, setBlacklistEntries] = useState<BlacklistEntry[]>([
+            {
+                id: "1",
+                roomName: "A-101",
+                startDate: "2024-12-20",
+                endDate: "2024-12-25",
+                comment: "Rénovation majeure de la salle - remplacement du système de ventilation",
+            },
+            {
+                id: "2",
+                roomName: "B-201",
+                startDate: undefined,
+                endDate: undefined,
+                comment: "Salle réservée exclusivement pour les réunions du conseil d'administration",
+            },
+            {
+                id: "3",
+                roomName: undefined,
+                startDate: "2024-12-31",
+                endDate: "2025-01-05",
+                comment: "Fermeture annuelle de l'établissement pour les fêtes de fin d'année",
+            },
+            {
+                id: "4",
+                roomName: "A-102",
+                startDate: "2024-12-15",
+                endDate: undefined,
+                comment: "Réparation du projecteur - date de fin à déterminer selon disponibilité des pièces",
+            },
+            {
+                id: "5",
+                roomName: "B-202",
+                startDate: "2025-01-10",
+                endDate: "2025-01-15",
+                comment: "Formation interne du personnel - salle utilisée pour les sessions de formation",
+            },
+        ]);
         const [newBlacklistRoom, setNewBlacklistRoom] = useState("");
-        const [newBlacklistDate, setNewBlacklistDate] = useState("");
+        const [newBlacklistStartDate, setNewBlacklistStartDate] = useState("");
+        const [newBlacklistEndDate, setNewBlacklistEndDate] = useState("");
+        const [newBlacklistNoEndDate, setNewBlacklistNoEndDate] = useState(false);
+        const [newBlacklistNoRoom, setNewBlacklistNoRoom] = useState(false);
+        const [newBlacklistNoDates, setNewBlacklistNoDates] = useState(false);
+        const [newBlacklistComment, setNewBlacklistComment] = useState("");
 
         const availableRooms = ["A-101", "A-102", "B-201", "B-202"];
         const daysOfWeekOptions = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -8005,15 +8053,27 @@ const LBNApp = () => {
         };
 
         const handleAddBlacklist = () => {
-            if (newBlacklistRoom && newBlacklistDate) {
+            // Validation: at least one of roomName or startDate must be specified
+            const hasRoom = !newBlacklistNoRoom && newBlacklistRoom;
+            const hasDates = !newBlacklistNoDates && newBlacklistStartDate;
+            
+            if (hasRoom || hasDates) {
                 const newEntry: BlacklistEntry = {
                     id: Date.now().toString(),
-                    roomName: newBlacklistRoom,
-                    date: newBlacklistDate,
+                    roomName: newBlacklistNoRoom ? undefined : (newBlacklistRoom || undefined),
+                    startDate: newBlacklistNoDates ? undefined : (newBlacklistStartDate || undefined),
+                    endDate: newBlacklistNoDates || newBlacklistNoEndDate ? undefined : (newBlacklistEndDate || undefined),
+                    comment: newBlacklistComment.trim() || undefined,
                 };
                 setBlacklistEntries([...blacklistEntries, newEntry]);
+                // Reset form
                 setNewBlacklistRoom("");
-                setNewBlacklistDate("");
+                setNewBlacklistStartDate("");
+                setNewBlacklistEndDate("");
+                setNewBlacklistNoEndDate(false);
+                setNewBlacklistNoRoom(false);
+                setNewBlacklistNoDates(false);
+                setNewBlacklistComment("");
             }
         };
 
@@ -8032,6 +8092,21 @@ const LBNApp = () => {
             setNewRoomAccommodations(prev =>
                 prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
             );
+        };
+
+        const handleFilterRooms = () => {
+            if (roomFilterStartDate) {
+                // Filter rooms based on availability for the period
+                // For now, we'll show all rooms as available (this would be connected to actual availability logic)
+                const allRooms = [
+                    { name: "A-101", capacity: 15, accommodations: ["windows", "wifi", "projector"] },
+                    { name: "A-102", capacity: 12, accommodations: ["wifi", "whiteboard"] },
+                    { name: "B-201", capacity: 20, accommodations: ["windows", "wifi", "projector", "restroom"] },
+                    { name: "B-202", capacity: 18, accommodations: ["wifi", "projector", "whiteboard"] },
+                ];
+                setFilteredRooms(allRooms);
+                setShowFilteredRooms(true);
+            }
         };
 
         return (
@@ -8267,6 +8342,79 @@ const LBNApp = () => {
                                     Salles avec capacités et accommodements
                                 </p>
 
+                                {/* Filter available rooms by period */}
+                                <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-green-100">
+                                    <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                        <Calendar size={16} className="text-green-500" />
+                                        Filtrer les salles disponibles par période
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date de début
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={roomFilterStartDate}
+                                                onChange={(e) => setRoomFilterStartDate(e.target.value)}
+                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date de fin
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={roomFilterEndDate}
+                                                onChange={(e) => setRoomFilterEndDate(e.target.value)}
+                                                disabled={roomFilterNoEndDate}
+                                                className={`w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${roomFilterNoEndDate ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={roomFilterNoEndDate}
+                                                onChange={(e) => {
+                                                    setRoomFilterNoEndDate(e.target.checked);
+                                                    if (e.target.checked) {
+                                                        setRoomFilterEndDate("");
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-green-500 border-slate-300 rounded focus:ring-green-500"
+                                            />
+                                            Sans date de fin
+                                        </label>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleFilterRooms}
+                                            disabled={!roomFilterStartDate}
+                                            className={`flex-1 py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${!roomFilterStartDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            <Search size={18} />
+                                            Filtrer
+                                        </button>
+                                        {showFilteredRooms && (
+                                            <button
+                                                onClick={() => {
+                                                    setShowFilteredRooms(false);
+                                                    setRoomFilterStartDate("");
+                                                    setRoomFilterEndDate("");
+                                                    setRoomFilterNoEndDate(false);
+                                                }}
+                                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <X size={18} />
+                                                Réinitialiser
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {/* Add new room form */}
                                 <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-green-100">
                                     <div className="grid grid-cols-2 gap-3 mb-4">
@@ -8326,13 +8474,31 @@ const LBNApp = () => {
                                 </div>
 
                                 {/* Rooms List */}
+                                {showFilteredRooms && filteredRooms.length > 0 && (
+                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                        <div className="text-sm font-semibold text-green-700 mb-1">
+                                            Salles disponibles pour la période sélectionnée:
+                                        </div>
+                                        <div className="text-xs text-green-600">
+                                            {roomFilterStartDate && (
+                                                <>
+                                                    Du {new Date(roomFilterStartDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    {roomFilterEndDate && !roomFilterNoEndDate && (
+                                                        <> au {new Date(roomFilterEndDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</>
+                                                    )}
+                                                    {roomFilterNoEndDate && " (sans date de fin)"}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                    {[
+                                    {(showFilteredRooms ? filteredRooms : [
                                         { name: "A-101", capacity: 15, accommodations: ["windows", "wifi", "projector"] },
                                         { name: "A-102", capacity: 12, accommodations: ["wifi", "whiteboard"] },
                                         { name: "B-201", capacity: 20, accommodations: ["windows", "wifi", "projector", "restroom"] },
                                         { name: "B-202", capacity: 18, accommodations: ["wifi", "projector", "whiteboard"] },
-                                    ].map((room, idx) => (
+                                    ]).map((room, idx) => (
                                         <div
                                             key={idx}
                                             className="p-4 bg-white/80 backdrop-blur rounded-xl border border-green-100 hover:shadow-md transition-all group"
@@ -8389,36 +8555,131 @@ const LBNApp = () => {
 
                                 {/* Add new blacklist entry form */}
                                 <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-5 shadow-sm border border-red-100">
+                                    <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                        <Ban size={16} className="text-red-500" />
+                                        Options de blocage
+                                    </h4>
+                                    
+                                    {/* Option to block all rooms (no room specified) */}
+                                    <div className="mb-3">
+                                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={newBlacklistNoRoom}
+                                                onChange={(e) => {
+                                                    setNewBlacklistNoRoom(e.target.checked);
+                                                    if (e.target.checked) {
+                                                        setNewBlacklistRoom("");
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-red-500 border-slate-300 rounded focus:ring-red-500"
+                                            />
+                                            Bloquer toutes les salles (ne pas spécifier de salle)
+                                        </label>
+                                    </div>
+
+                                    {/* Room selection (disabled if blocking all rooms) */}
+                                    <div className="mb-3">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Salle {!newBlacklistNoRoom && <span className="text-red-500">*</span>}
+                                        </label>
+                                        <select
+                                            value={newBlacklistRoom}
+                                            onChange={(e) => setNewBlacklistRoom(e.target.value)}
+                                            disabled={newBlacklistNoRoom}
+                                            className={`w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white ${newBlacklistNoRoom ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                                        >
+                                            <option value="">Sélectionner une salle</option>
+                                            {availableRooms.map((room) => (
+                                                <option key={room} value={room}>
+                                                    {room}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Option to block for all dates (no dates specified) */}
+                                    <div className="mb-3">
+                                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={newBlacklistNoDates}
+                                                onChange={(e) => {
+                                                    setNewBlacklistNoDates(e.target.checked);
+                                                    if (e.target.checked) {
+                                                        setNewBlacklistStartDate("");
+                                                        setNewBlacklistEndDate("");
+                                                        setNewBlacklistNoEndDate(false);
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-red-500 border-slate-300 rounded focus:ring-red-500"
+                                            />
+                                            Bloquer pour toutes les dates (ne pas spécifier de dates)
+                                        </label>
+                                    </div>
+
+                                    {/* Date range selection (disabled if blocking for all dates) */}
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div>
                                             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                                Salle
-                                            </label>
-                                            <select
-                                                value={newBlacklistRoom}
-                                                onChange={(e) => setNewBlacklistRoom(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
-                                            >
-                                                <option value="">Sélectionner une salle</option>
-                                                {availableRooms.map((room) => (
-                                                    <option key={room} value={room}>
-                                                        {room}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                                Date
+                                                Date de début {!newBlacklistNoDates && <span className="text-red-500">*</span>}
                                             </label>
                                             <input
                                                 type="date"
-                                                value={newBlacklistDate}
-                                                onChange={(e) => setNewBlacklistDate(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                                value={newBlacklistStartDate}
+                                                onChange={(e) => setNewBlacklistStartDate(e.target.value)}
+                                                disabled={newBlacklistNoDates}
+                                                className={`w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${newBlacklistNoDates ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Date de fin
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={newBlacklistEndDate}
+                                                onChange={(e) => setNewBlacklistEndDate(e.target.value)}
+                                                disabled={newBlacklistNoDates || newBlacklistNoEndDate}
+                                                className={`w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${(newBlacklistNoDates || newBlacklistNoEndDate) ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Option for no end date */}
+                                    {!newBlacklistNoDates && (
+                                        <div className="mb-3">
+                                            <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={newBlacklistNoEndDate}
+                                                    onChange={(e) => {
+                                                        setNewBlacklistNoEndDate(e.target.checked);
+                                                        if (e.target.checked) {
+                                                            setNewBlacklistEndDate("");
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-red-500 border-slate-300 rounded focus:ring-red-500"
+                                                />
+                                                Sans date de fin
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {/* Comment/Reason field */}
+                                    <div className="mb-3">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Commentaire / Raison du blocage
+                                        </label>
+                                        <textarea
+                                            value={newBlacklistComment}
+                                            onChange={(e) => setNewBlacklistComment(e.target.value)}
+                                            placeholder="Ex: Rénovation en cours, Réparation nécessaire, Événement privé..."
+                                            rows={3}
+                                            className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                        />
+                                    </div>
+
                                     <button
                                         onClick={handleAddBlacklist}
                                         className="w-full py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -8429,31 +8690,92 @@ const LBNApp = () => {
                                 </div>
 
                                 {/* List of blacklist entries */}
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                <div className="space-y-3 max-h-96 overflow-y-auto">
                                     {blacklistEntries.length === 0 ? (
                                         <div className="text-center py-8 text-slate-400 text-sm">
                                             Aucune entrée dans la blacklist
                                         </div>
                                     ) : (
-                                        blacklistEntries.map((entry) => (
-                                            <div
-                                                key={entry.id}
-                                                className="flex items-center justify-between p-3 bg-white/80 backdrop-blur rounded-lg border border-red-100 hover:shadow-md transition-all group"
-                                            >
-                                                <div>
-                                                    <div className="font-bold text-slate-900">{entry.roomName}</div>
-                                                    <div className="text-xs text-slate-500">
-                                                        {new Date(entry.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        blacklistEntries.map((entry) => {
+                                            // Determine blocking type
+                                            const hasRoom = entry.roomName && entry.roomName.trim() !== "";
+                                            const hasDates = entry.startDate;
+                                            let blockingType = "";
+                                            if (hasRoom && hasDates) {
+                                                blockingType = "Salle et dates spécifiques";
+                                            } else if (hasRoom && !hasDates) {
+                                                blockingType = "Salle uniquement (toutes les dates)";
+                                            } else if (!hasRoom && hasDates) {
+                                                blockingType = "Dates uniquement (toutes les salles)";
+                                            }
+
+                                            // Format date range
+                                            let dateRange = "";
+                                            if (entry.startDate) {
+                                                const startDate = new Date(entry.startDate + 'T00:00:00');
+                                                const startFormatted = startDate.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                                                
+                                                if (entry.endDate) {
+                                                    const endDate = new Date(entry.endDate + 'T00:00:00');
+                                                    const endFormatted = endDate.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                                                    dateRange = `Du ${startFormatted} au ${endFormatted}`;
+                                                } else {
+                                                    dateRange = `À partir du ${startFormatted}`;
+                                                }
+                                            } else {
+                                                dateRange = "Toutes les dates";
+                                            }
+
+                                            return (
+                                                <div
+                                                    key={entry.id}
+                                                    className="p-4 bg-white/80 backdrop-blur rounded-xl border border-red-100 hover:shadow-md transition-all group"
+                                                >
+                                                    <div className="flex items-start justify-between mb-2">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <Ban size={16} className="text-red-500" />
+                                                                <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
+                                                                    {blockingType}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            {hasRoom && (
+                                                                <div className="mb-2">
+                                                                    <span className="text-xs font-semibold text-slate-600">Salle:</span>
+                                                                    <span className="ml-2 font-bold text-slate-900">{entry.roomName}</span>
+                                                                </div>
+                                                            )}
+                                                            {!hasRoom && (
+                                                                <div className="mb-2">
+                                                                    <span className="text-xs font-semibold text-slate-600">Salle:</span>
+                                                                    <span className="ml-2 font-bold text-red-600">Toutes les salles</span>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            <div className="mb-2">
+                                                                <span className="text-xs font-semibold text-slate-600">Période:</span>
+                                                                <span className="ml-2 text-sm text-slate-700">{dateRange}</span>
+                                                            </div>
+                                                            
+                                                            {entry.comment && (
+                                                                <div className="mt-2 pt-2 border-t border-red-100">
+                                                                    <span className="text-xs font-semibold text-slate-600">Raison:</span>
+                                                                    <p className="text-sm text-slate-700 mt-1 italic">{entry.comment}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleDeleteBlacklist(entry.id)}
+                                                            className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100 ml-2"
+                                                            title="Supprimer"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleDeleteBlacklist(entry.id)}
-                                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
