@@ -3946,6 +3946,168 @@ const LBNApp = () => {
             }
         };
 
+        const handleRemoveStudentFromGroup = (studentId: number, groupId: number) => {
+            const groupe = groupes.find(g => g.id === groupId);
+            if (!groupe) return;
+
+            const student = eleves.find(e => e.id === studentId);
+            if (!student) return;
+
+            const updatedEleveIds = groupe.eleveIds.filter(id => id !== studentId);
+            const updatedEleveNames = groupe.eleveNames?.filter(name => name !== student.name) || [];
+            const updatedPG = updatedEleveIds.reduce((sum, id) => {
+                const eleve = eleves.find(e => e.id === id);
+                return sum + (eleve ? eleve.pg : 0);
+            }, 0);
+
+            const updatedGroup: Groupe = {
+                ...groupe,
+                eleveIds: updatedEleveIds,
+                eleveNames: updatedEleveNames,
+                pgTotal: updatedPG,
+            };
+
+            setGroupes(groupes.map(g => g.id === groupId ? updatedGroup : g));
+            if (selectedGroup?.id === groupId) {
+                setSelectedGroup(updatedGroup);
+            }
+        };
+
+        const handleAddStudentToGroup = (studentId: number, groupId: number) => {
+            const groupe = groupes.find(g => g.id === groupId);
+            if (!groupe) return;
+
+            const student = eleves.find(e => e.id === studentId);
+            if (!student) return;
+
+            // Check if student is already in the group
+            if (groupe.eleveIds.includes(studentId)) return;
+
+            const updatedEleveIds = [...groupe.eleveIds, studentId];
+            const updatedEleveNames = [...(groupe.eleveNames || []), student.name];
+            const updatedPG = updatedEleveIds.reduce((sum, id) => {
+                const eleve = eleves.find(e => e.id === id);
+                return sum + (eleve ? eleve.pg : 0);
+            }, 0);
+
+            const updatedGroup: Groupe = {
+                ...groupe,
+                eleveIds: updatedEleveIds,
+                eleveNames: updatedEleveNames,
+                pgTotal: updatedPG,
+            };
+
+            setGroupes(groupes.map(g => g.id === groupId ? updatedGroup : g));
+            if (selectedGroup?.id === groupId) {
+                setSelectedGroup(updatedGroup);
+            }
+        };
+
+        const handleAddTutorToGroup = (tutorId: number, groupId: number) => {
+            const groupe = groupes.find(g => g.id === groupId);
+            if (!groupe) return;
+
+            const tutor = tuteurs.find(t => t.id === tutorId);
+            if (!tutor) return;
+
+            // Check if tutor is already assigned
+            if (groupe.tuteurId === tutorId) return;
+
+            const updatedGroup: Groupe = {
+                ...groupe,
+                tuteurId: tutorId,
+                tuteurName: tutor.name,
+            };
+
+            setGroupes(groupes.map(g => g.id === groupId ? updatedGroup : g));
+            if (selectedGroup?.id === groupId) {
+                setSelectedGroup(updatedGroup);
+            }
+        };
+
+        const handleRemoveTutorFromGroup = (groupId: number) => {
+            const groupe = groupes.find(g => g.id === groupId);
+            if (!groupe) return;
+
+            const updatedGroup: Groupe = {
+                ...groupe,
+                tuteurId: undefined,
+                tuteurName: undefined,
+            };
+
+            setGroupes(groupes.map(g => g.id === groupId ? updatedGroup : g));
+            if (selectedGroup?.id === groupId) {
+                setSelectedGroup(updatedGroup);
+            }
+        };
+
+        const handleSaveGroupChanges = () => {
+            if (!selectedGroup) return;
+            
+            // Update the group in the groupes array
+            setGroupes(groupes.map(g => g.id === selectedGroup.id ? selectedGroup : g));
+            
+            // Show confirmation
+            alert("Groupe sauvegardé avec succès!");
+        };
+
+        // Function to get the exact date (day and month) for a day of the week
+        const getDateForDay = (day: Day): string => {
+            const today = new Date();
+            const dayNames: Day[] = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+            const dayIndex = dayNames.indexOf(day);
+            
+            // Get the next occurrence of this day
+            const currentDay = today.getDay();
+            let daysUntilTarget = dayIndex - currentDay;
+            if (daysUntilTarget < 0) {
+                daysUntilTarget += 7; // Next week
+            }
+            
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + daysUntilTarget);
+            
+            const dayNum = targetDate.getDate();
+            const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+            const month = monthNames[targetDate.getMonth()];
+            
+            return `${dayNum} ${month}`;
+        };
+
+        // Function to format student name: "Lucas B., Sec. 3"
+        const formatStudentName = (studentName: string, grade: string | null): string => {
+            const parts = studentName.trim().split(/\s+/);
+            if (parts.length < 2) {
+                return grade ? `${studentName}, ${grade}` : studentName;
+            }
+            const firstName = parts[0];
+            const lastNameInitial = parts[parts.length - 1][0].toUpperCase();
+            return grade ? `${firstName} ${lastNameInitial}., ${grade}` : `${firstName} ${lastNameInitial}.`;
+        };
+
+        // Function to get student grade from database
+        const getStudentGrade = (studentName: string): string | null => {
+            const student = eleves.find(s => s.name === studentName);
+            return student ? student.grade : null;
+        };
+
+        // Function to get all courses for a group from placement page
+        const getCoursesForGroup = (groupId: number): Array<{day: Day, course: Course}> => {
+            const groupCourses: Array<{day: Day, course: Course}> = [];
+            const allDays: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+            
+            allDays.forEach((day) => {
+                const dayCourses = courses[day] || [];
+                dayCourses.forEach((course) => {
+                    if (course.groupId === groupId) {
+                        groupCourses.push({ day, course });
+                    }
+                });
+            });
+            
+            return groupCourses;
+        };
+
         // Validate PG capacity
         const validatePGCapacity = (tuteurId: number, newPG: number): boolean => {
             const tuteur = tuteurs.find(t => t.id === tuteurId);
@@ -4463,7 +4625,10 @@ const LBNApp = () => {
                                     filteredPersonnel.map((person) => (
                                         <div
                                             key={person.id}
-                                            onClick={() => setSelectedPerson(person)}
+                                            onClick={() => {
+                                                setSelectedPerson(person);
+                                                setSelectedGroup(null);
+                                            }}
                                             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedPerson?.id === person.id
                                                 ? "bg-orange-100 border-2 border-orange-500 shadow-sm"
                                                 : "bg-slate-50 hover:bg-slate-100 border-2 border-transparent hover:shadow-sm"
@@ -4496,11 +4661,41 @@ const LBNApp = () => {
                                                     }
                                                 </div>
                                             </div>
-                                            {selectedPerson?.id === person.id && (
-                                                <div className="text-orange-500">
-                                                    <ChevronDown size={18} className="transform -rotate-90" />
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {selectedGroup && (
+                                                    <>
+                                                        {person.type === "tuteur" && selectedGroup.tuteurId !== person.id && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleAddTutorToGroup(person.id, selectedGroup.id);
+                                                                }}
+                                                                className="p-1.5 hover:bg-green-100 rounded-lg transition-colors text-green-600"
+                                                                title="Ajouter le tuteur au groupe"
+                                                            >
+                                                                <Plus size={16} />
+                                                            </button>
+                                                        )}
+                                                        {person.type === "eleve" && !selectedGroup.eleveIds.includes(person.id) && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleAddStudentToGroup(person.id, selectedGroup.id);
+                                                                }}
+                                                                className="p-1.5 hover:bg-green-100 rounded-lg transition-colors text-green-600"
+                                                                title="Ajouter l'élève au groupe"
+                                                            >
+                                                                <Plus size={16} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                                {selectedPerson?.id === person.id && (
+                                                    <div className="text-orange-500">
+                                                        <ChevronDown size={18} className="transform -rotate-90" />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
@@ -4515,7 +4710,195 @@ const LBNApp = () => {
 
                         {/* Right Panel - Details View */}
                         <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-y-auto">
-                            {selectedPerson ? (
+                            {selectedGroup ? (
+                                <div>
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                                                <Users size={32} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-slate-900">
+                                                    {selectedGroup.name}
+                                                </h3>
+                                                <div className="text-slate-600">
+                                                    Groupe • {selectedGroup.pgTotal} PG total
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    handleSaveGroupChanges();
+                                                }}
+                                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                            >
+                                                Sauvegarder
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    handleDeleteGroup(selectedGroup);
+                                                }}
+                                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                                            >
+                                                <Trash2 size={16} />
+                                                Supprimer
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Group Name */}
+                                    <div className="mb-6">
+                                        <div className="bg-orange-500 text-white rounded-lg p-4">
+                                            <div className="font-bold text-lg mb-1">{selectedGroup.name}</div>
+                                            <div className="text-sm opacity-90">{selectedGroup.pgTotal} PG total</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Tutor Section */}
+                                    <div className="mb-6">
+                                        <div className="text-sm font-semibold text-slate-700 mb-2">Tuteur:</div>
+                                        {selectedGroup.tuteurName ? (
+                                            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                <div className="flex-1">
+                                                    <div className="text-lg font-medium text-slate-900">{selectedGroup.tuteurName}</div>
+                                                    <div className={`text-xs px-2 py-1 rounded-full inline-block mt-2 ${
+                                                        selectedGroup.tuteurId ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                    }`}>
+                                                        {selectedGroup.tuteurId ? "Avec tuteur" : "Sans tuteur"}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveTutorFromGroup(selectedGroup.id)}
+                                                    className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                                                    title="Retirer le tuteur du groupe"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-500">
+                                                Aucun tuteur assigné
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Students Section */}
+                                    <div className="mb-6">
+                                        <div className="text-sm font-semibold text-slate-700 mb-3">
+                                            Élèves ({selectedGroup.eleveNames?.length || selectedGroup.eleveIds.length}):
+                                        </div>
+                                        {selectedGroup.eleveNames && selectedGroup.eleveNames.length > 0 ? (
+                                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                {selectedGroup.eleveNames.map((studentName, idx) => {
+                                                    const grade = getStudentGrade(studentName);
+                                                    const formattedName = formatStudentName(studentName, grade);
+                                                    const student = eleves.find(e => e.name === studentName);
+                                                    const studentId = student ? student.id : selectedGroup.eleveIds[idx];
+                                                    return (
+                                                        <div 
+                                                            key={idx} 
+                                                            className="flex items-center gap-3 p-2 rounded-lg bg-green-50 border border-green-200"
+                                                        >
+                                                            <Check size={16} className="text-green-600" />
+                                                            <span className="flex-1 text-slate-900">
+                                                                {formattedName}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleRemoveStudentFromGroup(studentId, selectedGroup.id)}
+                                                                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                                                                title="Retirer l'élève du groupe"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-slate-500 text-sm p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                Aucun élève dans ce groupe
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* PG Total */}
+                                    <div className="mb-6">
+                                        <div className="text-sm font-semibold text-slate-700 mb-2">Total PG:</div>
+                                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div className="text-lg font-medium text-slate-900">{selectedGroup.pgTotal} PG</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Créneaux de cours Section */}
+                                    {(() => {
+                                        const groupCourses = getCoursesForGroup(selectedGroup.id);
+                                        return groupCourses.length > 0 ? (
+                                            <div className="mb-6">
+                                                <div className="text-sm font-semibold text-slate-700 mb-3">
+                                                    Créneaux de cours ({groupCourses.length}):
+                                                </div>
+                                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                    {groupCourses.map(({ day, course }, idx) => {
+                                                        // Find the time slot label for this course
+                                                        const timeSlot = timeSlots.find(ts => ts.startTime === course.time);
+                                                        const timeLabel = timeSlot ? timeSlot.label : course.time;
+                                                        const exactDate = getDateForDay(day);
+                                                        
+                                                        return (
+                                                            <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <div className="text-sm font-medium text-slate-900">{day} {exactDate}</div>
+                                                                    <div className={`px-2 py-0.5 rounded text-xs font-medium ${course.color} text-white`}>
+                                                                        {course.subject}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 text-xs text-slate-600">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Clock size={12} />
+                                                                        <span>{timeLabel}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <MapPin size={12} />
+                                                                        <span>{course.room}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <User size={12} />
+                                                                        <span>{course.tutor}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="mb-6">
+                                                <div className="text-sm font-semibold text-slate-700 mb-3">Créneaux de cours:</div>
+                                                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-500 text-sm">
+                                                    Aucun créneau assigné à ce groupe pour le moment
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Disponibilités Section */}
+                                    {selectedGroup.disponibilites && selectedGroup.disponibilites.length > 0 && (
+                                        <div className="mb-6">
+                                            <div className="text-sm font-semibold text-slate-700 mb-3">Disponibilités:</div>
+                                            <div className="space-y-2">
+                                                {selectedGroup.disponibilites.map((dispo, idx) => (
+                                                    <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div className="text-sm font-medium text-slate-900">{dispo.day}</div>
+                                                        <div className="text-xs text-slate-600">{dispo.time}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : selectedPerson ? (
                                 <div>
                                     {/* Header */}
                                     <div className="flex items-start justify-between mb-6">
@@ -4850,7 +5233,7 @@ const LBNApp = () => {
                                     <div className="text-center">
                                         <Users size={48} className="mx-auto mb-4 opacity-50" />
                                         <p className="text-lg font-medium">Sélectionnez une personne</p>
-                                        <p className="text-sm">pour voir les détails</p>
+                                        <p className="text-sm">ou un groupe pour voir les détails</p>
                                     </div>
                                 </div>
                             )}
@@ -4877,10 +5260,11 @@ const LBNApp = () => {
                             {groupes.map((groupe) => (
                                 <div 
                                     key={groupe.id}
-                                    onClick={() => setSelectedGroup(groupe)}
-                                    className={`border-2 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer ${
-                                        selectedGroup?.id === groupe.id ? "border-orange-500 bg-orange-50" : "border-slate-200"
-                                    }`}
+                                    onClick={() => {
+                                        setSelectedGroup(groupe);
+                                        setSelectedPerson(null);
+                                    }}
+                                    className="border-2 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer border-slate-200"
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="font-semibold text-slate-900">{groupe.name}</div>
@@ -4893,40 +5277,51 @@ const LBNApp = () => {
                                     <div className="text-sm text-slate-600 mb-2">
                                         {groupe.tuteurName ? `Tuteur: ${groupe.tuteurName}` : "Aucun tuteur assigné"}
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Users size={14} className="text-slate-400" />
-                                            <span className="text-sm text-slate-600">{groupe.eleveIds.length} élève(s)</span>
+                                    {/* Students Section */}
+                                    {groupe.eleveNames && groupe.eleveNames.length > 0 ? (
+                                        <div className="mb-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Users size={14} className="text-slate-400" />
+                                                <span className="text-xs text-slate-600 font-medium">{groupe.eleveIds.length} élève(s)</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {groupe.eleveNames.slice(0, 4).map((studentName, idx) => {
+                                                    const grade = getStudentGrade(studentName);
+                                                    const formattedName = formatStudentName(studentName, grade);
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className="px-2 py-1 rounded-full text-[10px] font-medium bg-green-50 text-green-700 border border-green-200"
+                                                            title={studentName}
+                                                        >
+                                                            {formattedName}
+                                                        </div>
+                                                    );
+                                                })}
+                                                {groupe.eleveNames.length > 4 && (
+                                                    <div className="px-2 py-1 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                        +{groupe.eleveNames.length - 4}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Users size={14} className="text-slate-400" />
+                                            <span className="text-sm text-slate-600">0 élève(s)</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center justify-end">
                                         <div className="text-xs text-slate-500 font-medium">
                                             {groupe.pgTotal} PG
                                         </div>
-                                    </div>
-                                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditGroup(groupe);
-                                            }}
-                                            className="flex-1 px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors"
-                                        >
-                                            Modifier
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteGroup(groupe);
-                                            }}
-                                            className="flex-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                                        >
-                                            Supprimer
-                                        </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
+
 
                 {/* Student Form Modal */}
                 {showStudentForm && (
