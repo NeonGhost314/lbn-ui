@@ -2082,57 +2082,60 @@ const LBNApp = () => {
                                     Semaine du 17 octobre 2025
                                 </p>
                             </div>
-                            {/* Relative wrapper for dropdown positioning */}
+                            {/* Relative wrapper for stats picker positioning */}
                             <div className="relative">
+                                {/* Square clickable box to add statistics */}
                                 <button
                                     ref={statsPickerButtonRef}
                                     onClick={() => setShowStatsPicker(!showStatsPicker)}
-                                    className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2"
+                                    className="w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 flex items-center justify-center transition-all duration-200 hover:shadow-md"
+                                    title="Ajouter des statistiques"
                                 >
-                                    <Eye size={16} />
-                                    Personnaliser
-                                    <ChevronDown 
-                                        size={16} 
-                                        className={`transition-transform duration-200 ${showStatsPicker ? 'rotate-180' : ''}`}
-                                    />
+                                    <Plus size={20} className="text-slate-700" />
                                 </button>
 
-                                {/* Floating Statistics Picker Dropdown */}
+                                {/* Floating Statistics Picker Popup */}
                                 {showStatsPicker && (
                                     <div 
                                         ref={statsPickerRef}
-                                        className="absolute top-12 right-0 z-50 w-72 bg-white rounded-xl border border-slate-200 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                                        className="absolute top-14 right-0 z-50 w-72 bg-white rounded-xl border border-slate-200 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-200"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <p className="text-sm font-medium text-slate-700 mb-3">
-                                            Choisir les statistiques à afficher:
+                                            Statistiques disponibles:
                                         </p>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {statsConfig.map((stat) => (
-                                                <label
-                                                    key={stat.id}
-                                                    className="flex items-center gap-2 p-2.5 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={
-                                                            visibleStats[stat.id] ?? stat.visible
-                                                        }
-                                                        onChange={(e) =>
-                                                            setVisibleStats({
-                                                                ...visibleStats,
-                                                                [stat.id]: e.target.checked,
-                                                            })
-                                                        }
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="rounded"
-                                                    />
-                                                    <span className="text-sm text-slate-700">
-                                                        {stat.name}
-                                                    </span>
-                                                </label>
-                                            ))}
+                                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                                            {statsConfig.map((stat) => {
+                                                const isVisible = visibleStats[stat.id] ?? stat.visible;
+                                                return (
+                                                    <button
+                                                        key={stat.id}
+                                                        onClick={() => {
+                                                            if (!isVisible) {
+                                                                setVisibleStats({
+                                                                    ...visibleStats,
+                                                                    [stat.id]: true,
+                                                                });
+                                                            }
+                                                            setShowStatsPicker(false);
+                                                        }}
+                                                        disabled={isVisible}
+                                                        className={`flex items-center gap-2 p-2.5 rounded-lg transition-colors text-left ${
+                                                            isVisible 
+                                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                                                                : 'hover:bg-slate-50 text-slate-700 cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        <Plus size={16} className={isVisible ? 'invisible' : 'text-slate-600'} />
+                                                        <span className="text-sm flex-1">
+                                                            {stat.name}
+                                                        </span>
+                                                        {isVisible && (
+                                                            <span className="text-xs text-slate-400">Déjà affichée</span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -2142,7 +2145,14 @@ const LBNApp = () => {
                         {/* KPIs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             {visibleStats.activeStudents && (
-                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-5 shadow-md border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-5 shadow-md border border-blue-200 hover:shadow-lg transition-all duration-300 hover:scale-105 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, activeStudents: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Élèves actifs
@@ -2162,7 +2172,14 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.plannedCourses && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, plannedCourses: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Cours planifiés
@@ -2181,7 +2198,14 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.occupancyRate && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, occupancyRate: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Taux occupation
@@ -2203,7 +2227,14 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.overages && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, overages: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Dépassements
@@ -2225,7 +2256,14 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.tutorCapacity && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, tutorCapacity: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Capacité tuteurs
@@ -2244,7 +2282,14 @@ const LBNApp = () => {
                             )}
 
                             {visibleStats.roomUsage && (
-                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200">
+                                <div className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative">
+                                    <button
+                                        onClick={() => setVisibleStats({ ...visibleStats, roomUsage: false })}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-slate-600 text-sm font-medium">
                                             Utilisation salles
