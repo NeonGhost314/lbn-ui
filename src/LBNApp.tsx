@@ -3051,27 +3051,33 @@ const LBNApp = () => {
             }
 
             const dataToExport = personnelFilter === "tuteur" 
-                ? filteredPersonnel.map(t => ({
-                    Nom: t.name,
-                    Email: t.email,
-                    Téléphone: t.phone,
-                    Niveau: t.niveau,
-                    Spécialités: t.specialites.join(', '),
-                    "Années confortables": t.anneesConfortables.join(', '),
-                    "Salaire horaire": `$${t.salaireHoraire.toFixed(2)}/heure`,
-                    Capacité: t.capacity,
-                    Statut: t.status === "active" ? "Disponible" : "Complet",
-                    "Nombre de cours": t.courses
-                }))
-                : filteredPersonnel.map(e => ({
-                    Nom: e.name,
-                    Email: e.email,
-                    Téléphone: e.phone,
-                    Niveau: e.grade,
-                    PG: e.pg,
-                    Statut: e.status === "active" ? "Actif" : "Inactif",
-                    Tuteur: e.tuteur
-                }));
+                ? filteredPersonnel.map(t => {
+                    const tuteur = t as Tuteur;
+                    return {
+                        Nom: tuteur.name,
+                        Email: tuteur.email,
+                        Téléphone: tuteur.phone,
+                        Niveau: tuteur.niveau,
+                        Spécialités: tuteur.specialites.join(', '),
+                        "Années confortables": tuteur.anneesConfortables.join(', '),
+                        "Salaire horaire": `$${tuteur.salaireHoraire.toFixed(2)}/heure`,
+                        Capacité: tuteur.capacity,
+                        Statut: tuteur.status === "active" ? "Disponible" : "Complet",
+                        "Nombre de cours": tuteur.courses
+                    };
+                })
+                : filteredPersonnel.map(e => {
+                    const eleve = e as Eleve;
+                    return {
+                        Nom: eleve.name,
+                        Email: eleve.email,
+                        Téléphone: eleve.phone,
+                        Niveau: eleve.grade,
+                        PG: eleve.pg,
+                        Statut: eleve.status === "active" ? "Actif" : "Inactif",
+                        Tuteur: eleve.tuteur
+                    };
+                });
 
             const typeName = personnelFilter === "tuteur" ? "tuteurs" : "eleves";
             const timestamp = new Date().toISOString().split('T')[0];
@@ -3511,7 +3517,7 @@ const LBNApp = () => {
                                                 </h3>
                                                 <div className="text-slate-600">
                                                     {selectedPerson.type === "tuteur" ? "Tuteur" : "Élève"}
-                                                    {selectedPerson.niveau && ` • Niveau ${selectedPerson.niveau}`}
+                                                    {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).niveau && ` • Niveau ${(selectedPerson as Tuteur).niveau}`}
                                                 </div>
                                             </div>
                                         </div>
@@ -3540,7 +3546,7 @@ const LBNApp = () => {
                                             {selectedPerson.type === "tuteur" && (
                                                 <div>
                                                     <div className="text-sm text-slate-600 mb-1">Salaire horaire</div>
-                                                    <div className="text-slate-900 font-semibold">${selectedPerson.salaireHoraire.toFixed(2)}/heure</div>
+                                                    <div className="text-slate-900 font-semibold">${(selectedPerson as Tuteur).salaireHoraire.toFixed(2)}/heure</div>
                                                 </div>
                                             )}
                                         </div>
@@ -3553,7 +3559,7 @@ const LBNApp = () => {
                                             <div className="mb-6">
                                                 <h4 className="font-semibold text-slate-900 mb-3">Spécialités</h4>
                                                 <div className="flex gap-2 flex-wrap">
-                                                    {selectedPerson.specialites.map((spec: string, idx: number) => (
+                                                    {(selectedPerson as Tuteur).specialites.map((spec: string, idx: number) => (
                                                         <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
                                                             {spec}
                                                         </span>
@@ -3565,7 +3571,7 @@ const LBNApp = () => {
                                             <div className="mb-6">
                                                 <h4 className="font-semibold text-slate-900 mb-3">Années confortables</h4>
                                                 <div className="flex gap-2 flex-wrap">
-                                                    {selectedPerson.anneesConfortables.map((annee: string, idx: number) => (
+                                                    {(selectedPerson as Tuteur).anneesConfortables.map((annee: string, idx: number) => (
                                                         <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
                                                             {annee}
                                                         </span>
@@ -3578,9 +3584,9 @@ const LBNApp = () => {
                                                 <h4 className="font-semibold text-slate-900 mb-3">Capacité de Gestion</h4>
                                                 <div className="bg-slate-50 rounded-xl p-4">
                                                     <div className="text-sm text-slate-600 mb-2">Quantité d'élèves qu'il peut gérer</div>
-                                                    <div className="text-2xl font-bold text-slate-900 mb-2">{selectedPerson.capaciteGestion} PG</div>
+                                                    <div className="text-2xl font-bold text-slate-900 mb-2">{(selectedPerson as Tuteur).capaciteGestion} PG</div>
                                                     <div className="text-xs text-slate-500">
-                                                        Les PG des élèves assignés s'additionnent jusqu'à atteindre {selectedPerson.capaciteGestion} PG
+                                                        Les PG des élèves assignés s'additionnent jusqu'à atteindre {(selectedPerson as Tuteur).capaciteGestion} PG
                                                     </div>
                                                 </div>
                                             </div>
@@ -3593,18 +3599,18 @@ const LBNApp = () => {
                                             <div className="grid grid-cols-2 gap-4 mb-6">
                                                 <div className="bg-slate-50 rounded-xl p-4">
                                                     <div className="text-sm text-slate-600 mb-1">Niveau</div>
-                                                    <div className="text-xl font-bold text-slate-900">{selectedPerson.grade}</div>
+                                                    <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).grade}</div>
                                                 </div>
                                             <div className="bg-slate-50 rounded-xl p-4">
                                                 <div className="text-sm text-slate-600 mb-1">Points de Gestion</div>
-                                                <div className="text-xl font-bold text-slate-900">{selectedPerson.pg} PG</div>
+                                                <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).pg} PG</div>
                                             </div>
                                             </div>
 
                                             <div className="mb-6">
                                                 <h4 className="font-semibold text-slate-900 mb-3">Tuteur assigné</h4>
                                                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                                    <div className="font-medium text-blue-900">{selectedPerson.tuteur}</div>
+                                                    <div className="font-medium text-blue-900">{(selectedPerson as Eleve).tuteur}</div>
                                                 </div>
                                             </div>
                                         </>
