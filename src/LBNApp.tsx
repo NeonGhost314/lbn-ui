@@ -143,8 +143,9 @@ const LBNApp = () => {
         statistiques?: {
             heuresEnseignees: number;
             tauxCompletion: number;
-            satisfaction: number;
-            nombreEleves: number;
+            nombreCours: number;
+            dateDebut: string;
+            nombreElevesDifferents: number;
         };
         note?: string;
     }
@@ -171,6 +172,17 @@ const LBNApp = () => {
             time: string;
             subject: string;
             tuteur: string;
+        }>;
+        disponibilites?: Array<{
+            id: string;
+            day: string;
+            startTime: string;
+            endTime: string;
+            type: "recurrente" | "ponctuelle" | "exception";
+            startDate?: string;
+            endDate?: string;
+            commentaire?: string;
+            active: boolean;
         }>;
         statistiques?: {
             tauxPresence: number;
@@ -3061,6 +3073,8 @@ const LBNApp = () => {
         // Filter states for élèves
         const [gradeFilter, setGradeFilter] = useState<string[]>([]);
         const [pgFilter, setPgFilter] = useState<string>("");
+        const [availabilityDateFilter, setAvailabilityDateFilter] = useState<string>("");
+        const [availabilityTimeSlotFilter, setAvailabilityTimeSlotFilter] = useState<string[]>([]);
 
         // Export menu state
         const [showExportMenu, setShowExportMenu] = useState(false);
@@ -3093,6 +3107,26 @@ const LBNApp = () => {
             };
         }, [showExportMenu]);
 
+        // Clear invalid time slot selections when date changes
+        useEffect(() => {
+            if (availabilityDateFilter && availabilityTimeSlotFilter.length > 0) {
+                const selectedDay = (() => {
+                    const date = new Date(availabilityDateFilter);
+                    const dayIndex = date.getDay();
+                    const dayNames: Day[] = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                    return dayNames[dayIndex];
+                })();
+                
+                const validTimeSlots = timeSlots.filter(ts => ts.daysOfWeek.includes(selectedDay));
+                const validTimeSlotIds = validTimeSlots.map(ts => ts.id);
+                const invalidSelections = availabilityTimeSlotFilter.filter(id => !validTimeSlotIds.includes(id));
+                
+                if (invalidSelections.length > 0) {
+                    setAvailabilityTimeSlotFilter(availabilityTimeSlotFilter.filter(id => validTimeSlotIds.includes(id)));
+                }
+            }
+        }, [availabilityDateFilter, availabilityTimeSlotFilter, timeSlots]);
+
         // State for data
         const [tuteurs, setTuteurs] = useState<Tuteur[]>([
             {
@@ -3115,8 +3149,9 @@ const LBNApp = () => {
                 statistiques: {
                     heuresEnseignees: 120,
                     tauxCompletion: 95,
-                    satisfaction: 4.8,
-                    nombreEleves: 8
+                    nombreCours: 45,
+                    dateDebut: "2023-09-01",
+                    nombreElevesDifferents: 8
                 },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle A", students: 3 },
@@ -3124,6 +3159,38 @@ const LBNApp = () => {
                     { day: "Mardi", time: "15h30", room: "Salle C", students: 5 },
                 ],
                 allergies: "Arachides, Fruits de mer",
+                disponibilites: [
+                    {
+                        id: "t1-d1",
+                        day: "Lundi",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "t1-d2",
+                        day: "Mardi",
+                        startTime: "18:30",
+                        endTime: "20:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "t1-d3",
+                        day: "Mercredi",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                ],
             },
             {
                 id: 2,
@@ -3145,12 +3212,35 @@ const LBNApp = () => {
                 statistiques: {
                     heuresEnseignees: 90,
                     tauxCompletion: 92,
-                    satisfaction: 4.6,
-                    nombreEleves: 6
+                    nombreCours: 32,
+                    dateDebut: "2023-10-15",
+                    nombreElevesDifferents: 6
                 },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle B", students: 4 },
                     { day: "Lundi", time: "13h00", room: "Salle B", students: 4 },
+                ],
+                disponibilites: [
+                    {
+                        id: "t2-d1",
+                        day: "Lundi",
+                        startTime: "18:30",
+                        endTime: "20:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "t2-d2",
+                        day: "Jeudi",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
                 ],
             },
             {
@@ -3173,14 +3263,47 @@ const LBNApp = () => {
                 statistiques: {
                     heuresEnseignees: 150,
                     tauxCompletion: 98,
-                    satisfaction: 4.9,
-                    nombreEleves: 10
+                    nombreCours: 58,
+                    dateDebut: "2022-01-10",
+                    nombreElevesDifferents: 10
                 },
                 prochainsCours: [
                     { day: "Lundi", time: "10h30", room: "Salle A", students: 2 },
                     { day: "Mardi", time: "8h00", room: "Salle D", students: 2 },
                 ],
                 allergies: "Lactose",
+                disponibilites: [
+                    {
+                        id: "t3-d1",
+                        day: "Samedi",
+                        startTime: "08:15",
+                        endTime: "10:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "t3-d2",
+                        day: "Samedi",
+                        startTime: "10:30",
+                        endTime: "12:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "t3-d3",
+                        day: "Dimanche",
+                        startTime: "13:00",
+                        endTime: "15:00",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                ],
             },
             {
                 id: 4,
@@ -3202,8 +3325,9 @@ const LBNApp = () => {
                 statistiques: {
                     heuresEnseignees: 60,
                     tauxCompletion: 88,
-                    satisfaction: 4.5,
-                    nombreEleves: 4
+                    nombreCours: 20,
+                    dateDebut: "2024-01-20",
+                    nombreElevesDifferents: 4
                 },
                 prochainsCours: [
                     { day: "Lundi", time: "13h00", room: "Salle C", students: 3 },
@@ -3237,6 +3361,28 @@ const LBNApp = () => {
                     { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
                 ],
                 allergies: "Arachides",
+                disponibilites: [
+                    {
+                        id: "e1-d1",
+                        day: "Lundi",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "e1-d2",
+                        day: "Mardi",
+                        startTime: "18:30",
+                        endTime: "20:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                ],
             },
             {
                 id: 6,
@@ -3261,6 +3407,28 @@ const LBNApp = () => {
                     { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
                 ],
                 allergies: "Gluten, Œufs",
+                disponibilites: [
+                    {
+                        id: "e2-d1",
+                        day: "Lundi",
+                        startTime: "18:30",
+                        endTime: "20:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "e2-d2",
+                        day: "Jeudi",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                ],
             },
             {
                 id: 7,
@@ -3283,6 +3451,28 @@ const LBNApp = () => {
                 },
                 prochainsCours: [
                     { day: "Mardi", time: "10h30", subject: "Sciences", tuteur: "Sophie Chen" },
+                ],
+                disponibilites: [
+                    {
+                        id: "e3-d1",
+                        day: "Samedi",
+                        startTime: "08:15",
+                        endTime: "10:15",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
+                    {
+                        id: "e3-d2",
+                        day: "Samedi",
+                        startTime: "10:30",
+                        endTime: "12:30",
+                        type: "recurrente",
+                        startDate: "2024-01-01",
+                        endDate: "2024-12-31",
+                        active: true
+                    },
                 ],
             },
             {
@@ -3377,6 +3567,38 @@ const LBNApp = () => {
             };
         });
 
+        // Helper function to get day name from date string
+        const getDayNameFromDate = (dateString: string): Day | null => {
+            if (!dateString) return null;
+            const date = new Date(dateString);
+            const dayIndex = date.getDay();
+            const dayNames: Day[] = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+            return dayNames[dayIndex];
+        };
+
+        // Helper function to check if date is within range
+        const isDateInRange = (dateString: string, startDate?: string, endDate?: string): boolean => {
+            if (!dateString) return true;
+            const date = new Date(dateString);
+            if (startDate) {
+                const start = new Date(startDate);
+                if (date < start) return false;
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // Include the end date
+                if (date > end) return false;
+            }
+            return true;
+        };
+
+        // Helper function to check if time slot matches availability
+        const matchesTimeSlot = (availabilityStart: string, availabilityEnd: string, timeSlotId: string): boolean => {
+            const timeSlot = timeSlots.find(ts => ts.id === timeSlotId);
+            if (!timeSlot) return false;
+            return availabilityStart === timeSlot.startTime && availabilityEnd === timeSlot.endTime;
+        };
+
         // Filter personnel based on type, search query, and advanced filters
         const filteredPersonnel = (personnelFilter === "tuteur" ? tuteursWithUpdatedCapacity : eleves).filter((person) => {
             // Search filter - includes name and alias
@@ -3394,7 +3616,59 @@ const LBNApp = () => {
                 const matchesGroupe = groupeFilter === "" || 
                     (tuteur.groupeId && tuteur.groupeId.toString() === groupeFilter);
 
-                return matchesSearch && matchesSpecialite && matchesStatus && matchesTypeTuteur && matchesGroupe;
+                // Availability filter
+                let matchesAvailability = true;
+                if (availabilityDateFilter || availabilityTimeSlotFilter.length > 0) {
+                    matchesAvailability = false;
+                    if (tuteur.disponibilites && tuteur.disponibilites.length > 0) {
+                        const selectedDay = availabilityDateFilter ? getDayNameFromDate(availabilityDateFilter) : null;
+                        
+                        for (const disponibilite of tuteur.disponibilites) {
+                            if (!disponibilite.active) continue;
+                            
+                            // Check if date is in range
+                            if (availabilityDateFilter && !isDateInRange(availabilityDateFilter, disponibilite.startDate, disponibilite.endDate)) {
+                                continue;
+                            }
+                            
+                            // Check day match
+                            if (selectedDay && disponibilite.day !== selectedDay) {
+                                continue;
+                            }
+                            
+                            // Check time slot match
+                            if (availabilityTimeSlotFilter.length > 0) {
+                                const matchesTimeSlotFilter = availabilityTimeSlotFilter.some(tsId => 
+                                    matchesTimeSlot(disponibilite.startTime, disponibilite.endTime, tsId)
+                                );
+                                if (!matchesTimeSlotFilter) {
+                                    continue;
+                                }
+                            }
+                            
+                            // If we have date filter, we need both date and (optionally) time slot match
+                            // If we only have time slot filter, we need time slot match
+                            if (availabilityDateFilter) {
+                                // Date is selected: need day match and optionally time slot match
+                                if (selectedDay === disponibilite.day && 
+                                    (availabilityTimeSlotFilter.length === 0 || availabilityTimeSlotFilter.some(tsId => 
+                                        matchesTimeSlot(disponibilite.startTime, disponibilite.endTime, tsId)))) {
+                                    matchesAvailability = true;
+                                    break;
+                                }
+                            } else if (availabilityTimeSlotFilter.length > 0) {
+                                // Only time slot filter: just need time slot match
+                                if (availabilityTimeSlotFilter.some(tsId => 
+                                    matchesTimeSlot(disponibilite.startTime, disponibilite.endTime, tsId))) {
+                                    matchesAvailability = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return matchesSearch && matchesSpecialite && matchesStatus && matchesTypeTuteur && matchesGroupe && matchesAvailability;
             } else {
                 const eleve = person as Eleve;
                 const matchesGrade = gradeFilter.length === 0 || gradeFilter.includes(eleve.grade);
@@ -3408,7 +3682,7 @@ const LBNApp = () => {
 
         // Count active filters
         const activeFiltersCount = personnelFilter === "tuteur"
-            ? specialiteFilter.length + statusFilter.length + typeTuteurFilter.length + (groupeFilter ? 1 : 0)
+            ? specialiteFilter.length + statusFilter.length + typeTuteurFilter.length + (groupeFilter ? 1 : 0) + (availabilityDateFilter ? 1 : 0) + availabilityTimeSlotFilter.length
             : gradeFilter.length + (pgFilter ? 1 : 0) + (groupeFilter ? 1 : 0);
 
         // Form state for student
@@ -3967,7 +4241,7 @@ const LBNApp = () => {
                                                 </div>
 
                                                 <div className="border-t border-slate-200 pt-3">
-                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Disponibilité</label>
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Statut</label>
                                                     <div className="space-y-2">
                                                         {[
                                                             { value: "active", label: "Disponible" },
@@ -3989,6 +4263,61 @@ const LBNApp = () => {
                                                                 <span className="text-sm text-slate-700">{status.label}</span>
                                                             </label>
                                                         ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="border-t border-slate-200 pt-3">
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Disponibilité</label>
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="text-xs text-slate-600 mb-1 block">Date</label>
+                                                            <input
+                                                                type="date"
+                                                                value={availabilityDateFilter}
+                                                                onChange={(e) => setAvailabilityDateFilter(e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-600 mb-2 block">Créneaux horaires</label>
+                                                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                                {(() => {
+                                                                    // Filter time slots based on selected date's day of week
+                                                                    const selectedDay = availabilityDateFilter ? (() => {
+                                                                        const date = new Date(availabilityDateFilter);
+                                                                        const dayIndex = date.getDay();
+                                                                        const dayNames: Day[] = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                                                                        return dayNames[dayIndex];
+                                                                    })() : null;
+                                                                    
+                                                                    const availableTimeSlots = selectedDay 
+                                                                        ? timeSlots.filter(ts => ts.daysOfWeek.includes(selectedDay))
+                                                                        : timeSlots;
+                                                                    
+                                                                    return availableTimeSlots.length > 0 ? (
+                                                                        availableTimeSlots.map((timeSlot) => (
+                                                                            <label key={timeSlot.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={availabilityTimeSlotFilter.includes(timeSlot.id)}
+                                                                                    onChange={(e) => {
+                                                                                        if (e.target.checked) {
+                                                                                            setAvailabilityTimeSlotFilter([...availabilityTimeSlotFilter, timeSlot.id]);
+                                                                                        } else {
+                                                                                            setAvailabilityTimeSlotFilter(availabilityTimeSlotFilter.filter(id => id !== timeSlot.id));
+                                                                                        }
+                                                                                    }}
+                                                                                    className="rounded text-orange-500 focus:ring-orange-500"
+                                                                                />
+                                                                                <span className="text-sm text-slate-700">{timeSlot.label}</span>
+                                                                            </label>
+                                                                        ))
+                                                                    ) : (
+                                                                        <p className="text-xs text-slate-500 italic">Sélectionnez une date pour voir les créneaux disponibles</p>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -4073,6 +4402,8 @@ const LBNApp = () => {
                                                     setGradeFilter([]);
                                                     setPgFilter("");
                                                     setGroupeFilter("");
+                                                    setAvailabilityDateFilter("");
+                                                    setAvailabilityTimeSlotFilter([]);
                                                 }}
                                                 className="flex-1 px-3 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
                                             >
@@ -4316,12 +4647,16 @@ const LBNApp = () => {
                                                         <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.tauxCompletion}%</div>
                                                     </div>
                                                     <div className="bg-white rounded-lg p-3">
-                                                        <div className="text-xs text-slate-600 mb-1">Satisfaction</div>
-                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.satisfaction}/5</div>
+                                                        <div className="text-xs text-slate-600 mb-1">Nombre de cours</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.nombreCours}</div>
                                                     </div>
                                                     <div className="bg-white rounded-lg p-3">
-                                                        <div className="text-xs text-slate-600 mb-1">Nombre d'élèves</div>
-                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.nombreEleves}</div>
+                                                        <div className="text-xs text-slate-600 mb-1">Date de début</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.dateDebut}</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Nombre d'élèves différents</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.nombreElevesDifferents}</div>
                                                     </div>
                                                 </div>
                                             )}
