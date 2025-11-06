@@ -155,6 +155,7 @@ const LBNApp = () => {
     const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
         activeStudents: true,
         plannedCourses: true,
+        completedCourses: true,
         occupancyRate: true,
         overages: true,
         tutorCapacity: true,
@@ -1860,6 +1861,7 @@ const LBNApp = () => {
     const statsConfig: StatisticConfig[] = [
         { id: "activeStudents", name: "Élèves actifs", visible: true },
         { id: "plannedCourses", name: "Cours planifiés", visible: true },
+        { id: "completedCourses", name: "Cours réalisés", visible: true },
         { id: "occupancyRate", name: "Taux occupation", visible: true },
         { id: "overages", name: "Dépassements", visible: true },
         { id: "tutorCapacity", name: "Capacité tuteurs", visible: false },
@@ -1874,6 +1876,9 @@ const LBNApp = () => {
         const statsPickerRef = useRef<HTMLDivElement>(null);
         const statsPickerButtonRef = useRef<HTMLButtonElement>(null);
         const [coursesState, setCoursesState] = useState<Partial<Record<Day, Course[]>>>(courses);
+        const [hasEditPermissions] = useState(true); // Simulate permissions - can be changed based on user role
+        const [selectedSlotForMenu, setSelectedSlotForMenu] = useState<string | null>(null);
+        const [selectedCellForAdd, setSelectedCellForAdd] = useState<{room: string, slotId: string} | null>(null);
         
         // Get the Monday of the current week
         const getCurrentWeekStart = (): Date => {
@@ -2114,6 +2119,22 @@ const LBNApp = () => {
             );
         };
 
+        // Helper functions to detect issues
+        const detectOverrun = (course: Course): boolean => {
+            const coursePG = calculateCoursePG(course);
+            const tutorCapacity = getTutorCapacity(course.tutor);
+            return coursePG > tutorCapacity;
+        };
+
+        const detectConflict = (course: Course, room: string, slotStart: string): boolean => {
+            const roomCourses = getCoursesForRoomAndSlotLocal(room, slotStart);
+            return roomCourses.length > 1; // Multiple courses in same room/slot = conflict
+        };
+
+        const detectIncompleteCourse = (course: Course): boolean => {
+            return !course.studentNames || course.studentNames.length === 0 || course.students === 0;
+        };
+
         // Filter time slots for the selected day
         const getTimeSlotsForDay = (day: Day): TimeSlot[] => {
             if (day === "Vendredi") {
@@ -2155,6 +2176,22 @@ const LBNApp = () => {
                 document.removeEventListener('mousedown', handleClickOutside);
             };
         }, [showStatsPicker]);
+
+        // Close slot menu when clicking outside
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (selectedSlotForMenu) {
+                    const target = event.target as HTMLElement;
+                    if (!target.closest('.time-slot-menu')) {
+                        setSelectedSlotForMenu(null);
+                    }
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [selectedSlotForMenu]);
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 overflow-auto">
@@ -2310,8 +2347,46 @@ const LBNApp = () => {
                                     <div className="text-3xl font-bold text-slate-900">
                                         87
                                     </div>
-                                    <div className="text-slate-500 text-sm mt-2">
-                                        Cette semaine
+                                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                        <TrendingUp size={14} />
+                                        <span>+8% vs mois dernier</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {visibleStats.completedCourses && (
+                                <div 
+                                    className="bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200 relative cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-105"
+                                    onClick={() => {
+                                        setTargetStatsSection("completedCourses");
+                                        setCurrentPage("stats");
+                                    }}
+                                    title="Cliquer pour voir les détails"
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setVisibleStats({ ...visibleStats, completedCourses: false });
+                                        }}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 transition-colors text-slate-600 hover:text-slate-800 z-10"
+                                        title="Fermer cette statistique"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-slate-600 text-sm font-medium">
+                                            Cours réalisés
+                                        </span>
+                                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <CheckCircle size={20} className="text-emerald-600" />
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-bold text-slate-900">
+                                        82
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                        <TrendingUp size={14} />
+                                        <span>+15% vs mois dernier</span>
                                     </div>
                                 </div>
                             )}
@@ -2352,6 +2427,10 @@ const LBNApp = () => {
                                             style={{ width: "92%" }}
                                         ></div>
                                     </div>
+                                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                        <TrendingUp size={14} />
+                                        <span>+5% vs mois dernier</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -2388,8 +2467,9 @@ const LBNApp = () => {
                                     <div className="text-3xl font-bold text-slate-900">
                                         3
                                     </div>
-                                    <div className="text-orange-600 text-sm mt-2">
-                                        À résoudre
+                                    <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
+                                        <TrendingDown size={14} />
+                                        <span>-25% vs mois dernier</span>
                                     </div>
                                 </div>
                             )}
@@ -2424,8 +2504,9 @@ const LBNApp = () => {
                                     <div className="text-3xl font-bold text-slate-900">
                                         78%
                                     </div>
-                                    <div className="text-slate-500 text-sm mt-2">
-                                        Moyenne utilisation
+                                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                        <TrendingUp size={14} />
+                                        <span>+3% vs mois dernier</span>
                                     </div>
                                 </div>
                             )}
@@ -2465,6 +2546,10 @@ const LBNApp = () => {
                                             className="bg-teal-500 h-2 rounded-full"
                                             style={{ width: "85%" }}
                                         ></div>
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                        <TrendingUp size={14} />
+                                        <span>+7% vs mois dernier</span>
                                     </div>
                                 </div>
                             )}
@@ -2557,11 +2642,52 @@ const LBNApp = () => {
                                             filteredTimeSlots.map((slot) => (
                                                 <th
                                                     key={slot.id}
-                                                    className="p-3 text-center bg-slate-50 border border-slate-200 min-w-[150px]"
+                                                    className="p-3 text-center bg-slate-50 border border-slate-200 min-w-[150px] relative"
                                                 >
-                                                    <span className="text-sm font-semibold text-slate-700">
-                                                        {slot.label}
-                                                    </span>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <span className="text-sm font-semibold text-slate-700">
+                                                            {slot.label}
+                                                        </span>
+                                                        {hasEditPermissions && (
+                                                            <div className="relative time-slot-menu">
+                                                                <button
+                                                                    onClick={() => setSelectedSlotForMenu(selectedSlotForMenu === slot.id ? null : slot.id)}
+                                                                    className="p-1 hover:bg-slate-200 rounded transition-colors"
+                                                                    title="Gérer le créneau"
+                                                                >
+                                                                    <Menu size={14} className="text-slate-600" />
+                                                                </button>
+                                                                {selectedSlotForMenu === slot.id && (
+                                                                    <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[150px]">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                // Edit time slot - redirect to settings
+                                                                                setCurrentPage("settings");
+                                                                                setSelectedSlotForMenu(null);
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                                        >
+                                                                            <Settings size={14} />
+                                                                            <span>Modifier</span>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                // Delete time slot
+                                                                                if (confirm(`Êtes-vous sûr de vouloir supprimer le créneau ${slot.label}?`)) {
+                                                                                    setTimeSlots(timeSlots.filter(s => s.id !== slot.id));
+                                                                                    setSelectedSlotForMenu(null);
+                                                                                }
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                        >
+                                                                            <Trash2 size={14} />
+                                                                            <span>Supprimer</span>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </th>
                                             ))
                                         ) : (
@@ -2596,18 +2722,62 @@ const LBNApp = () => {
                                                                 {roomCourses.map(
                                                                     (course, idx) => {
                                                                         const courseIndex = findCourseIndex(room, slot.startTime, course);
+                                                                        const hasOverrun = detectOverrun(course);
+                                                                        const hasConflict = detectConflict(course, room, slot.startTime);
+                                                                        const isIncomplete = detectIncompleteCourse(course);
+                                                                        const alertCount = [hasOverrun, hasConflict, isIncomplete].filter(Boolean).length;
+                                                                        
                                                                         return (
                                                                             <div
                                                                                 key={idx}
-                                                                                className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden"
+                                                                                className={`bg-white rounded-lg shadow-sm overflow-hidden relative ${
+                                                                                    hasOverrun ? 'border-2 border-red-400' : 
+                                                                                    hasConflict ? 'border-2 border-orange-400' : 
+                                                                                    isIncomplete ? 'border-2 border-amber-400' : 
+                                                                                    'border border-slate-200'
+                                                                                }`}
                                                                             >
+                                                                                {/* Alert Badge */}
+                                                                                {alertCount > 0 && (
+                                                                                    <div className="absolute top-1 right-1 z-10">
+                                                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                                                                            hasOverrun ? 'bg-red-500 text-white' :
+                                                                                            hasConflict ? 'bg-orange-500 text-white' :
+                                                                                            'bg-amber-500 text-white'
+                                                                                        }`}>
+                                                                                            <AlertCircle size={10} />
+                                                                                            {alertCount > 1 && <span>{alertCount}</span>}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
                                                                                 {/* Course Header Section */}
                                                                                 <div 
-                                                                                    className={`${course.color} text-white px-3 py-2 text-xs font-semibold`}
+                                                                                    className={`${course.color} text-white px-3 py-2 text-xs font-semibold relative`}
                                                                                     onClick={() => setSelectedCourseForDetails(course)}
                                                                                 >
                                                                                     <div className="flex items-center justify-between mb-1.5">
                                                                                         <span className="opacity-90">Tutorat avec {course.tutor.split(' ')[0]} {course.tutor.split(' ')[1]?.[0]}.</span>
+                                                                                        {/* Alert indicators in header */}
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            {hasOverrun && (
+                                                                                                <div className="flex items-center gap-0.5 bg-red-500/30 px-1.5 py-0.5 rounded text-[10px]">
+                                                                                                    <AlertCircle size={10} />
+                                                                                                    <span>Dépassement</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {hasConflict && (
+                                                                                                <div className="flex items-center gap-0.5 bg-orange-500/30 px-1.5 py-0.5 rounded text-[10px]">
+                                                                                                    <AlertCircle size={10} />
+                                                                                                    <span>Conflit</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {isIncomplete && (
+                                                                                                <div className="flex items-center gap-0.5 bg-amber-500/30 px-1.5 py-0.5 rounded text-[10px]">
+                                                                                                    <AlertCircle size={10} />
+                                                                                                    <span>Incomplet</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
                                                                                     {(() => {
                                                                                         const coursePG = calculateCoursePG(course);
@@ -2667,8 +2837,9 @@ const LBNApp = () => {
                                                                                         })}
                                                                                     </div>
                                                                                 ) : (
-                                                                                    <div className="p-3 text-center text-xs text-slate-400">
-                                                                                        {course.students} élève(s) non spécifié(s)
+                                                                                    <div className="p-3 text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded">
+                                                                                        <AlertCircle size={14} className="inline mr-1" />
+                                                                                        {course.students || 0} élève(s) non spécifié(s)
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -2677,10 +2848,34 @@ const LBNApp = () => {
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center text-slate-300 hover:border-slate-300 transition-colors cursor-pointer h-20 flex items-center justify-center">
+                                                            <div 
+                                                                className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center text-slate-300 hover:border-slate-300 transition-colors cursor-pointer h-20 flex flex-col items-center justify-center gap-2 relative"
+                                                                onClick={() => {
+                                                                    if (hasEditPermissions) {
+                                                                        setSelectedCellForAdd({room, slotId: slot.id});
+                                                                        setCurrentPage("placement");
+                                                                    }
+                                                                }}
+                                                            >
                                                                 <span className="text-xs">
                                                                     Libre
                                                                 </span>
+                                                                {hasEditPermissions && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedCellForAdd({room, slotId: slot.id});
+                                                                            setCurrentPage("placement");
+                                                                        }}
+                                                                        className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-slate-50 rounded-lg"
+                                                                        title="Ajouter un cours"
+                                                                    >
+                                                                        <div className="flex flex-col items-center gap-1">
+                                                                            <Plus size={20} className="text-orange-500" />
+                                                                            <span className="text-xs text-orange-600 font-medium">Ajouter un cours</span>
+                                                                        </div>
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </td>
