@@ -116,7 +116,6 @@ const LBNApp = () => {
         avatar: string;
         email: string;
         phone: string;
-        niveau: string;
         specialites: string[];
         anneesConfortables: string[];
         salaireHoraire: number;
@@ -3052,7 +3051,6 @@ const LBNApp = () => {
         const [showFilters, setShowFilters] = useState(false);
 
         // Filter states for tuteurs
-        const [niveauFilter, setNiveauFilter] = useState<string[]>([]);
         const [specialiteFilter, setSpecialiteFilter] = useState<string[]>([]);
         const [statusFilter, setStatusFilter] = useState<string[]>([]);
         const [typeTuteurFilter, setTypeTuteurFilter] = useState<string[]>([]);
@@ -3108,7 +3106,6 @@ const LBNApp = () => {
                 avatar: "from-blue-500 to-blue-600",
                 email: "marie.dupont@lbn.com",
                 phone: "514-555-0001",
-                niveau: "Sénior",
                 specialites: ["Mathématiques", "Sciences"],
                 anneesConfortables: ["Sec. 3", "Sec. 4", "Sec. 5"],
                 salaireHoraire: 35.50,
@@ -3124,6 +3121,7 @@ const LBNApp = () => {
                     { day: "Lundi", time: "15h30", room: "Salle A", students: 5 },
                     { day: "Mardi", time: "15h30", room: "Salle C", students: 5 },
                 ],
+                allergies: "Arachides, Fruits de mer",
             },
             {
                 id: 2,
@@ -3138,7 +3136,6 @@ const LBNApp = () => {
                 avatar: "from-purple-500 to-purple-600",
                 email: "jean.martin@lbn.com",
                 phone: "514-555-0002",
-                niveau: "Intermédiaire",
                 specialites: ["Français", "Histoire"],
                 anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3"],
                 salaireHoraire: 28.75,
@@ -3167,7 +3164,6 @@ const LBNApp = () => {
                 avatar: "from-green-500 to-green-600",
                 email: "sophie.chen@lbn.com",
                 phone: "514-555-0003",
-                niveau: "Sénior",
                 specialites: ["Sciences", "Chimie"],
                 anneesConfortables: ["Sec. 4", "Sec. 5"],
                 salaireHoraire: 42.00,
@@ -3182,6 +3178,7 @@ const LBNApp = () => {
                     { day: "Lundi", time: "10h30", room: "Salle A", students: 2 },
                     { day: "Mardi", time: "8h00", room: "Salle D", students: 2 },
                 ],
+                allergies: "Lactose",
             },
             {
                 id: 4,
@@ -3196,7 +3193,6 @@ const LBNApp = () => {
                 avatar: "from-orange-500 to-orange-600",
                 email: "thomas.roy@lbn.com",
                 phone: "514-555-0004",
-                niveau: "Junior",
                 specialites: ["Anglais"],
                 anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4"],
                 salaireHoraire: 25.00,
@@ -3238,6 +3234,7 @@ const LBNApp = () => {
                     { day: "Lundi", time: "8h00", subject: "Math", tuteur: "Marie Dupont" },
                     { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
                 ],
+                allergies: "Arachides",
             },
             {
                 id: 6,
@@ -3261,6 +3258,7 @@ const LBNApp = () => {
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
                 ],
+                allergies: "Gluten, Œufs",
             },
             {
                 id: 7,
@@ -3329,6 +3327,7 @@ const LBNApp = () => {
                 prochainsCours: [
                     { day: "Lundi", time: "15h30", subject: "Math", tuteur: "Marie Dupont" },
                 ],
+                allergies: "Fruits de mer",
             },
         ]);
 
@@ -3385,7 +3384,6 @@ const LBNApp = () => {
 
             if (personnelFilter === "tuteur") {
                 const tuteur = person as Tuteur;
-                const matchesNiveau = niveauFilter.length === 0 || niveauFilter.includes(tuteur.niveau);
                 const matchesSpecialite = specialiteFilter.length === 0 ||
                     specialiteFilter.some(spec => tuteur.specialites.includes(spec));
                 const matchesStatus = statusFilter.length === 0 || statusFilter.includes(tuteur.status);
@@ -3394,7 +3392,7 @@ const LBNApp = () => {
                 const matchesGroupe = groupeFilter === "" || 
                     (tuteur.groupeId && tuteur.groupeId.toString() === groupeFilter);
 
-                return matchesSearch && matchesNiveau && matchesSpecialite && matchesStatus && matchesTypeTuteur && matchesGroupe;
+                return matchesSearch && matchesSpecialite && matchesStatus && matchesTypeTuteur && matchesGroupe;
             } else {
                 const eleve = person as Eleve;
                 const matchesGrade = gradeFilter.length === 0 || gradeFilter.includes(eleve.grade);
@@ -3408,7 +3406,7 @@ const LBNApp = () => {
 
         // Count active filters
         const activeFiltersCount = personnelFilter === "tuteur"
-            ? niveauFilter.length + specialiteFilter.length + statusFilter.length + typeTuteurFilter.length + (groupeFilter ? 1 : 0)
+            ? specialiteFilter.length + statusFilter.length + typeTuteurFilter.length + (groupeFilter ? 1 : 0)
             : gradeFilter.length + (pgFilter ? 1 : 0) + (groupeFilter ? 1 : 0);
 
         // Form state for student
@@ -3437,7 +3435,6 @@ const LBNApp = () => {
             phone: "",
             allergies: "",
             alias: "",
-            niveau: "",
             anneesConfortables: [] as string[],
         });
 
@@ -3542,7 +3539,6 @@ const LBNApp = () => {
                 phone: "",
                 allergies: "",
                 alias: "",
-                niveau: "",
                 anneesConfortables: [],
             });
             setShowTutorForm(true);
@@ -3561,7 +3557,6 @@ const LBNApp = () => {
                 phone: tuteur.phone,
                 allergies: tuteur.allergies || "",
                 alias: tuteur.alias || "",
-                niveau: tuteur.niveau,
                 anneesConfortables: tuteur.anneesConfortables || [],
             });
             setShowTutorForm(true);
@@ -3586,7 +3581,6 @@ const LBNApp = () => {
                 avatar: editingItem ? (editingItem as Tuteur).avatar : "from-blue-500 to-blue-600",
                 email: tutorFormData.email,
                 phone: tutorFormData.phone,
-                niveau: tutorFormData.niveau || "Junior",
                 specialites: tutorFormData.specialites,
                 anneesConfortables: tutorFormData.anneesConfortables,
                 salaireHoraire: parseFloat(tutorFormData.salaireHoraire) || 0,
@@ -3700,7 +3694,6 @@ const LBNApp = () => {
                         Nom: tuteur.name,
                         Email: tuteur.email,
                         Téléphone: tuteur.phone,
-                        Niveau: tuteur.niveau,
                         Spécialités: tuteur.specialites.join(', '),
                         "Années confortables": tuteur.anneesConfortables.join(', '),
                         "Salaire horaire": `$${tuteur.salaireHoraire.toFixed(2)}/heure`,
@@ -3926,29 +3919,6 @@ const LBNApp = () => {
                                             // Tuteur filters
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Niveau</label>
-                                                    <div className="space-y-2">
-                                                        {["Sénior", "Intermédiaire", "Junior"].map((niveau) => (
-                                                            <label key={niveau} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={niveauFilter.includes(niveau)}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            setNiveauFilter([...niveauFilter, niveau]);
-                                                                        } else {
-                                                                            setNiveauFilter(niveauFilter.filter(n => n !== niveau));
-                                                                        }
-                                                                    }}
-                                                                    className="rounded text-orange-500 focus:ring-orange-500"
-                                                                />
-                                                                <span className="text-sm text-slate-700">{niveau}</span>
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div className="border-t border-slate-200 pt-3">
                                                     <label className="text-sm font-semibold text-slate-700 mb-2 block">Spécialités</label>
                                                     <div className="space-y-2">
                                                         {["Mathématiques", "Sciences", "Français", "Anglais", "Histoire", "Chimie"].map((spec) => (
@@ -4095,7 +4065,6 @@ const LBNApp = () => {
                                         <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
                                             <button
                                                 onClick={() => {
-                                                    setNiveauFilter([]);
                                                     setSpecialiteFilter([]);
                                                     setStatusFilter([]);
                                                     setTypeTuteurFilter([]);
@@ -4226,7 +4195,6 @@ const LBNApp = () => {
                                                 <div className="text-slate-600">
                                                     {selectedPerson.type === "tuteur" ? "Tuteur" : "Élève"}
                                                     {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).typeTuteur && ` • ${(selectedPerson as Tuteur).typeTuteur}`}
-                                                    {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).niveau && ` • Niveau ${(selectedPerson as Tuteur).niveau}`}
                                                     {selectedPerson.alias && ` • Alias: ${selectedPerson.alias}`}
                                                 </div>
                                             </div>
@@ -4282,6 +4250,10 @@ const LBNApp = () => {
                                             <div>
                                                 <div className="text-sm text-slate-600 mb-1">Téléphone</div>
                                                 <div className="text-slate-900">{selectedPerson.phone}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-slate-600 mb-1">Allergies</div>
+                                                <div className="text-slate-900">{selectedPerson.allergies || "-"}</div>
                                             </div>
                                             {selectedPerson.type === "tuteur" && (
                                                 <div>
@@ -4449,55 +4421,56 @@ const LBNApp = () => {
                                         </>
                                     )}
 
-                                    {/* Upcoming Courses */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                                                <Clock size={18} className="text-orange-500" />
-                                                Prochains cours
-                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                                                    {selectedPerson.prochainsCours.length}
-                                                </span>
-                                            </h4>
-                                            <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 hover:underline">
-                                                <Plus size={14} />
-                                                Modifier horaire
-                                            </button>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {selectedPerson.prochainsCours.map((course: any, idx: number) => (
-                                                <div key={idx} className="group relative flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 hover:from-orange-50 hover:to-slate-50 rounded-lg border border-slate-200 hover:border-orange-300 transition-all cursor-pointer">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                            <Calendar size={20} className="text-white" />
+                                    {/* Upcoming Courses - Only for élèves */}
+                                    {selectedPerson.type === "eleve" && (
+                                        <div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                                                    <Clock size={18} className="text-orange-500" />
+                                                    Prochains cours
+                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                                        {selectedPerson.prochainsCours.length}
+                                                    </span>
+                                                </h4>
+                                                <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 hover:underline">
+                                                    <Plus size={14} />
+                                                    Modifier horaire
+                                                </button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {selectedPerson.prochainsCours.map((course: any, idx: number) => (
+                                                    <div key={idx} className="group relative flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 hover:from-orange-50 hover:to-slate-50 rounded-lg border border-slate-200 hover:border-orange-300 transition-all cursor-pointer">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                                <Calendar size={20} className="text-white" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-semibold text-slate-900">
+                                                                    {course.day} - {course.time}
+                                                                </div>
+                                                                <div className="text-sm text-slate-600">
+                                                                    {course.subject} • {course.tuteur}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="font-semibold text-slate-900">
-                                                                {course.day} - {course.time}
-                                                            </div>
-                                                            <div className="text-sm text-slate-600">
-                                                                {selectedPerson.type === "tuteur"
-                                                                    ? `${course.room} • ${course.students} élèves`
-                                                                    : `${course.subject} • ${course.tuteur}`
-                                                                }
-                                                            </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                className="opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg transition-all text-blue-600"
+                                                                title="Modifier ce cours"
+                                                            >
+                                                                <Settings size={16} />
+                                                            </button>
+                                                            <button className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600">
+                                                                <ChevronDown size={18} />
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg transition-all text-blue-600"
-                                                            title="Modifier ce cours"
-                                                        >
-                                                            <Settings size={16} />
-                                                        </button>
-                                                        <button className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600">
-                                                            <ChevronDown size={18} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>                                {/* Action Buttons */}
+                                    )}
+
+                                    {/* Action Buttons */}
                                     <div className="mt-6 pt-6 border-t border-slate-200 flex gap-3">
                                         <button 
                                             onClick={() => {
@@ -4553,6 +4526,10 @@ const LBNApp = () => {
                                                 <div>
                                                     <div className="text-sm text-slate-600 mb-1">Téléphone</div>
                                                     <div className="text-slate-900">514-555-XXXX</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-slate-600 mb-1">Allergies</div>
+                                                    <div className="text-slate-900">-</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -4913,19 +4890,6 @@ const LBNApp = () => {
                                             <option value="Apprenti">Apprenti</option>
                                             <option value="Tuteur">Tuteur</option>
                                             <option value="Administrateur">Administrateur</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Niveau</label>
-                                        <select
-                                            value={tutorFormData.niveau}
-                                            onChange={(e) => setTutorFormData({...tutorFormData, niveau: e.target.value})}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        >
-                                            <option value="">Sélectionner</option>
-                                            <option value="Junior">Junior</option>
-                                            <option value="Intermédiaire">Intermédiaire</option>
-                                            <option value="Sénior">Sénior</option>
                                         </select>
                                     </div>
                                 </div>
@@ -6434,6 +6398,7 @@ const LBNApp = () => {
                 email: "lucas.bernard@student.com",
                 phone: "514-555-1001",
                 tuteur: "Marie Dupont",
+                allergies: "Arachides",
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", subject: "Math", tuteur: "Marie Dupont" },
                     { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
@@ -6450,6 +6415,7 @@ const LBNApp = () => {
                 email: "emma.tremblay@student.com",
                 phone: "514-555-1002",
                 tuteur: "Jean Martin",
+                allergies: "Gluten, Œufs",
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
                 ],
@@ -6495,6 +6461,7 @@ const LBNApp = () => {
                 email: "william.roy@student.com",
                 phone: "514-555-1005",
                 tuteur: "Marie Dupont",
+                allergies: "Fruits de mer",
                 prochainsCours: [
                     { day: "Lundi", time: "15h30", subject: "Math", tuteur: "Marie Dupont" },
                 ],
