@@ -41,6 +41,7 @@ import {
     Send,
     Upload,
     ChevronRight,
+    ChevronLeft,
     Ban,
     FileText,
     LogIn,
@@ -1873,6 +1874,103 @@ const LBNApp = () => {
         const statsPickerRef = useRef<HTMLDivElement>(null);
         const statsPickerButtonRef = useRef<HTMLButtonElement>(null);
         const [coursesState, setCoursesState] = useState<Partial<Record<Day, Course[]>>>(courses);
+        
+        // Get the Monday of the current week
+        const getCurrentWeekStart = (): Date => {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            const monday = new Date(today);
+            monday.setDate(diff);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        };
+        
+        const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getCurrentWeekStart());
+        
+        // Utility functions for week management
+        const getWeekStart = (date: Date): Date => {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(d);
+            monday.setDate(diff);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        };
+        
+        const getWeekDates = (weekStart: Date): Record<Day, Date> => {
+            const monday = new Date(weekStart);
+            monday.setHours(0, 0, 0, 0);
+            
+            const dates: Record<string, Date> = {};
+            const dayOrder: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+            
+            dayOrder.forEach((day, index) => {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + index);
+                dates[day] = date;
+            });
+            
+            return dates as Record<Day, Date>;
+        };
+        
+        const formatWeekRange = (weekStart: Date): string => {
+            const weekDates = getWeekDates(weekStart);
+            const monday = weekDates["Lundi"];
+            const sunday = weekDates["Dimanche"];
+            
+            const formatDate = (date: Date): string => {
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            };
+            
+            const mondayStr = formatDate(monday);
+            const sundayStr = formatDate(sunday);
+            
+            // If same month, show "14 - 20 octobre 2025"
+            if (monday.getMonth() === sunday.getMonth() && monday.getFullYear() === sunday.getFullYear()) {
+                const day1 = monday.getDate();
+                const day2 = sunday.getDate();
+                const monthYear = monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                return `${day1} - ${day2} ${monthYear}`;
+            } else {
+                // Different months or years
+                return `${mondayStr} - ${sundayStr}`;
+            }
+        };
+        
+        const formatDayWithDate = (day: Day, weekStart: Date): string => {
+            const weekDates = getWeekDates(weekStart);
+            const date = weekDates[day];
+            const dayName = day;
+            const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+            return `${dayName} ${dateStr}`;
+        };
+        
+        const goToPreviousWeek = () => {
+            setCurrentWeekStart(prev => {
+                const newDate = new Date(prev);
+                newDate.setDate(prev.getDate() - 7);
+                return newDate;
+            });
+        };
+        
+        const goToNextWeek = () => {
+            setCurrentWeekStart(prev => {
+                const newDate = new Date(prev);
+                newDate.setDate(prev.getDate() + 7);
+                return newDate;
+            });
+        };
+        
+        const goToCurrentWeek = () => {
+            setCurrentWeekStart(getCurrentWeekStart());
+        };
+        
+        const isCurrentWeek = (): boolean => {
+            const currentWeek = getCurrentWeekStart();
+            return currentWeekStart.getTime() === currentWeek.getTime();
+        };
 
         // Mock students data - accessible for grade lookup
         const studentsData = [
@@ -2080,7 +2178,7 @@ const LBNApp = () => {
                                     Statistiques
                                 </h3>
                                 <p className="text-slate-600 text-sm">
-                                    Semaine du 17 octobre 2025
+                                    Semaine du {formatWeekRange(currentWeekStart)}
                                 </p>
                             </div>
                             {/* Relative wrapper for stats picker positioning */}
@@ -2376,13 +2474,40 @@ const LBNApp = () => {
                     {/* Weekly Schedule with New Layout - SECOND */}
                     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-900">
-                                    Vue hebdomadaire
-                                </h2>
-                                <p className="text-slate-600 text-sm">
-                                    Salles et créneaux horaires
-                                </p>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <h2 className="text-2xl font-bold text-slate-900">
+                                        Vue hebdomadaire
+                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={goToPreviousWeek}
+                                            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center"
+                                            title="Semaine précédente"
+                                        >
+                                            <ChevronLeft size={18} className="text-slate-700" />
+                                        </button>
+                                        <button
+                                            onClick={goToCurrentWeek}
+                                            disabled={isCurrentWeek()}
+                                            className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                                isCurrentWeek() 
+                                                    ? 'bg-slate-100 text-slate-500 cursor-default' 
+                                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                            }`}
+                                            title={isCurrentWeek() ? "Semaine actuelle" : "Retour à cette semaine"}
+                                        >
+                                            {formatWeekRange(currentWeekStart)}
+                                        </button>
+                                        <button
+                                            onClick={goToNextWeek}
+                                            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center"
+                                            title="Semaine suivante"
+                                        >
+                                            <ChevronRight size={18} className="text-slate-700" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -2413,7 +2538,7 @@ const LBNApp = () => {
                                         : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:shadow-md"
                                         }`}
                                 >
-                                    {day}
+                                    {formatDayWithDate(day, currentWeekStart)}
                                 </button>
                             ))}
                         </div>
