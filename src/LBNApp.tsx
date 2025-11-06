@@ -146,6 +146,7 @@ const LBNApp = () => {
             satisfaction: number;
             nombreEleves: number;
         };
+        note?: string;
     }
 
     interface Eleve {
@@ -176,6 +177,7 @@ const LBNApp = () => {
             progression: number;
             nombreCours: number;
         };
+        note?: string;
     }
 
     interface Groupe {
@@ -4411,13 +4413,6 @@ const LBNApp = () => {
                                                 <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).pg} PG</div>
                                             </div>
                                             </div>
-
-                                            <div className="mb-6">
-                                                <h4 className="font-semibold text-slate-900 mb-3">Tuteur assigné</h4>
-                                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                                    <div className="font-medium text-blue-900">{(selectedPerson as Eleve).tuteur}</div>
-                                                </div>
-                                            </div>
                                         </>
                                     )}
 
@@ -4470,6 +4465,29 @@ const LBNApp = () => {
                                         </div>
                                     )}
 
+                                    {/* Notes Section - For all entities */}
+                                    <div className="mb-6">
+                                        <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                            <FileText size={18} className="text-slate-600" />
+                                            Note
+                                        </h4>
+                                        <textarea
+                                            className="w-full bg-slate-50 rounded-xl p-4 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-y min-h-[120px]"
+                                            placeholder="Ajoutez une note..."
+                                            value={selectedPerson.note || ""}
+                                            onChange={(e) => {
+                                                const updatedPerson = { ...selectedPerson, note: e.target.value };
+                                                if (selectedPerson.type === "tuteur") {
+                                                    setTuteurs(tuteurs.map(t => t.id === selectedPerson.id ? updatedPerson as Tuteur : t));
+                                                } else {
+                                                    setEleves(eleves.map(e => e.id === selectedPerson.id ? updatedPerson as Eleve : e));
+                                                }
+                                                setSelectedPerson(updatedPerson);
+                                            }}
+                                            rows={4}
+                                        />
+                                    </div>
+
                                     {/* Action Buttons */}
                                     <div className="mt-6 pt-6 border-t border-slate-200 flex gap-3">
                                         <button 
@@ -4493,120 +4511,13 @@ const LBNApp = () => {
                                     </div>
                                 </div>
                             ) : (
-                                personnelFilter === "eleve" ? (
-                                    // Example student display
-                                    <div>
-                                        <div className="mb-4 pb-4 border-b border-slate-200">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
-                                                    Exemple
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-20 h-20 bg-gradient-to-br from-slate-300 to-slate-400 rounded-2xl"></div>
-                                                <div>
-                                                    <h3 className="text-2xl font-bold text-slate-900">
-                                                        Exemple d'élève
-                                                    </h3>
-                                                    <div className="text-slate-600">
-                                                        Élève • Niveau Sec. 3
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Contact Information */}
-                                        <div className="bg-slate-50 rounded-xl p-4 mb-6">
-                                            <h4 className="font-semibold text-slate-900 mb-3">Informations de contact</h4>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <div className="text-sm text-slate-600 mb-1">Email</div>
-                                                    <div className="text-slate-900">exemple.eleve@student.com</div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm text-slate-600 mb-1">Téléphone</div>
-                                                    <div className="text-slate-900">514-555-XXXX</div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm text-slate-600 mb-1">Allergies</div>
-                                                    <div className="text-slate-900">-</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Student-specific information */}
-                                        <div className="grid grid-cols-2 gap-4 mb-6">
-                                            <div className="bg-slate-50 rounded-xl p-4">
-                                                <div className="text-sm text-slate-600 mb-1">Niveau</div>
-                                                <div className="text-xl font-bold text-slate-900">Sec. 3</div>
-                                            </div>
-                                            <div className="bg-slate-50 rounded-xl p-4">
-                                                <div className="text-sm text-slate-600 mb-1">Points de Gestion</div>
-                                                <div className="text-xl font-bold text-slate-900">3 PG</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mb-6">
-                                            <h4 className="font-semibold text-slate-900 mb-3">Tuteur assigné</h4>
-                                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                                <div className="font-medium text-blue-900">Marie Dupont</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Upcoming Courses */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                                                    <Clock size={18} className="text-orange-500" />
-                                                    Prochains cours
-                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                                                        2
-                                                    </span>
-                                                </h4>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 rounded-lg border border-slate-200">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                            <Calendar size={20} className="text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-semibold text-slate-900">
-                                                                Lundi - 8h00
-                                                            </div>
-                                                            <div className="text-sm text-slate-600">
-                                                                Math • Marie Dupont
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-50 rounded-lg border border-slate-200">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                            <Calendar size={20} className="text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-semibold text-slate-900">
-                                                                Mercredi - 10h30
-                                                            </div>
-                                                            <div className="text-sm text-slate-600">
-                                                                Français • Jean Martin
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div className="h-full flex items-center justify-center text-slate-400">
+                                    <div className="text-center">
+                                        <Users size={48} className="mx-auto mb-4 opacity-50" />
+                                        <p className="text-lg font-medium">Sélectionnez une personne</p>
+                                        <p className="text-sm">pour voir les détails</p>
                                     </div>
-                                ) : (
-                                    <div className="h-full flex items-center justify-center text-slate-400">
-                                        <div className="text-center">
-                                            <Users size={48} className="mx-auto mb-4 opacity-50" />
-                                            <p className="text-lg font-medium">Sélectionnez une personne</p>
-                                            <p className="text-sm">pour voir les détails</p>
-                                        </div>
-                                    </div>
-                                )
+                                </div>
                             )}
                         </div>
                     </div>
