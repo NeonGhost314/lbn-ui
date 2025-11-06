@@ -106,7 +106,10 @@ const LBNApp = () => {
     interface Tuteur {
         id: number;
         name: string;
+        prenom?: string;
+        nom?: string;
         type: "tuteur";
+        typeTuteur?: "Apprenti" | "Tuteur" | "Administrateur";
         courses: number;
         capacity: string;
         status: string;
@@ -118,30 +121,75 @@ const LBNApp = () => {
         anneesConfortables: string[];
         salaireHoraire: number;
         capaciteGestion: number;
+        allergies?: string;
+        alias?: string;
+        groupeId?: number;
         prochainsCours: Array<{
             day: string;
             time: string;
             room: string;
             students: number;
         }>;
+        disponibilites?: Array<{
+            id: string;
+            day: string;
+            startTime: string;
+            endTime: string;
+            type: "recurrente" | "ponctuelle" | "exception";
+            startDate?: string;
+            endDate?: string;
+            commentaire?: string;
+            active: boolean;
+        }>;
+        statistiques?: {
+            heuresEnseignees: number;
+            tauxCompletion: number;
+            satisfaction: number;
+            nombreEleves: number;
+        };
     }
 
     interface Eleve {
         id: number;
         name: string;
         type: "eleve";
+        age?: number;
         grade: string;
         pg: number;
         status: string;
         avatar: string;
         email: string;
+        emails?: string[];
         phone: string;
         tuteur: string;
+        difficultes?: string;
+        allergies?: string;
+        alias?: string;
+        groupeId?: number;
         prochainsCours: Array<{
             day: string;
             time: string;
             subject: string;
             tuteur: string;
+        }>;
+        statistiques?: {
+            tauxPresence: number;
+            progression: number;
+            nombreCours: number;
+        };
+    }
+
+    interface Groupe {
+        id: number;
+        name: string;
+        tuteurId?: number;
+        tuteurName?: string;
+        eleveIds: number[];
+        eleveNames: string[];
+        pgTotal: number;
+        disponibilites?: Array<{
+            day: string;
+            time: string;
         }>;
     }
 
@@ -3000,12 +3048,15 @@ const LBNApp = () => {
         const [searchQuery, setSearchQuery] = useState("");
         const [personnelFilter, setPersonnelFilter] = useState<"tuteur" | "eleve">("tuteur");
         const [selectedPerson, setSelectedPerson] = useState<any>(null);
+        const [selectedGroup, setSelectedGroup] = useState<Groupe | null>(null);
         const [showFilters, setShowFilters] = useState(false);
 
         // Filter states for tuteurs
         const [niveauFilter, setNiveauFilter] = useState<string[]>([]);
         const [specialiteFilter, setSpecialiteFilter] = useState<string[]>([]);
         const [statusFilter, setStatusFilter] = useState<string[]>([]);
+        const [typeTuteurFilter, setTypeTuteurFilter] = useState<string[]>([]);
+        const [groupeFilter, setGroupeFilter] = useState<string>("");
 
         // Filter states for élèves
         const [gradeFilter, setGradeFilter] = useState<string[]>([]);
@@ -3013,6 +3064,19 @@ const LBNApp = () => {
 
         // Export menu state
         const [showExportMenu, setShowExportMenu] = useState(false);
+
+        // Modal states
+        const [showStudentForm, setShowStudentForm] = useState(false);
+        const [showTutorForm, setShowTutorForm] = useState(false);
+        const [showGroupForm, setShowGroupForm] = useState(false);
+        const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
+        const [showImportModal, setShowImportModal] = useState(false);
+        const [editingItem, setEditingItem] = useState<any>(null);
+        const [availabilityType, setAvailabilityType] = useState<"long" | "court" | "ponctuel">("long");
+
+        // User role for security (mock - should come from auth system)
+        const [userRole] = useState<"admin" | "tuteur" | "apprenti">("admin");
+        const canViewSensitiveData = userRole === "admin" || userRole === "tuteur";
 
         // Close export menu when clicking outside
         useEffect(() => {
@@ -3029,12 +3093,15 @@ const LBNApp = () => {
             };
         }, [showExportMenu]);
 
-        // Mock data for tuteurs
-        const tuteurs = [
+        // State for data
+        const [tuteurs, setTuteurs] = useState<Tuteur[]>([
             {
                 id: 1,
                 name: "Marie Dupont",
+                prenom: "Marie",
+                nom: "Dupont",
                 type: "tuteur",
+                typeTuteur: "Tuteur",
                 courses: 8,
                 capacity: "12/15 PG",
                 status: "active",
@@ -3046,6 +3113,12 @@ const LBNApp = () => {
                 anneesConfortables: ["Sec. 3", "Sec. 4", "Sec. 5"],
                 salaireHoraire: 35.50,
                 capaciteGestion: 15,
+                statistiques: {
+                    heuresEnseignees: 120,
+                    tauxCompletion: 95,
+                    satisfaction: 4.8,
+                    nombreEleves: 8
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle A", students: 3 },
                     { day: "Lundi", time: "15h30", room: "Salle A", students: 5 },
@@ -3055,7 +3128,10 @@ const LBNApp = () => {
             {
                 id: 2,
                 name: "Jean Martin",
+                prenom: "Jean",
+                nom: "Martin",
                 type: "tuteur",
+                typeTuteur: "Tuteur",
                 courses: 6,
                 capacity: "10/12 PG",
                 status: "active",
@@ -3067,6 +3143,12 @@ const LBNApp = () => {
                 anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3"],
                 salaireHoraire: 28.75,
                 capaciteGestion: 15,
+                statistiques: {
+                    heuresEnseignees: 90,
+                    tauxCompletion: 92,
+                    satisfaction: 4.6,
+                    nombreEleves: 6
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", room: "Salle B", students: 4 },
                     { day: "Lundi", time: "13h00", room: "Salle B", students: 4 },
@@ -3075,7 +3157,10 @@ const LBNApp = () => {
             {
                 id: 3,
                 name: "Sophie Chen",
+                prenom: "Sophie",
+                nom: "Chen",
                 type: "tuteur",
+                typeTuteur: "Administrateur",
                 courses: 10,
                 capacity: "15/15 PG",
                 status: "full",
@@ -3087,6 +3172,12 @@ const LBNApp = () => {
                 anneesConfortables: ["Sec. 4", "Sec. 5"],
                 salaireHoraire: 42.00,
                 capaciteGestion: 15,
+                statistiques: {
+                    heuresEnseignees: 150,
+                    tauxCompletion: 98,
+                    satisfaction: 4.9,
+                    nombreEleves: 10
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "10h30", room: "Salle A", students: 2 },
                     { day: "Mardi", time: "8h00", room: "Salle D", students: 2 },
@@ -3095,7 +3186,10 @@ const LBNApp = () => {
             {
                 id: 4,
                 name: "Thomas Roy",
+                prenom: "Thomas",
+                nom: "Roy",
                 type: "tuteur",
+                typeTuteur: "Apprenti",
                 courses: 4,
                 capacity: "6/10 PG",
                 status: "active",
@@ -3107,26 +3201,39 @@ const LBNApp = () => {
                 anneesConfortables: ["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4"],
                 salaireHoraire: 25.00,
                 capaciteGestion: 15,
+                statistiques: {
+                    heuresEnseignees: 60,
+                    tauxCompletion: 88,
+                    satisfaction: 4.5,
+                    nombreEleves: 4
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "13h00", room: "Salle C", students: 3 },
                     { day: "Mardi", time: "13h00", room: "Salle A", students: 3 },
                 ],
             },
-        ];
+        ]);
 
-        // Mock data for élèves
-        const eleves = [
+        const [eleves, setEleves] = useState<Eleve[]>([
             {
                 id: 5,
                 name: "Lucas Bernard",
                 type: "eleve",
+                age: 15,
                 grade: "Sec. 3",
                 pg: 3,
                 status: "active",
                 avatar: "from-slate-300 to-slate-400",
                 email: "lucas.bernard@student.com",
+                emails: ["lucas.bernard@student.com", "lucas.parent@email.com"],
                 phone: "514-555-1001",
                 tuteur: "Marie Dupont",
+                groupeId: 1,
+                statistiques: {
+                    tauxPresence: 95,
+                    progression: 85,
+                    nombreCours: 24
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", subject: "Math", tuteur: "Marie Dupont" },
                     { day: "Mercredi", time: "10h30", subject: "Français", tuteur: "Jean Martin" },
@@ -3136,13 +3243,21 @@ const LBNApp = () => {
                 id: 6,
                 name: "Emma Tremblay",
                 type: "eleve",
+                age: 16,
                 grade: "Sec. 4",
                 pg: 2,
                 status: "active",
                 avatar: "from-slate-300 to-slate-400",
                 email: "emma.tremblay@student.com",
+                emails: ["emma.tremblay@student.com"],
                 phone: "514-555-1002",
                 tuteur: "Jean Martin",
+                groupeId: 2,
+                statistiques: {
+                    tauxPresence: 92,
+                    progression: 78,
+                    nombreCours: 20
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "8h00", subject: "Français", tuteur: "Jean Martin" },
                 ],
@@ -3151,13 +3266,21 @@ const LBNApp = () => {
                 id: 7,
                 name: "Noah Gagnon",
                 type: "eleve",
+                age: 17,
                 grade: "Sec. 5",
                 pg: 4,
                 status: "active",
                 avatar: "from-slate-300 to-slate-400",
                 email: "noah.gagnon@student.com",
+                emails: ["noah.gagnon@student.com"],
                 phone: "514-555-1003",
                 tuteur: "Sophie Chen",
+                groupeId: 3,
+                statistiques: {
+                    tauxPresence: 98,
+                    progression: 92,
+                    nombreCours: 28
+                },
                 prochainsCours: [
                     { day: "Mardi", time: "10h30", subject: "Sciences", tuteur: "Sophie Chen" },
                 ],
@@ -3166,13 +3289,20 @@ const LBNApp = () => {
                 id: 8,
                 name: "Olivia Côté",
                 type: "eleve",
+                age: 15,
                 grade: "Sec. 3",
                 pg: 2,
                 status: "active",
                 avatar: "from-slate-300 to-slate-400",
                 email: "olivia.cote@student.com",
+                emails: ["olivia.cote@student.com"],
                 phone: "514-555-1004",
                 tuteur: "Thomas Roy",
+                statistiques: {
+                    tauxPresence: 90,
+                    progression: 75,
+                    nombreCours: 18
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "13h00", subject: "Anglais", tuteur: "Thomas Roy" },
                 ],
@@ -3181,18 +3311,54 @@ const LBNApp = () => {
                 id: 9,
                 name: "William Roy",
                 type: "eleve",
+                age: 16,
                 grade: "Sec. 4",
                 pg: 3,
                 status: "active",
                 avatar: "from-slate-300 to-slate-400",
                 email: "william.roy@student.com",
+                emails: ["william.roy@student.com"],
                 phone: "514-555-1005",
                 tuteur: "Marie Dupont",
+                groupeId: 1,
+                statistiques: {
+                    tauxPresence: 93,
+                    progression: 80,
+                    nombreCours: 22
+                },
                 prochainsCours: [
                     { day: "Lundi", time: "15h30", subject: "Math", tuteur: "Marie Dupont" },
                 ],
             },
-        ];
+        ]);
+
+        const [groupes, setGroupes] = useState<Groupe[]>([
+            {
+                id: 1,
+                name: "Groupe Math Avancé",
+                tuteurId: 1,
+                tuteurName: "Marie Dupont",
+                eleveIds: [5, 9],
+                eleveNames: ["Lucas Bernard", "William Roy"],
+                pgTotal: 6,
+            },
+            {
+                id: 2,
+                name: "Groupe Sec. 3",
+                eleveIds: [5, 8],
+                eleveNames: ["Lucas Bernard", "Olivia Côté"],
+                pgTotal: 5,
+            },
+            {
+                id: 3,
+                name: "Groupe Sciences",
+                tuteurId: 3,
+                tuteurName: "Sophie Chen",
+                eleveIds: [7],
+                eleveNames: ["Noah Gagnon"],
+                pgTotal: 4,
+            },
+        ]);
 
         // Calculate PG used by tutors from their assigned students
         const calculatePGUsed = (tuteurName: string): number => {
@@ -3212,8 +3378,10 @@ const LBNApp = () => {
 
         // Filter personnel based on type, search query, and advanced filters
         const filteredPersonnel = (personnelFilter === "tuteur" ? tuteursWithUpdatedCapacity : eleves).filter((person) => {
-            // Search filter
-            const matchesSearch = person.name.toLowerCase().includes(searchQuery.toLowerCase());
+            // Search filter - includes name and alias
+            const searchLower = searchQuery.toLowerCase();
+            const matchesSearch = person.name.toLowerCase().includes(searchLower) ||
+                (person.alias && person.alias.toLowerCase().includes(searchLower));
 
             if (personnelFilter === "tuteur") {
                 const tuteur = person as Tuteur;
@@ -3221,21 +3389,301 @@ const LBNApp = () => {
                 const matchesSpecialite = specialiteFilter.length === 0 ||
                     specialiteFilter.some(spec => tuteur.specialites.includes(spec));
                 const matchesStatus = statusFilter.length === 0 || statusFilter.includes(tuteur.status);
+                const matchesTypeTuteur = typeTuteurFilter.length === 0 || 
+                    (tuteur.typeTuteur && typeTuteurFilter.includes(tuteur.typeTuteur));
+                const matchesGroupe = groupeFilter === "" || 
+                    (tuteur.groupeId && tuteur.groupeId.toString() === groupeFilter);
 
-                return matchesSearch && matchesNiveau && matchesSpecialite && matchesStatus;
+                return matchesSearch && matchesNiveau && matchesSpecialite && matchesStatus && matchesTypeTuteur && matchesGroupe;
             } else {
                 const eleve = person as Eleve;
                 const matchesGrade = gradeFilter.length === 0 || gradeFilter.includes(eleve.grade);
                 const matchesPg = pgFilter === "" || eleve.pg.toString() === pgFilter;
+                const matchesGroupe = groupeFilter === "" || 
+                    (eleve.groupeId && eleve.groupeId.toString() === groupeFilter);
 
-                return matchesSearch && matchesGrade && matchesPg;
+                return matchesSearch && matchesGrade && matchesPg && matchesGroupe;
             }
         });
 
         // Count active filters
         const activeFiltersCount = personnelFilter === "tuteur"
-            ? niveauFilter.length + specialiteFilter.length + statusFilter.length
-            : gradeFilter.length + (pgFilter ? 1 : 0);
+            ? niveauFilter.length + specialiteFilter.length + statusFilter.length + typeTuteurFilter.length + (groupeFilter ? 1 : 0)
+            : gradeFilter.length + (pgFilter ? 1 : 0) + (groupeFilter ? 1 : 0);
+
+        // Form state for student
+        const [studentFormData, setStudentFormData] = useState({
+            name: "",
+            age: "",
+            grade: "",
+            pg: "",
+            emails: [""],
+            phone: "",
+            difficultes: "",
+            allergies: "",
+            alias: "",
+            tuteur: "",
+        });
+
+        // Form state for tutor
+        const [tutorFormData, setTutorFormData] = useState({
+            prenom: "",
+            nom: "",
+            typeTuteur: "Tuteur" as "Apprenti" | "Tuteur" | "Administrateur",
+            specialites: [] as string[],
+            salaireHoraire: "",
+            capaciteGestion: "",
+            email: "",
+            phone: "",
+            allergies: "",
+            alias: "",
+            niveau: "",
+            anneesConfortables: [] as string[],
+        });
+
+        // Form state for group
+        const [groupFormData, setGroupFormData] = useState({
+            name: "",
+            tuteurId: "",
+            eleveIds: [] as number[],
+        });
+
+        // Handler functions
+        const handleAddStudent = () => {
+            setEditingItem(null);
+            setStudentFormData({
+                name: "",
+                age: "",
+                grade: "",
+                pg: "",
+                emails: [""],
+                phone: "",
+                difficultes: "",
+                allergies: "",
+                alias: "",
+                tuteur: "",
+            });
+            setShowStudentForm(true);
+        };
+
+        const handleEditStudent = (eleve: Eleve) => {
+            setEditingItem(eleve);
+            setStudentFormData({
+                name: eleve.name,
+                age: eleve.age?.toString() || "",
+                grade: eleve.grade,
+                pg: eleve.pg.toString(),
+                emails: eleve.emails && eleve.emails.length > 0 ? eleve.emails : [eleve.email],
+                phone: eleve.phone,
+                difficultes: eleve.difficultes || "",
+                allergies: eleve.allergies || "",
+                alias: eleve.alias || "",
+                tuteur: eleve.tuteur,
+            });
+            setShowStudentForm(true);
+        };
+
+        const handleSaveStudent = () => {
+            if (!studentFormData.name || !studentFormData.grade || !studentFormData.pg) {
+                alert("Veuillez remplir tous les champs obligatoires");
+                return;
+            }
+
+            const newStudent: Eleve = {
+                id: editingItem ? editingItem.id : Math.max(...eleves.map(e => e.id), 0) + 1,
+                name: studentFormData.name,
+                type: "eleve",
+                age: studentFormData.age ? parseInt(studentFormData.age) : undefined,
+                grade: studentFormData.grade,
+                pg: parseInt(studentFormData.pg),
+                status: "active",
+                avatar: "from-slate-300 to-slate-400",
+                email: studentFormData.emails[0] || "",
+                emails: studentFormData.emails.filter(e => e.trim() !== ""),
+                phone: studentFormData.phone,
+                tuteur: studentFormData.tuteur || "",
+                difficultes: studentFormData.difficultes || undefined,
+                allergies: studentFormData.allergies || undefined,
+                alias: studentFormData.alias || undefined,
+                groupeId: groupeFilter ? parseInt(groupeFilter) : undefined,
+                prochainsCours: editingItem ? (editingItem as Eleve).prochainsCours : [],
+                statistiques: editingItem ? (editingItem as Eleve).statistiques : undefined,
+            };
+
+            if (editingItem) {
+                setEleves(eleves.map(e => e.id === editingItem.id ? newStudent : e));
+            } else {
+                setEleves([...eleves, newStudent]);
+            }
+
+            setShowStudentForm(false);
+            setEditingItem(null);
+        };
+
+        const handleDeleteStudent = (eleve: Eleve) => {
+            if (confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${eleve.name}?`)) {
+                setEleves(eleves.filter(e => e.id !== eleve.id));
+                if (selectedPerson?.id === eleve.id) {
+                    setSelectedPerson(null);
+                }
+            }
+        };
+
+        const handleAddTutor = () => {
+            setEditingItem(null);
+            setTutorFormData({
+                prenom: "",
+                nom: "",
+                typeTuteur: "Tuteur",
+                specialites: [],
+                salaireHoraire: "",
+                capaciteGestion: "",
+                email: "",
+                phone: "",
+                allergies: "",
+                alias: "",
+                niveau: "",
+                anneesConfortables: [],
+            });
+            setShowTutorForm(true);
+        };
+
+        const handleEditTutor = (tuteur: Tuteur) => {
+            setEditingItem(tuteur);
+            setTutorFormData({
+                prenom: tuteur.prenom || "",
+                nom: tuteur.nom || "",
+                typeTuteur: tuteur.typeTuteur || "Tuteur",
+                specialites: tuteur.specialites || [],
+                salaireHoraire: tuteur.salaireHoraire.toString(),
+                capaciteGestion: tuteur.capaciteGestion.toString(),
+                email: tuteur.email,
+                phone: tuteur.phone,
+                allergies: tuteur.allergies || "",
+                alias: tuteur.alias || "",
+                niveau: tuteur.niveau,
+                anneesConfortables: tuteur.anneesConfortables || [],
+            });
+            setShowTutorForm(true);
+        };
+
+        const handleSaveTutor = () => {
+            if (!tutorFormData.prenom || !tutorFormData.nom || !tutorFormData.email || !tutorFormData.capaciteGestion) {
+                alert("Veuillez remplir tous les champs obligatoires");
+                return;
+            }
+
+            const newTutor: Tuteur = {
+                id: editingItem ? editingItem.id : Math.max(...tuteurs.map(t => t.id), 0) + 1,
+                name: `${tutorFormData.prenom} ${tutorFormData.nom}`,
+                prenom: tutorFormData.prenom,
+                nom: tutorFormData.nom,
+                type: "tuteur",
+                typeTuteur: tutorFormData.typeTuteur,
+                courses: editingItem ? (editingItem as Tuteur).courses : 0,
+                capacity: editingItem ? (editingItem as Tuteur).capacity : "0/" + tutorFormData.capaciteGestion + " PG",
+                status: "active",
+                avatar: editingItem ? (editingItem as Tuteur).avatar : "from-blue-500 to-blue-600",
+                email: tutorFormData.email,
+                phone: tutorFormData.phone,
+                niveau: tutorFormData.niveau || "Junior",
+                specialites: tutorFormData.specialites,
+                anneesConfortables: tutorFormData.anneesConfortables,
+                salaireHoraire: parseFloat(tutorFormData.salaireHoraire) || 0,
+                capaciteGestion: parseInt(tutorFormData.capaciteGestion),
+                allergies: tutorFormData.allergies || undefined,
+                alias: tutorFormData.alias || undefined,
+                groupeId: groupeFilter ? parseInt(groupeFilter) : undefined,
+                prochainsCours: editingItem ? (editingItem as Tuteur).prochainsCours : [],
+                statistiques: editingItem ? (editingItem as Tuteur).statistiques : undefined,
+            };
+
+            if (editingItem) {
+                setTuteurs(tuteurs.map(t => t.id === editingItem.id ? newTutor : t));
+            } else {
+                setTuteurs([...tuteurs, newTutor]);
+            }
+
+            setShowTutorForm(false);
+            setEditingItem(null);
+        };
+
+        const handleDeleteTutor = (tuteur: Tuteur) => {
+            if (confirm(`Êtes-vous sûr de vouloir supprimer le tuteur ${tuteur.name}?`)) {
+                setTuteurs(tuteurs.filter(t => t.id !== tuteur.id));
+                if (selectedPerson?.id === tuteur.id) {
+                    setSelectedPerson(null);
+                }
+            }
+        };
+
+        const handleAddGroup = () => {
+            setEditingItem(null);
+            setGroupFormData({
+                name: "",
+                tuteurId: "",
+                eleveIds: [],
+            });
+            setShowGroupForm(true);
+        };
+
+        const handleEditGroup = (groupe: Groupe) => {
+            setEditingItem(groupe);
+            setGroupFormData({
+                name: groupe.name,
+                tuteurId: groupe.tuteurId?.toString() || "",
+                eleveIds: groupe.eleveIds,
+            });
+            setShowGroupForm(true);
+        };
+
+        const handleSaveGroup = () => {
+            if (!groupFormData.name) {
+                alert("Veuillez entrer un nom pour le groupe");
+                return;
+            }
+
+            const selectedEleves = eleves.filter(e => groupFormData.eleveIds.includes(e.id));
+            const pgTotal = selectedEleves.reduce((sum, e) => sum + e.pg, 0);
+            const tuteur = groupFormData.tuteurId ? tuteurs.find(t => t.id === parseInt(groupFormData.tuteurId)) : undefined;
+
+            const newGroup: Groupe = {
+                id: editingItem ? (editingItem as Groupe).id : Math.max(...groupes.map(g => g.id), 0) + 1,
+                name: groupFormData.name,
+                tuteurId: groupFormData.tuteurId ? parseInt(groupFormData.tuteurId) : undefined,
+                tuteurName: tuteur?.name,
+                eleveIds: groupFormData.eleveIds,
+                eleveNames: selectedEleves.map(e => e.name),
+                pgTotal: pgTotal,
+            };
+
+            if (editingItem) {
+                setGroupes(groupes.map(g => g.id === (editingItem as Groupe).id ? newGroup : g));
+            } else {
+                setGroupes([...groupes, newGroup]);
+            }
+
+            setShowGroupForm(false);
+            setEditingItem(null);
+        };
+
+        const handleDeleteGroup = (groupe: Groupe) => {
+            if (confirm(`Êtes-vous sûr de vouloir supprimer le groupe ${groupe.name}?`)) {
+                setGroupes(groupes.filter(g => g.id !== groupe.id));
+                if (selectedGroup?.id === groupe.id) {
+                    setSelectedGroup(null);
+                }
+            }
+        };
+
+        // Validate PG capacity
+        const validatePGCapacity = (tuteurId: number, newPG: number): boolean => {
+            const tuteur = tuteurs.find(t => t.id === tuteurId);
+            if (!tuteur) return false;
+            
+            const currentPG = calculatePGUsed(tuteur.name);
+            return currentPG + newPG <= tuteur.capaciteGestion;
+        };
 
         // Export functions
         const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
@@ -3367,7 +3815,10 @@ const LBNApp = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2">
+                            <button 
+                                onClick={() => setShowImportModal(true)}
+                                className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                            >
                                 <Upload size={16} />
                                 Import CSV
                             </button>
@@ -3403,7 +3854,16 @@ const LBNApp = () => {
                                     </div>
                                 )}
                             </div>
-                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                            <button 
+                                onClick={() => {
+                                    if (personnelFilter === "tuteur") {
+                                        handleAddTutor();
+                                    } else {
+                                        handleAddStudent();
+                                    }
+                                }}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                            >
                                 <Plus size={16} />
                                 Ajouter
                             </button>
@@ -3512,6 +3972,29 @@ const LBNApp = () => {
                                                 </div>
 
                                                 <div className="border-t border-slate-200 pt-3">
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Type de tuteur</label>
+                                                    <div className="space-y-2">
+                                                        {["Apprenti", "Tuteur", "Administrateur"].map((type) => (
+                                                            <label key={type} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={typeTuteurFilter.includes(type)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            setTypeTuteurFilter([...typeTuteurFilter, type]);
+                                                                        } else {
+                                                                            setTypeTuteurFilter(typeTuteurFilter.filter(t => t !== type));
+                                                                        }
+                                                                    }}
+                                                                    className="rounded text-orange-500 focus:ring-orange-500"
+                                                                />
+                                                                <span className="text-sm text-slate-700">{type}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="border-t border-slate-200 pt-3">
                                                     <label className="text-sm font-semibold text-slate-700 mb-2 block">Disponibilité</label>
                                                     <div className="space-y-2">
                                                         {[
@@ -3535,6 +4018,20 @@ const LBNApp = () => {
                                                             </label>
                                                         ))}
                                                     </div>
+                                                </div>
+
+                                                <div className="border-t border-slate-200 pt-3">
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Groupe d'appartenance</label>
+                                                    <select
+                                                        value={groupeFilter}
+                                                        onChange={(e) => setGroupeFilter(e.target.value)}
+                                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                                                    >
+                                                        <option value="">Tous</option>
+                                                        {groupes.map((g) => (
+                                                            <option key={g.id} value={g.id.toString()}>{g.name}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </div>
                                         ) : (
@@ -3577,6 +4074,20 @@ const LBNApp = () => {
                                                         <option value="5">5 PG et plus</option>
                                                     </select>
                                                 </div>
+
+                                                <div className="border-t border-slate-200 pt-3">
+                                                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Groupe d'appartenance</label>
+                                                    <select
+                                                        value={groupeFilter}
+                                                        onChange={(e) => setGroupeFilter(e.target.value)}
+                                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                                                    >
+                                                        <option value="">Tous</option>
+                                                        {groupes.map((g) => (
+                                                            <option key={g.id} value={g.id.toString()}>{g.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
                                         )}
 
@@ -3587,8 +4098,10 @@ const LBNApp = () => {
                                                     setNiveauFilter([]);
                                                     setSpecialiteFilter([]);
                                                     setStatusFilter([]);
+                                                    setTypeTuteurFilter([]);
                                                     setGradeFilter([]);
                                                     setPgFilter("");
+                                                    setGroupeFilter("");
                                                 }}
                                                 className="flex-1 px-3 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
                                             >
@@ -3712,7 +4225,9 @@ const LBNApp = () => {
                                                 </h3>
                                                 <div className="text-slate-600">
                                                     {selectedPerson.type === "tuteur" ? "Tuteur" : "Élève"}
+                                                    {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).typeTuteur && ` • ${(selectedPerson as Tuteur).typeTuteur}`}
                                                     {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).niveau && ` • Niveau ${(selectedPerson as Tuteur).niveau}`}
+                                                    {selectedPerson.alias && ` • Alias: ${selectedPerson.alias}`}
                                                 </div>
                                             </div>
                                         </div>
@@ -3720,8 +4235,30 @@ const LBNApp = () => {
                                             <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                                                 <Mail size={18} />
                                             </button>
-                                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                                            <button 
+                                                onClick={() => {
+                                                    if (selectedPerson.type === "tuteur") {
+                                                        handleEditTutor(selectedPerson as Tuteur);
+                                                    } else {
+                                                        handleEditStudent(selectedPerson as Eleve);
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                            >
                                                 Modifier
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if (selectedPerson.type === "tuteur") {
+                                                        handleDeleteTutor(selectedPerson as Tuteur);
+                                                    } else {
+                                                        handleDeleteStudent(selectedPerson as Eleve);
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                                            >
+                                                <Trash2 size={16} />
+                                                Supprimer
                                             </button>
                                         </div>
                                     </div>
@@ -3731,8 +4268,16 @@ const LBNApp = () => {
                                         <h4 className="font-semibold text-slate-900 mb-3">Informations de contact</h4>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <div className="text-sm text-slate-600 mb-1">Email</div>
-                                                <div className="text-slate-900">{selectedPerson.email}</div>
+                                                <div className="text-sm text-slate-600 mb-1">Email{selectedPerson.type === "eleve" && (selectedPerson as Eleve).emails && (selectedPerson as Eleve).emails!.length > 1 ? "s" : ""}</div>
+                                                {selectedPerson.type === "eleve" && (selectedPerson as Eleve).emails && (selectedPerson as Eleve).emails!.length > 1 ? (
+                                                    <div className="space-y-1">
+                                                        {(selectedPerson as Eleve).emails!.map((email, idx) => (
+                                                            <div key={idx} className="text-slate-900">{email}</div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-slate-900">{selectedPerson.email}</div>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="text-sm text-slate-600 mb-1">Téléphone</div>
@@ -3744,8 +4289,86 @@ const LBNApp = () => {
                                                     <div className="text-slate-900 font-semibold">${(selectedPerson as Tuteur).salaireHoraire.toFixed(2)}/heure</div>
                                                 </div>
                                             )}
+                                            {selectedPerson.type === "eleve" && (selectedPerson as Eleve).age && (
+                                                <div>
+                                                    <div className="text-sm text-slate-600 mb-1">Âge</div>
+                                                    <div className="text-slate-900">{(selectedPerson as Eleve).age} ans</div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
+
+                                    {/* Sensitive Information - Security Restricted */}
+                                    {(selectedPerson.allergies || (selectedPerson.type === "eleve" && (selectedPerson as Eleve).difficultes)) && canViewSensitiveData && (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Shield size={18} className="text-yellow-600" />
+                                                <h4 className="font-semibold text-slate-900">Informations sensibles</h4>
+                                                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Accès restreint</span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {selectedPerson.allergies && (
+                                                    <div>
+                                                        <div className="text-sm text-slate-600 mb-1">Allergies</div>
+                                                        <div className="text-slate-900">{selectedPerson.allergies}</div>
+                                                    </div>
+                                                )}
+                                                {selectedPerson.type === "eleve" && (selectedPerson as Eleve).difficultes && (
+                                                    <div>
+                                                        <div className="text-sm text-slate-600 mb-1">Difficultés</div>
+                                                        <div className="text-slate-900">{(selectedPerson as Eleve).difficultes}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Statistics */}
+                                    {((selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).statistiques) || 
+                                      (selectedPerson.type === "eleve" && (selectedPerson as Eleve).statistiques)) && (
+                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 mb-6 border border-blue-200">
+                                            <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                                <BarChart3 size={18} className="text-blue-600" />
+                                                Statistiques
+                                            </h4>
+                                            {selectedPerson.type === "tuteur" && (selectedPerson as Tuteur).statistiques && (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Heures enseignées</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.heuresEnseignees}h</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Taux de complétion</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.tauxCompletion}%</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Satisfaction</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.satisfaction}/5</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Nombre d'élèves</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Tuteur).statistiques!.nombreEleves}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {selectedPerson.type === "eleve" && (selectedPerson as Eleve).statistiques && (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Taux de présence</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).statistiques!.tauxPresence}%</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3">
+                                                        <div className="text-xs text-slate-600 mb-1">Progression</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).statistiques!.progression}%</div>
+                                                    </div>
+                                                    <div className="bg-white rounded-lg p-3 col-span-2">
+                                                        <div className="text-xs text-slate-600 mb-1">Nombre de cours</div>
+                                                        <div className="text-xl font-bold text-slate-900">{(selectedPerson as Eleve).statistiques!.nombreCours}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Tutor-specific information */}
                                     {selectedPerson.type === "tuteur" && (
@@ -3777,13 +4400,28 @@ const LBNApp = () => {
                                             {/* Capacity Management */}
                                             <div className="mb-6">
                                                 <h4 className="font-semibold text-slate-900 mb-3">Capacité de Gestion</h4>
-                                                <div className="bg-slate-50 rounded-xl p-4">
-                                                    <div className="text-sm text-slate-600 mb-2">Quantité d'élèves qu'il peut gérer</div>
-                                                    <div className="text-2xl font-bold text-slate-900 mb-2">{(selectedPerson as Tuteur).capaciteGestion} PG</div>
-                                                    <div className="text-xs text-slate-500">
-                                                        Les PG des élèves assignés s'additionnent jusqu'à atteindre {(selectedPerson as Tuteur).capaciteGestion} PG
-                                                    </div>
-                                                </div>
+                                                {(() => {
+                                                    const tuteur = selectedPerson as Tuteur;
+                                                    const pgUsed = calculatePGUsed(tuteur.name);
+                                                    const isOverCapacity = pgUsed > tuteur.capaciteGestion;
+                                                    return (
+                                                        <div className={`rounded-xl p-4 ${isOverCapacity ? "bg-red-50 border-2 border-red-300" : "bg-slate-50"}`}>
+                                                            <div className="text-sm text-slate-600 mb-2">Quantité d'élèves qu'il peut gérer</div>
+                                                            <div className={`text-2xl font-bold mb-2 ${isOverCapacity ? "text-red-700" : "text-slate-900"}`}>
+                                                                {pgUsed}/{tuteur.capaciteGestion} PG
+                                                            </div>
+                                                            {isOverCapacity && (
+                                                                <div className="text-sm text-red-700 font-semibold mb-2 flex items-center gap-2">
+                                                                    <AlertCircle size={16} />
+                                                                    Capacité dépassée!
+                                                                </div>
+                                                            )}
+                                                            <div className="text-xs text-slate-500">
+                                                                Les PG des élèves assignés s'additionnent jusqu'à atteindre {tuteur.capaciteGestion} PG
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </>
                                     )}
@@ -3861,10 +4499,22 @@ const LBNApp = () => {
                                         </div>
                                     </div>                                {/* Action Buttons */}
                                     <div className="mt-6 pt-6 border-t border-slate-200 flex gap-3">
-                                        <button className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                                        <button 
+                                            onClick={() => {
+                                                setAvailabilityType("court");
+                                                setShowAvailabilityForm(true);
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                        >
                                             Modifier une date unique
                                         </button>
-                                        <button className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                        <button 
+                                            onClick={() => {
+                                                setAvailabilityType("long");
+                                                setShowAvailabilityForm(true);
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                        >
                                             Modification long terme
                                         </button>
                                     </div>
@@ -3991,58 +4641,661 @@ const LBNApp = () => {
                                 <h3 className="text-lg font-bold text-slate-900">Gestion des groupes</h3>
                                 <p className="text-sm text-slate-600">Créez et gérez des groupes pour déplacer plusieurs personnes ensemble</p>
                             </div>
-                            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                            <button 
+                                onClick={handleAddGroup}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                            >
                                 <Plus size={16} />
                                 Créer un groupe
                             </button>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
-                            {/* Example groups */}
-                            <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="font-semibold text-slate-900">Groupe Math Avancé</div>
-                                    <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Avec tuteur</div>
+                            {groupes.map((groupe) => (
+                                <div 
+                                    key={groupe.id}
+                                    onClick={() => setSelectedGroup(groupe)}
+                                    className={`border-2 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer ${
+                                        selectedGroup?.id === groupe.id ? "border-orange-500 bg-orange-50" : "border-slate-200"
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="font-semibold text-slate-900">{groupe.name}</div>
+                                        <div className={`text-xs px-2 py-1 rounded-full ${
+                                            groupe.tuteurId ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                        }`}>
+                                            {groupe.tuteurId ? "Avec tuteur" : "Sans tuteur"}
+                                        </div>
+                                    </div>
+                                    <div className="text-sm text-slate-600 mb-2">
+                                        {groupe.tuteurName ? `Tuteur: ${groupe.tuteurName}` : "Aucun tuteur assigné"}
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Users size={14} className="text-slate-400" />
+                                            <span className="text-sm text-slate-600">{groupe.eleveIds.length} élève(s)</span>
+                                        </div>
+                                        <div className="text-xs text-slate-500 font-medium">
+                                            {groupe.pgTotal} PG
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditGroup(groupe);
+                                            }}
+                                            className="flex-1 px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors"
+                                        >
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteGroup(groupe);
+                                            }}
+                                            className="flex-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="text-sm text-slate-600 mb-2">
-                                    Tuteur: Marie Dupont
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Users size={14} className="text-slate-400" />
-                                    <span className="text-sm text-slate-600">4 élèves</span>
-                                </div>
-                            </div>
-
-                            <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="font-semibold text-slate-900">Groupe Sec. 3</div>
-                                    <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Sans tuteur</div>
-                                </div>
-                                <div className="text-sm text-slate-600 mb-2">
-                                    Niveau secondaire 3
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Users size={14} className="text-slate-400" />
-                                    <span className="text-sm text-slate-600">6 élèves</span>
-                                </div>
-                            </div>
-
-                            <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 transition-colors cursor-pointer">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="font-semibold text-slate-900">Groupe Sciences</div>
-                                    <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Avec tuteur</div>
-                                </div>
-                                <div className="text-sm text-slate-600 mb-2">
-                                    Tuteur: Sophie Chen
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Users size={14} className="text-slate-400" />
-                                    <span className="text-sm text-slate-600">3 élèves</span>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
+
+                {/* Student Form Modal */}
+                {showStudentForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900">
+                                    {editingItem ? "Modifier l'élève" : "Créer un élève"}
+                                </h3>
+                                <button onClick={() => { setShowStudentForm(false); setEditingItem(null); }} className="text-slate-400 hover:text-slate-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Nom <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        value={studentFormData.name}
+                                        onChange={(e) => setStudentFormData({...studentFormData, name: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Âge</label>
+                                        <input
+                                            type="number"
+                                            value={studentFormData.age}
+                                            onChange={(e) => setStudentFormData({...studentFormData, age: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Année scolaire <span className="text-red-500">*</span></label>
+                                        <select
+                                            value={studentFormData.grade}
+                                            onChange={(e) => setStudentFormData({...studentFormData, grade: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            <option value="">Sélectionner</option>
+                                            {["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4", "Sec. 5"].map(g => (
+                                                <option key={g} value={g}>{g}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Points de Gestion (PG) <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="number"
+                                            value={studentFormData.pg}
+                                            onChange={(e) => setStudentFormData({...studentFormData, pg: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone</label>
+                                        <input
+                                            type="tel"
+                                            value={studentFormData.phone}
+                                            onChange={(e) => setStudentFormData({...studentFormData, phone: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Adresses courriel</label>
+                                    {studentFormData.emails.map((email, idx) => (
+                                        <div key={idx} className="flex gap-2 mb-2">
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => {
+                                                    const newEmails = [...studentFormData.emails];
+                                                    newEmails[idx] = e.target.value;
+                                                    setStudentFormData({...studentFormData, emails: newEmails});
+                                                }}
+                                                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                                placeholder="email@exemple.com"
+                                            />
+                                            {studentFormData.emails.length > 1 && (
+                                                <button
+                                                    onClick={() => {
+                                                        const newEmails = studentFormData.emails.filter((_, i) => i !== idx);
+                                                        setStudentFormData({...studentFormData, emails: newEmails});
+                                                    }}
+                                                    className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={() => setStudentFormData({...studentFormData, emails: [...studentFormData.emails, ""]})}
+                                        className="text-sm text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                                    >
+                                        <Plus size={14} />
+                                        Ajouter une adresse courriel
+                                    </button>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Difficultés {!canViewSensitiveData && <span className="text-xs text-slate-500">(Accès restreint)</span>}</label>
+                                    <textarea
+                                        value={studentFormData.difficultes}
+                                        onChange={(e) => setStudentFormData({...studentFormData, difficultes: e.target.value})}
+                                        disabled={!canViewSensitiveData}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-slate-100"
+                                        rows={3}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Allergies {!canViewSensitiveData && <span className="text-xs text-slate-500">(Accès restreint)</span>}</label>
+                                    <input
+                                        type="text"
+                                        value={studentFormData.allergies}
+                                        onChange={(e) => setStudentFormData({...studentFormData, allergies: e.target.value})}
+                                        disabled={!canViewSensitiveData}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-slate-100"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Alias</label>
+                                    <input
+                                        type="text"
+                                        value={studentFormData.alias}
+                                        onChange={(e) => setStudentFormData({...studentFormData, alias: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        placeholder="Alias pour distinguer les doublons"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Tuteur assigné</label>
+                                    <select
+                                        value={studentFormData.tuteur}
+                                        onChange={(e) => setStudentFormData({...studentFormData, tuteur: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="">Aucun</option>
+                                        {tuteurs.map(t => (
+                                            <option key={t.id} value={t.name}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => { setShowStudentForm(false); setEditingItem(null); }}
+                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleSaveStudent}
+                                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    {editingItem ? "Enregistrer" : "Créer"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tutor Form Modal */}
+                {showTutorForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900">
+                                    {editingItem ? "Modifier le tuteur" : "Créer un tuteur"}
+                                </h3>
+                                <button onClick={() => { setShowTutorForm(false); setEditingItem(null); }} className="text-slate-400 hover:text-slate-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Prénom <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={tutorFormData.prenom}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, prenom: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Nom <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={tutorFormData.nom}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, nom: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Type de tuteur <span className="text-red-500">*</span></label>
+                                        <select
+                                            value={tutorFormData.typeTuteur}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, typeTuteur: e.target.value as "Apprenti" | "Tuteur" | "Administrateur"})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            <option value="Apprenti">Apprenti</option>
+                                            <option value="Tuteur">Tuteur</option>
+                                            <option value="Administrateur">Administrateur</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Niveau</label>
+                                        <select
+                                            value={tutorFormData.niveau}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, niveau: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            <option value="">Sélectionner</option>
+                                            <option value="Junior">Junior</option>
+                                            <option value="Intermédiaire">Intermédiaire</option>
+                                            <option value="Sénior">Sénior</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Matière(s) enseignée(s)</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {tutorFormData.specialites.map((spec, idx) => (
+                                            <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-2">
+                                                {spec}
+                                                <button onClick={() => {
+                                                    setTutorFormData({...tutorFormData, specialites: tutorFormData.specialites.filter((_, i) => i !== idx)});
+                                                }} className="hover:text-blue-900">
+                                                    <X size={14} />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <select
+                                        onChange={(e) => {
+                                            if (e.target.value && !tutorFormData.specialites.includes(e.target.value)) {
+                                                setTutorFormData({...tutorFormData, specialites: [...tutorFormData.specialites, e.target.value]});
+                                            }
+                                            e.target.value = "";
+                                        }}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="">Ajouter une matière</option>
+                                        {["Mathématiques", "Sciences", "Français", "Anglais", "Histoire", "Chimie"].filter(s => !tutorFormData.specialites.includes(s)).map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Taux horaire</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={tutorFormData.salaireHoraire}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, salaireHoraire: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Points de gestion <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="number"
+                                            value={tutorFormData.capaciteGestion}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, capaciteGestion: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="email"
+                                            value={tutorFormData.email}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, email: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone</label>
+                                        <input
+                                            type="tel"
+                                            value={tutorFormData.phone}
+                                            onChange={(e) => setTutorFormData({...tutorFormData, phone: e.target.value})}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Allergies {!canViewSensitiveData && <span className="text-xs text-slate-500">(Accès restreint)</span>}</label>
+                                    <input
+                                        type="text"
+                                        value={tutorFormData.allergies}
+                                        onChange={(e) => setTutorFormData({...tutorFormData, allergies: e.target.value})}
+                                        disabled={!canViewSensitiveData}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-slate-100"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Alias</label>
+                                    <input
+                                        type="text"
+                                        value={tutorFormData.alias}
+                                        onChange={(e) => setTutorFormData({...tutorFormData, alias: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        placeholder="Alias pour distinguer les doublons"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Années confortables</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {tutorFormData.anneesConfortables.map((annee, idx) => (
+                                            <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-2">
+                                                {annee}
+                                                <button onClick={() => {
+                                                    setTutorFormData({...tutorFormData, anneesConfortables: tutorFormData.anneesConfortables.filter((_, i) => i !== idx)});
+                                                }} className="hover:text-green-900">
+                                                    <X size={14} />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <select
+                                        onChange={(e) => {
+                                            if (e.target.value && !tutorFormData.anneesConfortables.includes(e.target.value)) {
+                                                setTutorFormData({...tutorFormData, anneesConfortables: [...tutorFormData.anneesConfortables, e.target.value]});
+                                            }
+                                            e.target.value = "";
+                                        }}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="">Ajouter une année</option>
+                                        {["Sec. 1", "Sec. 2", "Sec. 3", "Sec. 4", "Sec. 5"].filter(a => !tutorFormData.anneesConfortables.includes(a)).map(a => (
+                                            <option key={a} value={a}>{a}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => { setShowTutorForm(false); setEditingItem(null); }}
+                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleSaveTutor}
+                                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    {editingItem ? "Enregistrer" : "Créer"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Group Form Modal */}
+                {showGroupForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900">
+                                    {editingItem ? "Modifier le groupe" : "Créer un groupe"}
+                                </h3>
+                                <button onClick={() => { setShowGroupForm(false); setEditingItem(null); }} className="text-slate-400 hover:text-slate-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Nom du groupe <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        value={groupFormData.name}
+                                        onChange={(e) => setGroupFormData({...groupFormData, name: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Tuteur assigné</label>
+                                    <select
+                                        value={groupFormData.tuteurId}
+                                        onChange={(e) => setGroupFormData({...groupFormData, tuteurId: e.target.value})}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="">Aucun tuteur</option>
+                                        {tuteurs.map(t => (
+                                            <option key={t.id} value={t.id.toString()}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Élèves</label>
+                                    <div className="border border-slate-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                                        {eleves.map(eleve => (
+                                            <label key={eleve.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={groupFormData.eleveIds.includes(eleve.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setGroupFormData({...groupFormData, eleveIds: [...groupFormData.eleveIds, eleve.id]});
+                                                        } else {
+                                                            setGroupFormData({...groupFormData, eleveIds: groupFormData.eleveIds.filter(id => id !== eleve.id)});
+                                                        }
+                                                    }}
+                                                    className="rounded text-orange-500 focus:ring-orange-500"
+                                                />
+                                                <span className="text-sm text-slate-700">{eleve.name} ({eleve.pg} PG)</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="mt-2 text-sm text-slate-600">
+                                        PG total: {eleves.filter(e => groupFormData.eleveIds.includes(e.id)).reduce((sum, e) => sum + e.pg, 0)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => { setShowGroupForm(false); setEditingItem(null); }}
+                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleSaveGroup}
+                                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    {editingItem ? "Enregistrer" : "Créer"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Availability Form Modal */}
+                {showAvailabilityForm && selectedPerson && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-2xl w-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900">
+                                    {availabilityType === "long" ? "Modification long terme" : availabilityType === "court" ? "Modification court terme" : "Ajout ponctuel"}
+                                </h3>
+                                <button onClick={() => setShowAvailabilityForm(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-sm text-blue-900">
+                                        {availabilityType === "long" 
+                                            ? "Modifiez les disponibilités récurrentes avec dates de début et de fin."
+                                            : availabilityType === "court"
+                                            ? "Signalez une absence, un retard ou une exception ponctuelle."
+                                            : "Ajoutez une plage horaire pour une journée spécifique."}
+                                    </p>
+                                </div>
+                                {availabilityType === "long" && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Date de début</label>
+                                                <input type="date" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Date de fin</label>
+                                                <input type="date" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Plage horaire à désactiver</label>
+                                            <select className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                                <option value="">Sélectionner une plage</option>
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
+                                {availabilityType === "court" && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Type</label>
+                                            <select className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                                <option value="">Sélectionner</option>
+                                                <option value="absence">Absence</option>
+                                                <option value="retard">Retard</option>
+                                                <option value="exception">Exception</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date</label>
+                                            <input type="date" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Commentaire <span className="text-red-500">*</span></label>
+                                            <textarea
+                                                rows={3}
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                                placeholder="Précisez le motif du changement"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                                {availabilityType === "ponctuel" && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date</label>
+                                            <input type="date" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Heure de début</label>
+                                                <input type="time" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Heure de fin</label>
+                                                <input type="time" className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => setShowAvailabilityForm(false)}
+                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        alert("Fonctionnalité de disponibilité enregistrée (simulation)");
+                                        setShowAvailabilityForm(false);
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Import Modal */}
+                {showImportModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-2xl w-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900">Importer des données CSV</h3>
+                                <button onClick={() => setShowImportModal(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-sm text-blue-900">
+                                        Sélectionnez un fichier CSV contenant les données à importer. Le fichier doit respecter le format attendu.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Fichier CSV</label>
+                                    <input
+                                        type="file"
+                                        accept=".csv"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                alert(`Import du fichier ${file.name} (simulation)`);
+                                                setShowImportModal(false);
+                                            }
+                                        }}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => setShowImportModal(false)}
+                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
