@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Calendar,
     Users,
@@ -51,6 +51,7 @@ import {
     Info,
     Shield,
     ExternalLink,
+    Check,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -1886,6 +1887,97 @@ const LBNApp = () => {
         const [showStatsPicker, setShowStatsPicker] = useState(false);
         const [printRange, setPrintRange] = useState("week");
         const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
+        const statsPickerRef = useRef<HTMLDivElement>(null);
+        const statsPickerButtonRef = useRef<HTMLButtonElement>(null);
+        const [coursesState, setCoursesState] = useState<Partial<Record<Day, Course[]>>>(courses);
+
+        // Mock students data - accessible for grade lookup
+        const studentsData = [
+            { id: 1, name: "Lucas Bernard", grade: "Sec. 3", pg: 3 },
+            { id: 2, name: "Emma Tremblay", grade: "Sec. 4", pg: 2 },
+            { id: 3, name: "Noah Gagnon", grade: "Sec. 5", pg: 4 },
+            { id: 4, name: "Olivia Côté", grade: "Sec. 3", pg: 2 },
+            { id: 5, name: "William Roy", grade: "Sec. 4", pg: 3 },
+            { id: 6, name: "Sophie Martin", grade: "Sec. 3", pg: 3 },
+            { id: 7, name: "Alex Leblanc", grade: "Sec. 3", pg: 3 },
+            { id: 8, name: "Emma Chen", grade: "Sec. 4", pg: 3 },
+            { id: 9, name: "Marc Dubois", grade: "Sec. 4", pg: 3 }
+        ];
+
+        // Mock tutors data with capacity
+        const tutorsData = [
+            { name: "Marie Dupont", capaciteGestion: 15 },
+            { name: "Jean Martin", capaciteGestion: 15 },
+            { name: "Sophie Chen", capaciteGestion: 15 },
+            { name: "Thomas Roy", capaciteGestion: 15 }
+        ];
+
+        // Function to calculate total PG used in a course (only for present students)
+        const calculateCoursePG = (course: Course): number => {
+            if (!course.studentNames || course.studentNames.length === 0) {
+                return 0;
+            }
+            return course.studentNames.reduce((total, studentName) => {
+                // Only count PG for present students (attendance !== false)
+                const isPresent = course.attendance?.[studentName] !== false;
+                if (!isPresent) {
+                    return total; // Skip absent students
+                }
+                const student = studentsData.find(s => s.name === studentName);
+                return total + (student?.pg || 0);
+            }, 0);
+        };
+
+        // Function to get tutor capacity
+        const getTutorCapacity = (tutorName: string): number => {
+            const tutor = tutorsData.find(t => t.name === tutorName);
+            return tutor?.capaciteGestion || 15; // Default to 15 if not found
+        };
+
+        // Function to format student name: "Lucas B., Sec. 3"
+        const formatStudentName = (studentName: string, grade: string | null): string => {
+            const parts = studentName.trim().split(/\s+/);
+            if (parts.length < 2) {
+                return grade ? `${studentName}, ${grade}` : studentName;
+            }
+            const firstName = parts[0];
+            const lastNameInitial = parts[parts.length - 1][0].toUpperCase();
+            return grade ? `${firstName} ${lastNameInitial}., ${grade}` : `${firstName} ${lastNameInitial}.`;
+        };
+
+        // Function to get student grade from database
+        const getStudentGrade = (studentName: string): string | null => {
+            const student = studentsData.find(s => s.name === studentName);
+            return student ? student.grade : null;
+        };
+
+        // Function to toggle attendance for a student in a course
+        const toggleAttendance = (day: Day, courseIndex: number, studentName: string) => {
+            setCoursesState(prev => {
+                const newState = { ...prev };
+                if (!newState[day]) return newState;
+                
+                const updatedCourses = [...newState[day]!];
+                const course = { ...updatedCourses[courseIndex] };
+                
+                // Initialize attendance if not exists
+                if (!course.attendance) {
+                    course.attendance = {};
+                }
+                
+                // Toggle attendance (default to true if undefined/null)
+                const currentStatus = course.attendance[studentName];
+                course.attendance = {
+                    ...course.attendance,
+                    [studentName]: currentStatus === false ? true : false
+                };
+                
+                updatedCourses[courseIndex] = course;
+                newState[day] = updatedCourses;
+                
+                return newState;
+            });
+        };
 
         // Mock groups (same as PlacementPage)
         const groups = [
@@ -1920,6 +2012,51 @@ const LBNApp = () => {
             return groups.find(g => g.id === course.groupId) || null;
         };
 
+        // Local function to get courses for a room in a time slot using coursesState
+        const getCoursesForRoomAndSlotLocal = (room: string, slotStart: string) => {
+            return (
+                coursesState[selectedDay]?.filter(
+                    (c) => c.room === room && c.time.startsWith(slotStart.split(":")[0])
+                ) || []
+            );
+        };
+
+        // Helper to find course index in coursesState for toggleAttendance
+        const findCourseIndex = (room: string, slotStart: string, courseToFind: Course): number => {
+            const courses = coursesState[selectedDay] || [];
+            return courses.findIndex(
+                (c) => c.room === room && 
+                       c.time.startsWith(slotStart.split(":")[0]) &&
+                       c.tutor === courseToFind.tutor &&
+                       c.subject === courseToFind.subject &&
+                       c.time === courseToFind.time
+            );
+        };
+
+        // Close stats picker when clicking outside
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                const target = event.target as HTMLElement;
+                if (
+                    showStatsPicker &&
+                    statsPickerRef.current &&
+                    statsPickerButtonRef.current &&
+                    !statsPickerRef.current.contains(target) &&
+                    !statsPickerButtonRef.current.contains(target)
+                ) {
+                    setShowStatsPicker(false);
+                }
+            };
+
+            if (showStatsPicker) {
+                document.addEventListener('mousedown', handleClickOutside);
+            }
+
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [showStatsPicker]);
+
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 overflow-auto">
                 {/* Page Header */}
@@ -1945,48 +2082,62 @@ const LBNApp = () => {
                                     Semaine du 17 octobre 2025
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowStatsPicker(!showStatsPicker)}
-                                className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2"
-                            >
-                                <Eye size={16} />
-                                Personnaliser
-                            </button>
-                        </div>
+                            {/* Relative wrapper for dropdown positioning */}
+                            <div className="relative">
+                                <button
+                                    ref={statsPickerButtonRef}
+                                    onClick={() => setShowStatsPicker(!showStatsPicker)}
+                                    className="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2"
+                                >
+                                    <Eye size={16} />
+                                    Personnaliser
+                                    <ChevronDown 
+                                        size={16} 
+                                        className={`transition-transform duration-200 ${showStatsPicker ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
 
-                        {/* Statistics Picker */}
-                        {showStatsPicker && (
-                            <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4">
-                                <p className="text-sm font-medium text-slate-700 mb-3">
-                                    Choisir les statistiques à afficher:
-                                </p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {statsConfig.map((stat) => (
-                                        <label
-                                            key={stat.id}
-                                            className="flex items-center gap-2 p-2 hover:bg-white rounded transition-colors cursor-pointer"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    visibleStats[stat.id] ?? stat.visible
-                                                }
-                                                onChange={(e) =>
-                                                    setVisibleStats({
-                                                        ...visibleStats,
-                                                        [stat.id]: e.target.checked,
-                                                    })
-                                                }
-                                                className="rounded"
-                                            />
-                                            <span className="text-sm text-slate-700">
-                                                {stat.name}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
+                                {/* Floating Statistics Picker Dropdown */}
+                                {showStatsPicker && (
+                                    <div 
+                                        ref={statsPickerRef}
+                                        className="absolute top-12 right-0 z-50 w-72 bg-white rounded-xl border border-slate-200 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <p className="text-sm font-medium text-slate-700 mb-3">
+                                            Choisir les statistiques à afficher:
+                                        </p>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {statsConfig.map((stat) => (
+                                                <label
+                                                    key={stat.id}
+                                                    className="flex items-center gap-2 p-2.5 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={
+                                                            visibleStats[stat.id] ?? stat.visible
+                                                        }
+                                                        onChange={(e) =>
+                                                            setVisibleStats({
+                                                                ...visibleStats,
+                                                                [stat.id]: e.target.checked,
+                                                            })
+                                                        }
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="rounded"
+                                                    />
+                                                    <span className="text-sm text-slate-700">
+                                                        {stat.name}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
 
                         {/* KPIs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -2191,39 +2342,98 @@ const LBNApp = () => {
                                             </td>
                                             {timeSlots.map((slot) => {
                                                 const roomCourses =
-                                                    getCoursesForRoomAndSlot(
+                                                    getCoursesForRoomAndSlotLocal(
                                                         room,
                                                         slot.startTime
                                                     );
                                                 return (
                                                     <td
                                                         key={`${room}-${slot.id}`}
-                                                        className="p-2 border border-slate-200 min-w-[150px] align-top"
+                                                        className="p-2 border border-slate-200 min-w-[200px] align-top"
                                                     >
                                                         {roomCourses.length > 0 ? (
                                                             <div className="space-y-2">
                                                                 {roomCourses.map(
-                                                                    (course, idx) => (
-                                                                        <div
-                                                                            key={idx}
-                                                                            onClick={() => setSelectedCourseForDetails(course)}
-                                                                            className={`${course.color} text-white rounded-lg p-3 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer text-xs font-medium group hover:scale-105 border border-opacity-20 border-white`}
-                                                                        >
-                                                                            <div className="font-bold mb-1 group-hover:text-yellow-50">
-                                                                                {
-                                                                                    course.tutor
-                                                                                }
+                                                                    (course, idx) => {
+                                                                        const courseIndex = findCourseIndex(room, slot.startTime, course);
+                                                                        return (
+                                                                            <div
+                                                                                key={idx}
+                                                                                className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden"
+                                                                            >
+                                                                                {/* Course Header Section */}
+                                                                                <div 
+                                                                                    className={`${course.color} text-white px-3 py-2 text-xs font-semibold`}
+                                                                                    onClick={() => setSelectedCourseForDetails(course)}
+                                                                                >
+                                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                                        <span className="opacity-90">{course.tutor.split(' ')[0]} {course.tutor.split(' ')[1]?.[0]}.</span>
+                                                                                    </div>
+                                                                                    {(() => {
+                                                                                        const coursePG = calculateCoursePG(course);
+                                                                                        const tutorCapacity = getTutorCapacity(course.tutor);
+                                                                                        const percentage = tutorCapacity > 0 ? Math.round((coursePG / tutorCapacity) * 100) : 0;
+                                                                                        const isNearFull = percentage >= 80;
+                                                                                        const isFull = percentage >= 100;
+                                                                                        
+                                                                                        return (
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <div className="flex-1 bg-white/20 rounded-full h-1.5 overflow-hidden">
+                                                                                                    <div 
+                                                                                                        className={`h-full transition-all duration-300 ${
+                                                                                                            isFull ? 'bg-red-200' : isNearFull ? 'bg-yellow-200' : 'bg-white/60'
+                                                                                                        }`}
+                                                                                                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <span className="text-[10px] opacity-90 font-medium whitespace-nowrap">
+                                                                                                    {coursePG}/{tutorCapacity} PG
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })()}
+                                                                                </div>
+                                                                                
+                                                                                {/* Students Section */}
+                                                                                {course.studentNames && course.studentNames.length > 0 ? (
+                                                                                    <div className="p-2 flex flex-wrap gap-1.5 min-h-[60px]">
+                                                                                        {course.studentNames.map((studentName, studentIdx) => {
+                                                                                            const grade = getStudentGrade(studentName);
+                                                                                            const formattedName = formatStudentName(studentName, grade);
+                                                                                            const isPresent = course.attendance?.[studentName] !== false; // Default to true if undefined
+                                                                                            
+                                                                                            return (
+                                                                                                <div
+                                                                                                    key={studentIdx}
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        toggleAttendance(selectedDay, courseIndex, studentName);
+                                                                                                    }}
+                                                                                                    className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                                                                                                        isPresent
+                                                                                                            ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300'
+                                                                                                            : 'bg-gray-100 text-gray-500 border border-gray-200 line-through hover:bg-gray-200 hover:border-gray-300'
+                                                                                                    }`}
+                                                                                                    title={isPresent ? "Cliquer pour marquer absent" : "Cliquer pour marquer présent"}
+                                                                                                >
+                                                                                                    {isPresent ? (
+                                                                                                        <Check size={12} className="text-green-600" />
+                                                                                                    ) : (
+                                                                                                        <X size={12} className="text-gray-400" />
+                                                                                                    )}
+                                                                                                    <span>{formattedName}</span>
+                                                                                                </div>
+                                                                                            );
+                                                                                        })}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="p-3 text-center text-xs text-slate-400">
+                                                                                        {course.students} élève(s) non spécifié(s)
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
-                                                                            <div className="opacity-90 flex items-center gap-1 group-hover:opacity-100">
-                                                                                <Users
-                                                                                    size={
-                                                                                        12
-                                                                                    }
-                                                                                />
-                                                                                <span>{course.students} élèves</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    )
+                                                                        );
+                                                                    }
                                                                 )}
                                                             </div>
                                                         ) : (
@@ -2303,24 +2513,26 @@ const LBNApp = () => {
                                                     {selectedCourseForDetails.studentNames && selectedCourseForDetails.studentNames.length > 0 ? (
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {selectedCourseForDetails.studentNames.map((studentName, idx) => {
-                                                                const isPresent = selectedCourseForDetails.attendance?.[studentName] ?? null;
+                                                                const grade = getStudentGrade(studentName);
+                                                                const formattedName = formatStudentName(studentName, grade);
+                                                                const isPresent = selectedCourseForDetails.attendance?.[studentName] !== false;
                                                                 return (
-                                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
-                                                                        <Users size={16} className="text-slate-400" />
-                                                                        <span className="text-slate-900 flex-1">{studentName}</span>
-                                                                        {isPresent !== null && (
-                                                                            <div className="flex items-center gap-2">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={isPresent}
-                                                                                    disabled
-                                                                                    className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 cursor-not-allowed opacity-60"
-                                                                                />
-                                                                                <span className="text-xs text-slate-600">
-                                                                                    {isPresent ? "Présent" : "Absent"}
-                                                                                </span>
-                                                                            </div>
+                                                                    <div key={idx} className={`flex items-center gap-3 p-2 rounded-lg ${
+                                                                        isPresent ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'
+                                                                    }`}>
+                                                                        {isPresent ? (
+                                                                            <Check size={16} className="text-green-600" />
+                                                                        ) : (
+                                                                            <X size={16} className="text-gray-400" />
                                                                         )}
+                                                                        <span className={`flex-1 ${isPresent ? 'text-slate-900' : 'text-gray-500 line-through'}`}>
+                                                                            {formattedName}
+                                                                        </span>
+                                                                        <span className={`text-xs font-medium ${
+                                                                            isPresent ? 'text-green-700' : 'text-gray-500'
+                                                                        }`}>
+                                                                            {isPresent ? "Présent" : "Absent"}
+                                                                        </span>
                                                                     </div>
                                                                 );
                                                             })}
