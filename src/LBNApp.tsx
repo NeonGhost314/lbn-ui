@@ -55,7 +55,7 @@ import {
 } from "lucide-react";
 
 const LBNApp = () => {
-    type Day = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi";
+    type Day = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi" | "Samedi" | "Dimanche";
     type RoomFilter = "all" | "occupied" | "free";
 
     interface Course {
@@ -160,10 +160,13 @@ const LBNApp = () => {
     });
 
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
-        { id: "1", startTime: "08:00", endTime: "10:15", label: "8h-10h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
-        { id: "2", startTime: "10:30", endTime: "12:30", label: "10h30-12h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
-        { id: "3", startTime: "13:00", endTime: "15:15", label: "13h-15h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
-        { id: "4", startTime: "15:30", endTime: "17:30", label: "15h30-17h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        // Créneaux pour Lundi au Jeudi
+        { id: "1", startTime: "16:15", endTime: "18:15", label: "16h15-18h15", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "2", startTime: "18:30", endTime: "20:30", label: "18h30-20h30", daysOfWeek: ["Lundi", "Mardi", "Mercredi", "Jeudi"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        // Créneaux pour Samedi et Dimanche
+        { id: "3", startTime: "08:15", endTime: "10:15", label: "8h15-10h15", daysOfWeek: ["Samedi", "Dimanche"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "4", startTime: "10:30", endTime: "12:30", label: "10h30-12h30", daysOfWeek: ["Samedi", "Dimanche"], startDate: "2024-01-01", endDate: "2024-12-31" },
+        { id: "5", startTime: "13:00", endTime: "15:00", label: "13h-15h", daysOfWeek: ["Samedi", "Dimanche"], startDate: "2024-01-01", endDate: "2024-12-31" },
     ]);
 
     // Mock logs data - historique complet de toutes les actions
@@ -231,7 +234,22 @@ const LBNApp = () => {
 
     const [logs, setLogs] = useState<Log[]>(generateMockLogs());
 
-    const days: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+    // Helper function to get days that have time slots configured
+    const getDaysWithTimeSlots = (slots: TimeSlot[]): Day[] => {
+        const daysWithSlots = new Set<Day>();
+        slots.forEach(slot => {
+            slot.daysOfWeek.forEach(day => {
+                if (day === "Lundi" || day === "Mardi" || day === "Mercredi" || day === "Jeudi" || day === "Vendredi" || day === "Samedi" || day === "Dimanche") {
+                    daysWithSlots.add(day as Day);
+                }
+            });
+        });
+        // Return days in the original order
+        const allDays: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+        return allDays.filter(day => daysWithSlots.has(day));
+    };
+
+    const allDays: Day[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
     // All rooms available for the dashboard
     const allRooms = ["Salle A", "Salle B", "Salle C", "Salle D", "Salle E"];
@@ -239,7 +257,7 @@ const LBNApp = () => {
     const courses: Partial<Record<Day, Course[]>> = {
         Lundi: [
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle A",
                 tutor: "Marie Dupont",
                 students: 4,
@@ -255,7 +273,7 @@ const LBNApp = () => {
                 },
             },
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle B",
                 tutor: "Jean Martin",
                 students: 3,
@@ -270,7 +288,7 @@ const LBNApp = () => {
                 },
             },
             {
-                time: "10h30",
+                time: "18:30",
                 room: "Salle A",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -284,41 +302,17 @@ const LBNApp = () => {
                 },
             },
             {
-                time: "13h00",
-                room: "Salle B",
-                tutor: "Jean Martin",
-                students: 4,
-                subject: "Français",
-                color: "bg-purple-500",
-            },
-            {
-                time: "13h00",
+                time: "18:30",
                 room: "Salle C",
                 tutor: "Thomas Roy",
                 students: 3,
                 subject: "Anglais",
                 color: "bg-orange-500",
-            },
-            {
-                time: "15h30",
-                room: "Salle A",
-                tutor: "Marie Dupont",
-                students: 4,
-                subject: "Math",
-                color: "bg-blue-500",
-                groupId: 1,
-                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
-                attendance: {
-                    "Lucas Bernard": true,
-                    "Emma Tremblay": false,
-                    "Noah Gagnon": true,
-                    "Olivia Côté": true,
-                },
             },
         ],
         Mardi: [
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle C",
                 tutor: "Marie Dupont",
                 students: 4,
@@ -328,7 +322,7 @@ const LBNApp = () => {
                 studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle D",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -338,7 +332,7 @@ const LBNApp = () => {
                 studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
-                time: "10h30",
+                time: "18:30",
                 room: "Salle B",
                 tutor: "Jean Martin",
                 students: 3,
@@ -348,27 +342,17 @@ const LBNApp = () => {
                 studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
-                time: "13h00",
+                time: "18:30",
                 room: "Salle A",
                 tutor: "Thomas Roy",
                 students: 3,
                 subject: "Anglais",
                 color: "bg-orange-500",
-            },
-            {
-                time: "15h30",
-                room: "Salle C",
-                tutor: "Marie Dupont",
-                students: 4,
-                subject: "Math",
-                color: "bg-blue-500",
-                groupId: 1,
-                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
         ],
         Mercredi: [
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle A",
                 tutor: "Jean Martin",
                 students: 3,
@@ -378,7 +362,7 @@ const LBNApp = () => {
                 studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
-                time: "10h30",
+                time: "16:15",
                 room: "Salle B",
                 tutor: "Marie Dupont",
                 students: 4,
@@ -388,7 +372,7 @@ const LBNApp = () => {
                 studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
-                time: "10h30",
+                time: "18:30",
                 room: "Salle D",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -398,25 +382,17 @@ const LBNApp = () => {
                 studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
-                time: "13h00",
+                time: "18:30",
                 room: "Salle C",
                 tutor: "Thomas Roy",
                 students: 3,
                 subject: "Anglais",
                 color: "bg-orange-500",
-            },
-            {
-                time: "15h30",
-                room: "Salle E",
-                tutor: "Jean Martin",
-                students: 5,
-                subject: "Français",
-                color: "bg-purple-500",
             },
         ],
         Jeudi: [
             {
-                time: "8h00",
+                time: "16:15",
                 room: "Salle B",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -426,7 +402,7 @@ const LBNApp = () => {
                 studentNames: ["Emma Chen", "Marc Dubois"],
             },
             {
-                time: "10h30",
+                time: "16:15",
                 room: "Salle A",
                 tutor: "Jean Martin",
                 students: 3,
@@ -436,7 +412,7 @@ const LBNApp = () => {
                 studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
             {
-                time: "10h30",
+                time: "18:30",
                 room: "Salle C",
                 tutor: "Marie Dupont",
                 students: 4,
@@ -446,46 +422,19 @@ const LBNApp = () => {
                 studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
-                time: "13h00",
+                time: "18:30",
                 room: "Salle D",
                 tutor: "Thomas Roy",
                 students: 3,
                 subject: "Anglais",
                 color: "bg-orange-500",
-            },
-            {
-                time: "15h30",
-                room: "Salle B",
-                tutor: "Marie Dupont",
-                students: 4,
-                subject: "Math",
-                color: "bg-blue-500",
-                groupId: 1,
-                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
         ],
-        Vendredi: [
+        Vendredi: [], // Pas de cours le vendredi
+        Samedi: [
             {
-                time: "8h00",
+                time: "08:15",
                 room: "Salle A",
-                tutor: "Thomas Roy",
-                students: 3,
-                subject: "Anglais",
-                color: "bg-orange-500",
-            },
-            {
-                time: "8h00",
-                room: "Salle D",
-                tutor: "Jean Martin",
-                students: 3,
-                subject: "Français",
-                color: "bg-purple-500",
-                groupId: 2,
-                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
-            },
-            {
-                time: "10h30",
-                room: "Salle B",
                 tutor: "Marie Dupont",
                 students: 4,
                 subject: "Math",
@@ -494,7 +443,17 @@ const LBNApp = () => {
                 studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
             },
             {
-                time: "13h00",
+                time: "10:30",
+                room: "Salle B",
+                tutor: "Jean Martin",
+                students: 3,
+                subject: "Français",
+                color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
+            },
+            {
+                time: "13:00",
                 room: "Salle C",
                 tutor: "Sophie Chen",
                 students: 2,
@@ -503,13 +462,35 @@ const LBNApp = () => {
                 groupId: 3,
                 studentNames: ["Emma Chen", "Marc Dubois"],
             },
+        ],
+        Dimanche: [
             {
-                time: "15h30",
-                room: "Salle E",
+                time: "08:15",
+                room: "Salle B",
+                tutor: "Thomas Roy",
+                students: 3,
+                subject: "Anglais",
+                color: "bg-orange-500",
+            },
+            {
+                time: "10:30",
+                room: "Salle A",
+                tutor: "Marie Dupont",
+                students: 4,
+                subject: "Math",
+                color: "bg-blue-500",
+                groupId: 1,
+                studentNames: ["Lucas Bernard", "Emma Tremblay", "Noah Gagnon", "Olivia Côté"],
+            },
+            {
+                time: "13:00",
+                room: "Salle D",
                 tutor: "Jean Martin",
-                students: 5,
+                students: 3,
                 subject: "Français",
                 color: "bg-purple-500",
+                groupId: 2,
+                studentNames: ["William Roy", "Sophie Martin", "Alex Leblanc"],
             },
         ],
     };
@@ -1864,9 +1845,10 @@ const LBNApp = () => {
     };
 
     // Helper to get courses for a room in a time slot
-    const getCoursesForRoomAndSlot = (room: string, slotStart: string) => {
+    const getCoursesForRoomAndSlot = (room: string, slotStart: string, day?: Day) => {
+        const dayToUse = day || selectedDay;
         return (
-            courses[selectedDay]?.filter(
+            courses[dayToUse]?.filter(
                 (c) => c.room === room && c.time.startsWith(slotStart.split(":")[0])
             ) || []
         );
@@ -2032,6 +2014,24 @@ const LBNApp = () => {
                        c.time === courseToFind.time
             );
         };
+
+        // Filter time slots for the selected day
+        const getTimeSlotsForDay = (day: Day): TimeSlot[] => {
+            if (day === "Vendredi") {
+                return []; // Pas de cours le vendredi
+            }
+            return timeSlots.filter(slot => slot.daysOfWeek.includes(day));
+        };
+        
+        const filteredTimeSlots = getTimeSlotsForDay(selectedDay);
+        
+        // Ensure selectedDay is valid (has time slots)
+        useEffect(() => {
+            const availableDays = getDaysWithTimeSlots(timeSlots);
+            if (availableDays.length > 0 && !availableDays.includes(selectedDay)) {
+                setSelectedDay(availableDays[0]);
+            }
+        }, [timeSlots]);
 
         // Close stats picker when clicking outside
         useEffect(() => {
@@ -2343,7 +2343,7 @@ const LBNApp = () => {
 
                         {/* Day tabs */}
                         <div className="flex gap-3 mb-6 flex-wrap">
-                            {days.map((day) => (
+                            {getDaysWithTimeSlots(timeSlots).map((day) => (
                                 <button
                                     key={day}
                                     onClick={() => setSelectedDay(day)}
@@ -2367,16 +2367,24 @@ const LBNApp = () => {
                                                 Salles / Créneaux
                                             </span>
                                         </th>
-                                        {timeSlots.map((slot) => (
-                                            <th
-                                                key={slot.id}
-                                                className="p-3 text-center bg-slate-50 border border-slate-200 min-w-[150px]"
-                                            >
-                                                <span className="text-sm font-semibold text-slate-700">
-                                                    {slot.label}
+                                        {filteredTimeSlots.length > 0 ? (
+                                            filteredTimeSlots.map((slot) => (
+                                                <th
+                                                    key={slot.id}
+                                                    className="p-3 text-center bg-slate-50 border border-slate-200 min-w-[150px]"
+                                                >
+                                                    <span className="text-sm font-semibold text-slate-700">
+                                                        {slot.label}
+                                                    </span>
+                                                </th>
+                                            ))
+                                        ) : (
+                                            <th className="p-3 text-center bg-slate-50 border border-slate-200">
+                                                <span className="text-sm font-semibold text-slate-500 italic">
+                                                    Aucun cours
                                                 </span>
                                             </th>
-                                        ))}
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2385,17 +2393,18 @@ const LBNApp = () => {
                                             <td className="p-3 bg-inherit border border-slate-200 font-semibold text-slate-900 whitespace-nowrap hover:bg-orange-100 transition-colors">
                                                 {room}
                                             </td>
-                                            {timeSlots.map((slot) => {
-                                                const roomCourses =
-                                                    getCoursesForRoomAndSlotLocal(
-                                                        room,
-                                                        slot.startTime
-                                                    );
-                                                return (
-                                                    <td
-                                                        key={`${room}-${slot.id}`}
-                                                        className="p-2 border border-slate-200 min-w-[200px] align-top"
-                                                    >
+                                            {filteredTimeSlots.length > 0 ? (
+                                                filteredTimeSlots.map((slot) => {
+                                                    const roomCourses =
+                                                        getCoursesForRoomAndSlotLocal(
+                                                            room,
+                                                            slot.startTime
+                                                        );
+                                                    return (
+                                                        <td
+                                                            key={`${room}-${slot.id}`}
+                                                            className="p-2 border border-slate-200 min-w-[200px] align-top"
+                                                        >
                                                         {roomCourses.length > 0 ? (
                                                             <div className="space-y-2">
                                                                 {roomCourses.map(
@@ -2412,7 +2421,7 @@ const LBNApp = () => {
                                                                                     onClick={() => setSelectedCourseForDetails(course)}
                                                                                 >
                                                                                     <div className="flex items-center justify-between mb-1.5">
-                                                                                        <span className="opacity-90">{course.tutor.split(' ')[0]} {course.tutor.split(' ')[1]?.[0]}.</span>
+                                                                                        <span className="opacity-90">Tutorat avec {course.tutor.split(' ')[0]} {course.tutor.split(' ')[1]?.[0]}.</span>
                                                                                     </div>
                                                                                     {(() => {
                                                                                         const coursePG = calculateCoursePG(course);
@@ -2490,7 +2499,12 @@ const LBNApp = () => {
                                                         )}
                                                     </td>
                                                 );
-                                            })}
+                                                })
+                                            ) : (
+                                                <td colSpan={1} className="p-2 border border-slate-200 text-center text-slate-400 italic">
+                                                    Aucun créneau disponible
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -2524,7 +2538,7 @@ const LBNApp = () => {
                                 {/* Course Info */}
                                 <div className="mb-6">
                                     <div className={`${selectedCourseForDetails.color} text-white rounded-lg p-4 mb-4`}>
-                                        <div className="font-bold text-lg mb-1">{selectedCourseForDetails.subject}</div>
+                                        <div className="font-bold text-lg mb-1">Tutorat avec {selectedCourseForDetails.tutor}</div>
                                         <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
                                     </div>
                                     
@@ -3792,14 +3806,33 @@ const LBNApp = () => {
                 c.studentNames?.includes(personName)
             );
             
-            // For now, return mock status - this would need real availability data
-            const totalSlots = timeSlots.length;
+            // Filter time slots for the specific day
+            const dayTimeSlots = day === "Vendredi" ? [] : timeSlots.filter(slot => slot.daysOfWeek.includes(day));
+            const totalSlots = dayTimeSlots.length;
             const placedSlots = personCourses.length;
             
             if (placedSlots === 0) return { status: "unplaced", slots: 0, total: totalSlots };
-            if (placedSlots === totalSlots) return { status: "fully_placed", slots: placedSlots, total: totalSlots };
+            if (placedSlots === totalSlots && totalSlots > 0) return { status: "fully_placed", slots: placedSlots, total: totalSlots };
             return { status: "partially_placed", slots: placedSlots, total: totalSlots };
         };
+
+        // Filter time slots for the selected day in placement
+        const getTimeSlotsForPlacementDay = (day: Day): TimeSlot[] => {
+            if (day === "Vendredi") {
+                return []; // Pas de cours le vendredi
+            }
+            return timeSlots.filter(slot => slot.daysOfWeek.includes(day));
+        };
+        
+        const filteredPlacementTimeSlots = getTimeSlotsForPlacementDay(placementDay);
+        
+        // Ensure placementDay is valid (has time slots)
+        useEffect(() => {
+            const availableDays = getDaysWithTimeSlots(timeSlots);
+            if (availableDays.length > 0 && !availableDays.includes(placementDay)) {
+                setPlacementDay(availableDays[0]);
+            }
+        }, [timeSlots]);
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden flex flex-col">
@@ -4320,7 +4353,7 @@ const LBNApp = () => {
                                             className="px-3 py-2 bg-slate-100 rounded-lg text-sm border-0 focus:outline-none focus:ring-2 focus:ring-orange-500"
                                         >
                                             <option value="">Tous les créneaux</option>
-                                            {timeSlots.map((slot) => (
+                                            {filteredPlacementTimeSlots.map((slot) => (
                                                 <option key={slot.id} value={slot.id}>
                                                     {slot.label} ({slot.startTime} - {slot.endTime})
                                                 </option>
@@ -4332,10 +4365,17 @@ const LBNApp = () => {
 
                             {/* Day Selector */}
                             <div className="flex gap-2">
-                                {days.map((day) => (
+                                {getDaysWithTimeSlots(timeSlots).map((day) => (
                                     <button
                                         key={day}
-                                        onClick={() => setPlacementDay(day)}
+                                        onClick={() => {
+                                            setPlacementDay(day);
+                                            // Reset time slot filter when changing day if the selected slot is not available for the new day
+                                            const dayTimeSlots = timeSlots.filter(slot => slot.daysOfWeek.includes(day));
+                                            if (selectedTimeSlotFilter && !dayTimeSlots.some(slot => slot.id === selectedTimeSlotFilter)) {
+                                                setSelectedTimeSlotFilter(null);
+                                            }
+                                        }}
                                         className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${placementDay === day
                                             ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
                                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -4357,19 +4397,25 @@ const LBNApp = () => {
                                             <th className="p-4 text-left font-semibold text-slate-700 border-b-2 border-slate-200 sticky left-0 bg-slate-100 z-10">
                                                 Salles
                                             </th>
-                                            {timeSlots
-                                                .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
-                                                .map((slot) => (
-                                                <th
-                                                    key={slot.id}
-                                                    className="p-4 text-center font-semibold text-slate-700 border-b-2 border-slate-200 min-w-[250px]"
-                                                >
-                                                    <div>{slot.label}</div>
-                                                    <div className="text-xs font-normal text-slate-500">
-                                                        {slot.startTime} - {slot.endTime}
-                                                    </div>
+                                            {filteredPlacementTimeSlots.length > 0 ? (
+                                                filteredPlacementTimeSlots
+                                                    .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
+                                                    .map((slot) => (
+                                                    <th
+                                                        key={slot.id}
+                                                        className="p-4 text-center font-semibold text-slate-700 border-b-2 border-slate-200 min-w-[250px]"
+                                                    >
+                                                        <div>{slot.label}</div>
+                                                        <div className="text-xs font-normal text-slate-500">
+                                                            {slot.startTime} - {slot.endTime}
+                                                        </div>
+                                                    </th>
+                                                ))
+                                            ) : (
+                                                <th className="p-4 text-center font-semibold text-slate-500 border-b-2 border-slate-200 italic">
+                                                    Aucun cours
                                                 </th>
-                                            ))}
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -4385,24 +4431,25 @@ const LBNApp = () => {
                                                         {room}
                                                     </div>
                                                 </td>
-                                                {timeSlots
-                                                    .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
-                                                    .map((slot) => {
-                                                    const roomCourses = getCoursesForRoomAndSlot(room, slot.startTime);
-                                                    return (
-                                                        <td
-                                                            key={`${room}-${slot.id}`}
-                                                            className="p-3 border border-slate-200 align-top"
-                                                            onDragOver={(e) => e.preventDefault()}
-                                                            onDrop={(e) => {
-                                                                e.preventDefault();
-                                                                if (draggedItem) {
-                                                                    setHasUnsavedChanges(true);
-                                                                    // Handle drop logic here
-                                                                    console.log(`Dropped ${draggedItem.type}:`, draggedItem.data, 'in', room, slot.label);
-                                                                }
-                                                            }}
-                                                        >
+                                                {filteredPlacementTimeSlots.length > 0 ? (
+                                                    filteredPlacementTimeSlots
+                                                        .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
+                                                        .map((slot) => {
+                                                        const roomCourses = getCoursesForRoomAndSlot(room, slot.startTime, placementDay);
+                                                        return (
+                                                            <td
+                                                                key={`${room}-${slot.id}`}
+                                                                className="p-3 border border-slate-200 align-top"
+                                                                onDragOver={(e) => e.preventDefault()}
+                                                                onDrop={(e) => {
+                                                                    e.preventDefault();
+                                                                    if (draggedItem) {
+                                                                        setHasUnsavedChanges(true);
+                                                                        // Handle drop logic here
+                                                                        console.log(`Dropped ${draggedItem.type}:`, draggedItem.data, 'in', room, slot.label);
+                                                                    }
+                                                                }}
+                                                            >
                                                             {roomCourses.length > 0 ? (
                                                                 <div className="space-y-2">
                                                                     {roomCourses.map((course, idx) => {
@@ -4419,7 +4466,7 @@ const LBNApp = () => {
                                                                                     </div>
                                                                                 )}
                                                                                 <div className="font-bold mb-1 text-sm">
-                                                                                    {course.tutor}
+                                                                                    Tutorat avec {course.tutor}
                                                                                 </div>
                                                                                 <div className="text-xs opacity-90 flex items-center gap-1">
                                                                                     <Users size={12} />
@@ -4449,7 +4496,12 @@ const LBNApp = () => {
                                                             )}
                                                         </td>
                                                     );
-                                                })}
+                                                    })
+                                                ) : (
+                                                    <td colSpan={1} className="p-3 border border-slate-200 text-center text-slate-400 italic">
+                                                        Aucun créneau disponible
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -4633,7 +4685,7 @@ const LBNApp = () => {
                                 {/* Course Info */}
                                 <div className="mb-6">
                                     <div className={`${selectedCourseForDetails.color} text-white rounded-lg p-4 mb-4`}>
-                                        <div className="font-bold text-lg mb-1">{selectedCourseForDetails.subject}</div>
+                                        <div className="font-bold text-lg mb-1">Tutorat avec {selectedCourseForDetails.tutor}</div>
                                         <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
                                     </div>
                                     
