@@ -54,6 +54,11 @@ import {
     ExternalLink,
     Check,
     Copy,
+    DollarSign,
+    Calculator,
+    Edit3,
+    Save,
+    RefreshCw,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -105,6 +110,54 @@ const LBNApp = () => {
         description: string;
         status: "success" | "error" | "warning";
         details?: string;
+    }
+
+    interface PayrollAdjustment {
+        id: string;
+        amount: number;
+        reason: string;
+        author: string;
+        date: Date;
+        type: "bonus" | "deduction" | "correction";
+    }
+
+    interface PayrollSession {
+        id: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        students: number;
+        hasBonus: boolean; // 30% bonus si 3+ élèves
+        paidBreak: number; // minutes de pause payée
+        hours: number;
+        baseAmount: number;
+        bonusAmount: number;
+    }
+
+    interface PayrollEmployee {
+        id: number;
+        name: string;
+        status: "Apprenti" | "Tuteur" | "Administrateur";
+        hourlyRate: number;
+        weeklyHours: number;
+        sessions: PayrollSession[];
+        adjustments: PayrollAdjustment[];
+        grossTotal: number;
+        netTotal: number;
+        payrollStatus: "draft" | "validated" | "paid";
+        validatedBy?: string;
+        validatedAt?: Date;
+        paidAt?: Date;
+    }
+
+    interface PayrollConfig {
+        rates: {
+            Apprenti: number;
+            Tuteur: number;
+            Administrateur: number;
+        };
+        lastUpdated: Date;
+        updatedBy: string;
     }
 
     interface Tuteur {
@@ -301,6 +354,113 @@ const LBNApp = () => {
     };
 
     const [logs, setLogs] = useState<Log[]>(generateMockLogs());
+
+    // Payroll Configuration
+    const [payrollConfig, setPayrollConfig] = useState<PayrollConfig>({
+        rates: {
+            Apprenti: 18.50,
+            Tuteur: 25.00,
+            Administrateur: 35.00
+        },
+        lastUpdated: new Date(),
+        updatedBy: "admin@labonnenote.com"
+    });
+
+    // Mock Payroll Data
+    const generateMockPayrollData = (): PayrollEmployee[] => {
+        return [
+            {
+                id: 1,
+                name: "Marie Dupont",
+                status: "Tuteur",
+                hourlyRate: 25.00,
+                weeklyHours: 38,
+                sessions: [
+                    {
+                        id: "s1",
+                        date: "2024-11-04",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        students: 4,
+                        hasBonus: true,
+                        paidBreak: 30,
+                        hours: 2,
+                        baseAmount: 50.00,
+                        bonusAmount: 15.00
+                    },
+                    {
+                        id: "s2",
+                        date: "2024-11-05",
+                        startTime: "18:30",
+                        endTime: "20:30",
+                        students: 2,
+                        hasBonus: false,
+                        paidBreak: 0,
+                        hours: 2,
+                        baseAmount: 50.00,
+                        bonusAmount: 0
+                    }
+                ],
+                adjustments: [],
+                grossTotal: 950.00,
+                netTotal: 950.00,
+                payrollStatus: "draft",
+            },
+            {
+                id: 2,
+                name: "Jean Martin",
+                status: "Tuteur",
+                hourlyRate: 25.00,
+                weeklyHours: 25,
+                sessions: [
+                    {
+                        id: "s3",
+                        date: "2024-11-04",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        students: 3,
+                        hasBonus: true,
+                        paidBreak: 15,
+                        hours: 2,
+                        baseAmount: 50.00,
+                        bonusAmount: 15.00
+                    }
+                ],
+                adjustments: [
+                    {
+                        id: "adj1",
+                        amount: 50.00,
+                        reason: "Prime de performance exceptionnelle",
+                        author: "admin@labonnenote.com",
+                        date: new Date(),
+                        type: "bonus"
+                    }
+                ],
+                grossTotal: 675.00,
+                netTotal: 675.00,
+                payrollStatus: "validated",
+                validatedBy: "admin@labonnenote.com",
+                validatedAt: new Date()
+            },
+            {
+                id: 3,
+                name: "Sophie Chen",
+                status: "Administrateur",
+                hourlyRate: 35.00,
+                weeklyHours: 40,
+                sessions: [],
+                adjustments: [],
+                grossTotal: 1400.00,
+                netTotal: 1400.00,
+                payrollStatus: "paid",
+                validatedBy: "admin@labonnenote.com",
+                validatedAt: new Date(),
+                paidAt: new Date()
+            }
+        ];
+    };
+
+    const [payrollEmployees, setPayrollEmployees] = useState<PayrollEmployee[]>(generateMockPayrollData());
 
     // Helper function to get days that have time slots configured
     const getDaysWithTimeSlots = (slots: TimeSlot[]): Day[] => {
@@ -654,6 +814,20 @@ const LBNApp = () => {
                     )}
                     <FileText size={20} className="group-hover:scale-110 transition-transform" />
                     <span>Logs</span>
+                </button>
+
+                <button
+                    onClick={() => setCurrentPage("payroll")}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "payroll"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                        : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                        }`}
+                >
+                    {currentPage === "payroll" && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                    )}
+                    <DollarSign size={20} className="group-hover:scale-110 transition-transform" />
+                    <span>Comptabilité</span>
                 </button>
 
                 {/* Notifications Button */}
@@ -9170,6 +9344,515 @@ const LBNApp = () => {
         );
     };
 
+    // Payroll Page - Gestion de la paie
+    const PayrollPage = () => {
+        const [selectedTab, setSelectedTab] = useState<"overview" | "config" | "history">("overview");
+        const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+        const [selectedEmployee, setSelectedEmployee] = useState<PayrollEmployee | null>(null);
+        const [newAdjustment, setNewAdjustment] = useState({
+            amount: 0,
+            reason: "",
+            type: "bonus" as "bonus" | "deduction" | "correction"
+        });
+        const [historyFilter, setHistoryFilter] = useState({
+            employee: "all",
+            status: "all" as "all" | "draft" | "validated" | "paid",
+            period: "current"
+        });
+
+        const getStatusColor = (status: PayrollEmployee["payrollStatus"]) => {
+            switch (status) {
+                case "draft":
+                    return "bg-yellow-100 text-yellow-800 border-yellow-300";
+                case "validated":
+                    return "bg-blue-100 text-blue-800 border-blue-300";
+                case "paid":
+                    return "bg-green-100 text-green-800 border-green-300";
+                default:
+                    return "bg-slate-100 text-slate-800 border-slate-300";
+            }
+        };
+
+        const getStatusIcon = (status: PayrollEmployee["payrollStatus"]) => {
+            switch (status) {
+                case "draft":
+                    return <Edit3 size={14} />;
+                case "validated":
+                    return <CheckCircle size={14} />;
+                case "paid":
+                    return <DollarSign size={14} />;
+            }
+        };
+
+        return (
+            <div className="p-8">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+                                <Calculator className="text-orange-500" size={36} />
+                                Comptabilité & Paie
+                            </h1>
+                            <p className="text-slate-600">Gestion de la rémunération et des feuilles de paie</p>
+                        </div>
+                        <button className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                            <RefreshCw size={20} />
+                            Recalculer tout
+                        </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl mb-6">
+                        <button
+                            onClick={() => setSelectedTab("overview")}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                                selectedTab === "overview"
+                                    ? "bg-white text-slate-900 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            Vue d'ensemble
+                        </button>
+                        <button
+                            onClick={() => setSelectedTab("config")}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                                selectedTab === "config"
+                                    ? "bg-white text-slate-900 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            Configuration
+                        </button>
+                        <button
+                            onClick={() => setSelectedTab("history")}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                                selectedTab === "history"
+                                    ? "bg-white text-slate-900 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            Historique
+                        </button>
+                    </div>
+                </div>
+
+                {/* Overview Tab */}
+                {selectedTab === "overview" && (
+                    <div className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600 mb-1">Total à payer</p>
+                                        <p className="text-2xl font-bold text-slate-900">
+                                            {payrollEmployees.reduce((sum, emp) => sum + emp.grossTotal, 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                        </p>
+                                    </div>
+                                    <DollarSign className="text-green-500" size={24} />
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600 mb-1">Heures totales</p>
+                                        <p className="text-2xl font-bold text-slate-900">
+                                            {payrollEmployees.reduce((sum, emp) => sum + emp.weeklyHours, 0)}h
+                                        </p>
+                                    </div>
+                                    <Clock className="text-blue-500" size={24} />
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600 mb-1">Validés</p>
+                                        <p className="text-2xl font-bold text-slate-900">
+                                            {payrollEmployees.filter(emp => emp.payrollStatus === "validated").length}
+                                        </p>
+                                    </div>
+                                    <CheckCircle className="text-orange-500" size={24} />
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600 mb-1">Payés</p>
+                                        <p className="text-2xl font-bold text-slate-900">
+                                            {payrollEmployees.filter(emp => emp.payrollStatus === "paid").length}
+                                        </p>
+                                    </div>
+                                    <CheckCircle className="text-green-500" size={24} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Employee Payroll Table */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-200">
+                                <h3 className="text-lg font-semibold text-slate-900">Feuilles de paie - Semaine du 4-10 Nov 2024</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Employé</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Statut</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Heures</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Bonus</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Pauses</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Ajustements</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Total</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">État</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200">
+                                        {payrollEmployees.map((employee) => {
+                                            const totalBonus = employee.sessions.reduce((sum, session) => sum + session.bonusAmount, 0);
+                                            const totalPaidBreaks = employee.sessions.reduce((sum, session) => sum + (session.paidBreak / 60 * employee.hourlyRate), 0);
+                                            const totalAdjustments = employee.adjustments.reduce((sum, adj) => sum + (adj.type === "deduction" ? -adj.amount : adj.amount), 0);
+
+                                            return (
+                                                <tr key={employee.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div>
+                                                            <div className="text-sm font-medium text-slate-900">{employee.name}</div>
+                                                            <div className="text-xs text-slate-500">{employee.hourlyRate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}/h</div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                                            {employee.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                                        {employee.weeklyHours}h
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm text-slate-900">
+                                                                {totalBonus.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                            </span>
+                                                            {totalBonus > 0 && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                    +30%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                                        {totalPaidBreaks.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-sm ${totalAdjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {totalAdjustments.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSelectedEmployee(employee);
+                                                                    setShowAdjustmentModal(true);
+                                                                }}
+                                                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                                            >
+                                                                <Edit3 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-semibold text-slate-900">
+                                                            {employee.grossTotal.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(employee.payrollStatus)}`}>
+                                                            {getStatusIcon(employee.payrollStatus)}
+                                                            <span className="ml-1 capitalize">{employee.payrollStatus === "draft" ? "Brouillon" : employee.payrollStatus === "validated" ? "Validé" : "Payé"}</span>
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        <div className="flex items-center gap-1">
+                                                            {employee.payrollStatus === "draft" && (
+                                                                <button className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors">
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                            )}
+                                                            <button className="p-2 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors">
+                                                                <Download size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Configuration Tab */}
+                {selectedTab === "config" && (
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Settings size={20} className="text-orange-500" />
+                                Configuration des taux horaires
+                            </h3>
+                            <div className="space-y-4">
+                                {Object.entries(payrollConfig.rates).map(([status, rate]) => (
+                                    <div key={status} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                status === "Apprenti" ? "bg-blue-100 text-blue-600" :
+                                                status === "Tuteur" ? "bg-orange-100 text-orange-600" :
+                                                "bg-purple-100 text-purple-600"
+                                            }`}>
+                                                {status === "Apprenti" ? "A" : status === "Tuteur" ? "T" : "AD"}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-slate-900">{status}</h4>
+                                                <p className="text-sm text-slate-600">Taux de base actuel</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-slate-900">
+                                                    {rate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })} /h
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    Mis à jour le {payrollConfig.lastUpdated.toLocaleDateString('fr-FR')}
+                                                </div>
+                                            </div>
+                                            <button className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors">
+                                                Modifier
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                <div className="flex items-start gap-3">
+                                    <Info className="text-blue-500 mt-0.5" size={20} />
+                                    <div className="text-sm text-blue-700">
+                                        <p className="font-semibold mb-1">Règles de calcul automatiques :</p>
+                                        <ul className="space-y-1 text-blue-600">
+                                            <li>• Bonus de 30% appliqué automatiquement pour 3 élèves ou plus par séance</li>
+                                            <li>• Pauses payées calculées entre séances consécutives</li>
+                                            <li>• Les modifications de taux n'affectent pas les périodes déjà validées</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* History Tab */}
+                {selectedTab === "history" && (
+                    <div className="space-y-6">
+                        {/* Filters */}
+                        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Filtres</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Employé</label>
+                                    <select
+                                        value={historyFilter.employee}
+                                        onChange={(e) => setHistoryFilter({...historyFilter, employee: e.target.value})}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="all">Tous les employés</option>
+                                        {payrollEmployees.map(emp => (
+                                            <option key={emp.id} value={emp.id.toString()}>{emp.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">État</label>
+                                    <select
+                                        value={historyFilter.status}
+                                        onChange={(e) => setHistoryFilter({...historyFilter, status: e.target.value as any})}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="all">Tous les états</option>
+                                        <option value="draft">Brouillon</option>
+                                        <option value="validated">Validé</option>
+                                        <option value="paid">Payé</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Période</label>
+                                    <select
+                                        value={historyFilter.period}
+                                        onChange={(e) => setHistoryFilter({...historyFilter, period: e.target.value})}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="current">Période courante</option>
+                                        <option value="last-week">Semaine dernière</option>
+                                        <option value="last-month">Mois dernier</option>
+                                        <option value="last-quarter">Trimestre dernier</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Historical Payroll Records */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-200">
+                                <h3 className="text-lg font-semibold text-slate-900">Historique des paies</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Période</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Employé</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Montant</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">État</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Validé par</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200">
+                                        {payrollEmployees
+                                            .filter(emp => historyFilter.employee === "all" || emp.id.toString() === historyFilter.employee)
+                                            .filter(emp => historyFilter.status === "all" || emp.payrollStatus === historyFilter.status)
+                                            .map((employee) => (
+                                            <tr key={`hist-${employee.id}`} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                                    4-10 Nov 2024
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div>
+                                                        <div className="text-sm font-medium text-slate-900">{employee.name}</div>
+                                                        <div className="text-xs text-slate-500">{employee.status}</div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                                                    {employee.grossTotal.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(employee.payrollStatus)}`}>
+                                                        {getStatusIcon(employee.payrollStatus)}
+                                                        <span className="ml-1 capitalize">{employee.payrollStatus === "draft" ? "Brouillon" : employee.payrollStatus === "validated" ? "Validé" : "Payé"}</span>
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    {employee.validatedBy || "-"}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <button className="p-2 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors">
+                                                        <Eye size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Adjustment Modal */}
+                {showAdjustmentModal && selectedEmployee && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
+                            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Edit3 size={22} className="text-orange-500" />
+                                Ajustement - {selectedEmployee.name}
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Type d'ajustement</label>
+                                        <select
+                                            value={newAdjustment.type}
+                                            onChange={(e) => setNewAdjustment({...newAdjustment, type: e.target.value as any})}
+                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            <option value="bonus">Bonus</option>
+                                            <option value="correction">Correction</option>
+                                            <option value="deduction">Déduction</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Montant</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={newAdjustment.amount}
+                                            onChange={(e) => setNewAdjustment({...newAdjustment, amount: parseFloat(e.target.value) || 0})}
+                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Justification</label>
+                                    <textarea
+                                        value={newAdjustment.reason}
+                                        onChange={(e) => setNewAdjustment({...newAdjustment, reason: e.target.value})}
+                                        placeholder="Expliquez la raison de cet ajustement..."
+                                        rows={4}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                                    />
+                                </div>
+                                
+                                {/* Existing Adjustments */}
+                                {selectedEmployee.adjustments.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-medium text-slate-700 mb-3">Ajustements existants</h4>
+                                        <div className="space-y-2">
+                                            {selectedEmployee.adjustments.map((adj) => (
+                                                <div key={adj.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-sm font-medium ${adj.type === "deduction" ? "text-red-600" : "text-green-600"}`}>
+                                                                {adj.type === "deduction" ? "-" : "+"}{adj.amount.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                            </span>
+                                                            <span className="text-xs px-2 py-1 bg-slate-200 text-slate-600 rounded-full capitalize">
+                                                                {adj.type}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 mt-1">{adj.reason}</div>
+                                                    </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Par {adj.author} le {adj.date.toLocaleDateString('fr-FR')}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => {
+                                        setShowAdjustmentModal(false);
+                                        setSelectedEmployee(null);
+                                        setNewAdjustment({ amount: 0, reason: "", type: "bonus" });
+                                    }}
+                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium text-slate-700 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                    <Save size={16} />
+                                    Enregistrer l'ajustement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     // Company Settings Page
     const CompanySettingsPage = () => {
         const [newSlotStart, setNewSlotStart] = useState("");
@@ -10273,6 +10956,7 @@ const LBNApp = () => {
                 {currentPage === "placement" && <PlacementPage />}
                 {currentPage === "stats" && <StatsPage />}
                 {currentPage === "logs" && <LogsPage />}
+                {currentPage === "payroll" && <PayrollPage />}
                 {currentPage === "settings" && <SettingsPage />}
                 {currentPage === "companySettings" && <CompanySettingsPage />}
             </div>
