@@ -5969,6 +5969,8 @@ const LBNApp = () => {
         const [showSaveHistory, setShowSaveHistory] = useState(false);
         const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
         const [selectedTimeSlotFilter, setSelectedTimeSlotFilter] = useState<string | null>(null);
+        const [selectedTimeSlotsForDetailedView, setSelectedTimeSlotsForDetailedView] = useState<string[]>([]);
+        const [selectedTimeSlotsForGridView, setSelectedTimeSlotsForGridView] = useState<string[]>([]);
         const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
         const [placementCourses, setPlacementCourses] = useState<Partial<Record<Day, Course[]>>>({});
         const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -6292,6 +6294,27 @@ const LBNApp = () => {
                 return `Tutorat avec ${course.tutor}`;
             }
             return `Salle ${course.room} - ${day} - ${slot.startTime}`;
+        };
+
+        // Helper to get assigned tutors for a specific day
+        const getAssignedTutorsForDay = (day: Day): string[] => {
+            const dayCourses = placementCourses[day] || [];
+            const tutorSet = new Set<string>();
+            dayCourses.forEach(course => {
+                if (course.tutor && course.tutor.trim() !== "") {
+                    tutorSet.add(course.tutor);
+                }
+            });
+            return Array.from(tutorSet).sort();
+        };
+
+        // Helper to get courses for a tutor in a specific time slot
+        const getTutorCoursesForSlot = (tutorName: string, slot: TimeSlot, day: Day): Course[] => {
+            const dayCourses = placementCourses[day] || [];
+            return dayCourses.filter(course => 
+                course.tutor === tutorName && 
+                course.time.startsWith(slot.startTime.split(":")[0])
+            );
         };
 
         // Handle drop to create or update course
@@ -7178,48 +7201,84 @@ const LBNApp = () => {
                                 </div>
                             </div>
 
-                            {/* Time Slot Filter */}
-                            {placementView === "grid" && (
-                                <div className="mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-slate-600">Créneau:</span>
-                                        <select 
-                                            value={selectedTimeSlotFilter || ""} 
-                                            onChange={(e) => setSelectedTimeSlotFilter(e.target.value || null)}
-                                            className="px-3 py-2 bg-slate-100 rounded-lg text-sm border-0 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        >
-                                            <option value="">Tous les créneaux</option>
-                                            {filteredPlacementTimeSlots.map((slot) => (
-                                                <option key={slot.id} value={slot.id}>
-                                                    {slot.label} ({slot.startTime} - {slot.endTime})
-                                                </option>
-                                            ))}
-                                        </select>
+                            {/* Day and Time Slot Selector */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                                <div className="mb-3">
+                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Jours de la semaine</h4>
+                                    <div className="flex gap-2">
+                                        {getDaysWithTimeSlots(timeSlots).map((day) => (
+                                            <button
+                                                key={day}
+                                                onClick={() => {
+                                                    setPlacementDay(day);
+                                                    // Reset selected time slots for both views if they're not available for the new day
+                                                    const dayTimeSlots = timeSlots.filter(slot => slot.daysOfWeek.includes(day));
+                                                    const availableSlotIds = dayTimeSlots.map(slot => slot.id);
+                                                    if (placementView === "detailed") {
+                                                        setSelectedTimeSlotsForDetailedView(prev => 
+                                                            prev.filter(id => availableSlotIds.includes(id))
+                                                        );
+                                                    }
+                                                    if (placementView === "grid") {
+                                                        setSelectedTimeSlotsForGridView(prev => 
+                                                            prev.filter(id => availableSlotIds.includes(id))
+                                                        );
+                                                    }
+                                                }}
+                                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${placementDay === day
+                                                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
+                                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                    }`}
+                                            >
+                                                {formatDayWithDate(day, currentWeekStart)}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
-                            )}
-
-                            {/* Day Selector */}
-                            <div className="flex gap-2">
-                                {getDaysWithTimeSlots(timeSlots).map((day) => (
-                                    <button
-                                        key={day}
-                                        onClick={() => {
-                                            setPlacementDay(day);
-                                            // Reset time slot filter when changing day if the selected slot is not available for the new day
-                                            const dayTimeSlots = timeSlots.filter(slot => slot.daysOfWeek.includes(day));
-                                            if (selectedTimeSlotFilter && !dayTimeSlots.some(slot => slot.id === selectedTimeSlotFilter)) {
-                                                setSelectedTimeSlotFilter(null);
-                                            }
-                                        }}
-                                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${placementDay === day
-                                            ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
-                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                            }`}
-                                    >
-                                        {formatDayWithDate(day, currentWeekStart)}
-                                    </button>
-                                ))}
+                                
+                                {/* Time Slots Selector for both views */}
+                                {filteredPlacementTimeSlots.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-700 mb-2">Créneaux</h4>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {filteredPlacementTimeSlots.map((slot) => {
+                                                const isSelected = placementView === "detailed" 
+                                                    ? selectedTimeSlotsForDetailedView.includes(slot.id)
+                                                    : selectedTimeSlotsForGridView.includes(slot.id);
+                                                return (
+                                                    <button
+                                                        key={slot.id}
+                                                        onClick={() => {
+                                                            if (placementView === "detailed") {
+                                                                setSelectedTimeSlotsForDetailedView(prev => {
+                                                                    if (prev.includes(slot.id)) {
+                                                                        return prev.filter(id => id !== slot.id);
+                                                                    } else {
+                                                                        return [...prev, slot.id];
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                setSelectedTimeSlotsForGridView(prev => {
+                                                                    if (prev.includes(slot.id)) {
+                                                                        return prev.filter(id => id !== slot.id);
+                                                                    } else {
+                                                                        return [...prev, slot.id];
+                                                                    }
+                                                                });
+                                                            }
+                                                        }}
+                                                        className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${isSelected
+                                                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                            }`}
+                                                    >
+                                                        {slot.label} ({slot.startTime} - {slot.endTime})
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -7233,10 +7292,13 @@ const LBNApp = () => {
                                             <th className="p-4 text-left font-semibold text-slate-700 border-b-2 border-slate-200 sticky left-0 bg-slate-100 z-10">
                                                 Salles
                                             </th>
-                                            {filteredPlacementTimeSlots.length > 0 ? (
-                                                filteredPlacementTimeSlots
-                                                    .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
-                                                    .map((slot) => (
+                                            {(() => {
+                                                const displayedSlots = selectedTimeSlotsForGridView.length > 0
+                                                    ? filteredPlacementTimeSlots.filter(slot => selectedTimeSlotsForGridView.includes(slot.id))
+                                                    : filteredPlacementTimeSlots;
+                                                
+                                                return displayedSlots.length > 0 ? (
+                                                    displayedSlots.map((slot) => (
                                                     <th
                                                         key={slot.id}
                                                         className="p-4 text-center font-semibold text-slate-700 border-b-2 border-slate-200 min-w-[250px]"
@@ -7246,12 +7308,13 @@ const LBNApp = () => {
                                                             {slot.startTime} - {slot.endTime}
                                                         </div>
                                                     </th>
-                                                ))
-                                            ) : (
-                                                <th className="p-4 text-center font-semibold text-slate-500 border-b-2 border-slate-200 italic">
-                                                    Aucun cours
-                                                </th>
-                                            )}
+                                                    ))
+                                                ) : (
+                                                    <th className="p-4 text-center font-semibold text-slate-500 border-b-2 border-slate-200 italic">
+                                                        {selectedTimeSlotsForGridView.length > 0 ? "Aucun créneau correspond à votre sélection" : "Aucun cours"}
+                                                    </th>
+                                                );
+                                            })()}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -7267,10 +7330,13 @@ const LBNApp = () => {
                                                         {room}
                                                     </div>
                                                 </td>
-                                                {filteredPlacementTimeSlots.length > 0 ? (
-                                                    filteredPlacementTimeSlots
-                                                        .filter(slot => !selectedTimeSlotFilter || slot.id === selectedTimeSlotFilter)
-                                                        .map((slot) => {
+                                                {(() => {
+                                                    const displayedSlots = selectedTimeSlotsForGridView.length > 0
+                                                        ? filteredPlacementTimeSlots.filter(slot => selectedTimeSlotsForGridView.includes(slot.id))
+                                                        : filteredPlacementTimeSlots;
+                                                    
+                                                    return displayedSlots.length > 0 ? (
+                                                        displayedSlots.map((slot) => {
                                                         const roomCourses = getPlacementCoursesForRoomAndSlot(room, slot.startTime, placementDay);
                                                         return (
                                                             <td
@@ -7369,11 +7435,12 @@ const LBNApp = () => {
                                                         </td>
                                                     );
                                                     })
-                                                ) : (
-                                                    <td colSpan={1} className="p-3 border border-slate-200 text-center text-slate-400 italic">
-                                                        Aucun créneau disponible
-                                                    </td>
-                                                )}
+                                                    ) : (
+                                                        <td colSpan={filteredPlacementTimeSlots.length || 1} className="p-3 border border-slate-200 text-center text-slate-400 italic">
+                                                            {selectedTimeSlotsForGridView.length > 0 ? "Aucun créneau correspond à votre sélection" : "Aucun créneau disponible"}
+                                                        </td>
+                                                    );
+                                                })()}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -7385,120 +7452,156 @@ const LBNApp = () => {
 
                         {/* Detailed View */}
                         {placementView === "detailed" && (
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                                <h3 className="text-lg font-bold text-slate-900 mb-4">Statut de placement - {placementDay}</h3>
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="p-6 border-b border-slate-200">
+                                    <h3 className="text-lg font-bold text-slate-900">Vue détaillée - {placementDay}</h3>
+                                </div>
                                 
-                                {/* Tutors Section */}
-                                <div className="mb-6">
-                                    <h4 className="text-md font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                        <Users size={18} className="text-blue-500" />
-                                        Tuteurs ({tutors.length})
-                                    </h4>
-                                    <div className="space-y-3">
-                                        {tutors.map((tutor) => {
-                                            const status = getPlacementStatus(tutor.name, placementDay);
-                                            const group = getGroupForPerson(tutor.name);
-                                            return (
-                                                <div key={tutor.id} className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-all">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="font-semibold text-slate-900">{tutor.name}</span>
-                                                                {group && (
-                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                                                                        {group.name}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="text-sm text-slate-600 mb-2">
-                                                                {tutor.specialties.join(", ")} • {tutor.capacity} PG
-                                                            </div>
-                                                            <div className="text-xs text-slate-500">
-                                                                Placé dans {status.slots} sur {status.total} créneaux disponibles
-                                                            </div>
-                                                        </div>
-                                                        <div className="ml-4">
-                                                            {status.status === "fully_placed" && (
-                                                                <div className="flex items-center gap-2 text-green-600">
-                                                                    <CheckCircle size={20} />
-                                                                    <span className="text-sm font-medium">Complet</span>
-                                                                </div>
-                                                            )}
-                                                            {status.status === "partially_placed" && (
-                                                                <div className="flex items-center gap-2 text-amber-600">
-                                                                    <AlertCircle size={20} />
-                                                                    <span className="text-sm font-medium">Partiel</span>
-                                                                </div>
-                                                            )}
-                                                            {status.status === "unplaced" && (
-                                                                <div className="flex items-center gap-2 text-red-600">
-                                                                    <X size={20} />
-                                                                    <span className="text-sm font-medium">Non placé</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const assignedTutors = getAssignedTutorsForDay(placementDay);
+                                    
+                                    // Filter time slots based on selection
+                                    const displayedTimeSlots = selectedTimeSlotsForDetailedView.length > 0
+                                        ? filteredPlacementTimeSlots.filter(slot => selectedTimeSlotsForDetailedView.includes(slot.id))
+                                        : filteredPlacementTimeSlots;
+                                    
+                                    if (assignedTutors.length === 0) {
+                                        return (
+                                            <div className="p-12 text-center">
+                                                <Users size={48} className="mx-auto mb-4 text-slate-300" />
+                                                <p className="text-slate-500 text-lg mb-2">Aucun tuteur assigné</p>
+                                                <p className="text-slate-400 text-sm">Aucun tuteur n'a été assigné à un créneau pour ce jour.</p>
+                                            </div>
+                                        );
+                                    }
 
-                                {/* Students Section */}
-                                <div>
-                                    <h4 className="text-md font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                        <BookOpen size={18} className="text-purple-500" />
-                                        Élèves ({students.length})
-                                    </h4>
-                                    <div className="space-y-3">
-                                        {students.map((student) => {
-                                            const status = getPlacementStatus(student.name, placementDay);
-                                            const group = getGroupForPerson(student.name);
-                                            return (
-                                                <div key={student.id} className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-all">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="font-semibold text-slate-900">{student.name}</span>
-                                                                {group && (
-                                                                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                                                                        {group.name}
-                                                                    </span>
-                                                                )}
+                                    if (displayedTimeSlots.length === 0) {
+                                        return (
+                                            <div className="p-12 text-center">
+                                                <Calendar size={48} className="mx-auto mb-4 text-slate-300" />
+                                                <p className="text-slate-500 text-lg mb-2">Aucun créneau disponible</p>
+                                                <p className="text-slate-400 text-sm">
+                                                    {selectedTimeSlotsForDetailedView.length > 0 
+                                                        ? "Aucun créneau correspond à votre sélection."
+                                                        : "Aucun créneau horaire n'est disponible pour ce jour."}
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="bg-gradient-to-r from-slate-100 to-slate-50">
+                                                        <th className="p-4 text-left font-semibold text-slate-700 border-b-2 border-slate-200 sticky left-0 bg-slate-100 z-10 min-w-[200px]">
+                                                            <div className="flex items-center gap-2">
+                                                                <Users size={18} className="text-blue-500" />
+                                                                Tuteurs
                                                             </div>
-                                                            <div className="text-sm text-slate-600 mb-2">
-                                                                {student.grade} • {student.pg} PG
-                                                            </div>
-                                                            <div className="text-xs text-slate-500">
-                                                                Placé dans {status.slots} sur {status.total} créneaux disponibles
-                                                            </div>
-                                                        </div>
-                                                        <div className="ml-4">
-                                                            {status.status === "fully_placed" && (
-                                                                <div className="flex items-center gap-2 text-green-600">
-                                                                    <CheckCircle size={20} />
-                                                                    <span className="text-sm font-medium">Complet</span>
+                                                        </th>
+                                                        {displayedTimeSlots.map((slot) => (
+                                                            <th
+                                                                key={slot.id}
+                                                                className="p-4 text-center font-semibold text-slate-700 border-b-2 border-slate-200 min-w-[300px]"
+                                                            >
+                                                                <div>{slot.label}</div>
+                                                                <div className="text-xs font-normal text-slate-500">
+                                                                    {slot.startTime} - {slot.endTime}
                                                                 </div>
-                                                            )}
-                                                            {status.status === "partially_placed" && (
-                                                                <div className="flex items-center gap-2 text-amber-600">
-                                                                    <AlertCircle size={20} />
-                                                                    <span className="text-sm font-medium">Partiel</span>
-                                                                </div>
-                                                            )}
-                                                            {status.status === "unplaced" && (
-                                                                <div className="flex items-center gap-2 text-red-600">
-                                                                    <X size={20} />
-                                                                    <span className="text-sm font-medium">Non placé</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {assignedTutors.map((tutorName, tutorIdx) => {
+                                                        const tutor = tutors.find(t => t.name === tutorName);
+                                                        const group = getGroupForPerson(tutorName);
+                                                        
+                                                        return (
+                                                            <tr
+                                                                key={tutorName}
+                                                                className={`transition-colors ${tutorIdx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-orange-50`}
+                                                            >
+                                                                <td className="p-4 font-semibold text-slate-900 border-r-2 border-slate-200 sticky left-0 bg-inherit z-10">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span>{tutorName}</span>
+                                                                            {group && (
+                                                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                                                                    {group.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {tutor && (
+                                                                            <div className="text-xs text-slate-600">
+                                                                                {tutor.specialties.join(", ")} • {tutor.capacity} PG
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                {displayedTimeSlots.map((slot) => {
+                                                                    const tutorCourses = getTutorCoursesForSlot(tutorName, slot, placementDay);
+                                                                    
+                                                                    return (
+                                                                        <td
+                                                                            key={`${tutorName}-${slot.id}`}
+                                                                            className="p-3 border border-slate-200 align-top"
+                                                                        >
+                                                                            {tutorCourses.length > 0 ? (
+                                                                                <div className="space-y-3">
+                                                                                    {tutorCourses.map((course, courseIdx) => (
+                                                                                        <div
+                                                                                            key={courseIdx}
+                                                                                            className="bg-white rounded-lg border border-slate-200 overflow-hidden"
+                                                                                        >
+                                                                                            <div className="bg-blue-500 text-white px-3 py-2 text-xs font-semibold">
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <MapPin size={12} />
+                                                                                                    {course.room}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            {course.studentNames && course.studentNames.length > 0 ? (
+                                                                                                <div className="p-2 flex flex-col gap-1.5 max-h-64 overflow-y-auto">
+                                                                                                    {course.studentNames.map((studentName, studentIdx) => {
+                                                                                                        const grade = getStudentGrade(studentName);
+                                                                                                        const formattedName = formatStudentName(studentName, grade);
+                                                                                                        
+                                                                                                        return (
+                                                                                                            <div
+                                                                                                                key={studentIdx}
+                                                                                                                className="px-2.5 py-1.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 flex items-center gap-1.5"
+                                                                                                            >
+                                                                                                                <Check size={12} className="text-green-600" />
+                                                                                                                <span className="flex-1">{formattedName}</span>
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="p-3 text-center text-xs text-slate-400">
+                                                                                                    Aucun élève assigné
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-center text-slate-400 text-sm py-4">
+                                                                                    -
+                                                                                </div>
+                                                                            )}
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>
