@@ -670,22 +670,8 @@ const LBNApp = () => {
 
                 <div className="pt-2">
                     <button
-                        onClick={() => setCurrentPage("settings")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "settings"
-                            ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                            : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
-                            }`}
-                    >
-                        {currentPage === "settings" && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
-                        )}
-                        <UserCog size={20} className="group-hover:scale-110 transition-transform" />
-                        <span>Mon Compte</span>
-                    </button>
-
-                    <button
                         onClick={() => setCurrentPage("companySettings")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group mt-1.5 ${currentPage === "companySettings"
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "companySettings"
                             ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
                             : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
                             }`}
@@ -710,6 +696,23 @@ const LBNApp = () => {
                         <div className="text-xs text-slate-400 truncate">admin@labonnenote.com</div>
                     </div>
                 </div>
+                
+                <div className="space-y-1 mb-3">
+                    <button
+                        onClick={() => setCurrentPage("settings")}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "settings"
+                            ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                            : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
+                            }`}
+                    >
+                        {currentPage === "settings" && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                        )}
+                        <UserCog size={18} className="group-hover:scale-110 transition-transform" />
+                        <span>Mon Compte</span>
+                    </button>
+                </div>
+                
                 <button
                     onClick={() => {
                         setIsLoggedIn(false);
@@ -8278,56 +8281,37 @@ const LBNApp = () => {
             })).sort((a, b) => b.pg - a.pg);
         };
 
-        // Fonction pour calculer la répartition par difficulté
-        const calculateDifficultyDistribution = () => {
-            const difficultyMap: { [key: string]: { count: number; pg: number } } = {
-                "Facile": { count: 0, pg: 0 },
-                "Moyen": { count: 0, pg: 0 },
-                "Difficile": { count: 0, pg: 0 },
-                "Très difficile": { count: 0, pg: 0 },
-            };
+        const subjectDistribution = calculateSubjectDistribution();
 
-            eleves.forEach((eleve) => {
-                let difficulty: string;
-                if (eleve.pg === 2) {
-                    difficulty = "Facile";
-                } else if (eleve.pg === 3) {
-                    difficulty = "Moyen";
-                } else if (eleve.pg === 4) {
-                    difficulty = "Difficile";
-                } else {
-                    difficulty = "Très difficile";
-                }
-
-                difficultyMap[difficulty].count += 1;
-                difficultyMap[difficulty].pg += eleve.pg;
-            });
-
-            // Calculer les totaux et pourcentages
-            const totalStudents = eleves.length;
-            const totalPG = eleves.reduce((sum, eleve) => sum + eleve.pg, 0);
-
-            const difficultyColors: { [key: string]: { color: string; textColor: string; bgColor: string } } = {
-                "Facile": { color: "bg-green-500", textColor: "text-green-700", bgColor: "bg-green-50" },
-                "Moyen": { color: "bg-blue-500", textColor: "text-blue-700", bgColor: "bg-blue-50" },
-                "Difficile": { color: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
-                "Très difficile": { color: "bg-red-500", textColor: "text-red-700", bgColor: "bg-red-50" },
-            };
-
-            return Object.entries(difficultyMap)
-                .filter(([_, data]) => data.count > 0)
-                .map(([difficulty, data]) => ({
-                    difficulty,
-                    count: data.count,
-                    pg: data.pg,
-                    percentage: totalStudents > 0 ? Math.round((data.count / totalStudents) * 100) : 0,
-                    pgPercentage: totalPG > 0 ? Math.round((data.pg / totalPG) * 100) : 0,
-                    ...difficultyColors[difficulty],
-                }));
+        // Fonctions pour générer les options de temporalité avec dates en temps réel
+        const getCurrentWeekRange = () => {
+            const now = new Date();
+            const monday = new Date(now);
+            const day = monday.getDay();
+            const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
+            monday.setDate(diff);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            return `Cette semaine (${monday.getDate()}-${sunday.getDate()} ${monday.toLocaleDateString('fr-FR', { month: 'short' })})`;
         };
 
-        const subjectDistribution = calculateSubjectDistribution();
-        const difficultyDistribution = calculateDifficultyDistribution();
+        const getCurrentMonth = () => {
+            const now = new Date();
+            return `Ce mois (${now.toLocaleDateString('fr-FR', { month: 'long' })})`;
+        };
+
+        const getCurrentQuarter = () => {
+            const now = new Date();
+            const quarter = Math.floor((now.getMonth() + 3) / 3);
+            return `Ce trimestre (T${quarter})`;
+        };
+
+        const getCurrentYear = () => {
+            const now = new Date();
+            return `Cette année (${now.getFullYear()})`;
+        };
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
@@ -8345,10 +8329,10 @@ const LBNApp = () => {
                         </div>
                         <div className="flex gap-2">
                             <select className="px-4 py-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-sm">
-                                <option>Cette semaine</option>
-                                <option>Ce mois</option>
-                                <option>Ce trimestre</option>
-                                <option>Cette année</option>
+                                <option>{getCurrentWeekRange()}</option>
+                                <option>{getCurrentMonth()}</option>
+                                <option>{getCurrentQuarter()}</option>
+                                <option>{getCurrentYear()}</option>
                             </select>
                             <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
                                 <Download size={16} />
@@ -8703,32 +8687,6 @@ const LBNApp = () => {
                         )}
                     </div>
                 </div>
-
-                {/* Répartition par difficultés */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <TrendingUp className="text-purple-500" size={20} />
-                        Répartition par difficultés
-                    </h3>
-                    <div className={`grid gap-4 ${difficultyDistribution.length <= 4 ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4'}`}>
-                        {difficultyDistribution.length > 0 ? (
-                            difficultyDistribution.map((difficulty, idx) => (
-                                <div key={idx} className={`${difficulty.bgColor} rounded-lg p-4 border border-slate-200`}>
-                                    <div className={`w-12 h-12 ${difficulty.color} rounded-lg flex items-center justify-center text-white font-bold text-lg mb-3`}>
-                                        {difficulty.count}
-                                    </div>
-                                    <div className="font-medium text-slate-900 text-sm mb-1">{difficulty.difficulty}</div>
-                                    <div className={`text-xs ${difficulty.textColor} font-semibold`}>{difficulty.percentage}% des élèves</div>
-                                    <div className="text-xs text-slate-600 mt-1">{difficulty.pg} PG totaux ({difficulty.pgPercentage}%)</div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center text-slate-500 py-8">
-                                Aucune donnée disponible
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -8737,9 +8695,44 @@ const LBNApp = () => {
     // Settings Page - Manager Profile
     const SettingsPage = () => {
         const [showPasswordModal, setShowPasswordModal] = useState(false);
+        const [showSessionsModal, setShowSessionsModal] = useState(false);
         const [showErrorReportModal, setShowErrorReportModal] = useState(false);
         const [errorDescription, setErrorDescription] = useState("");
         const [errorSeverity, setErrorSeverity] = useState("medium");
+
+        // Mock data pour les sessions actives
+        const activeSessions = [
+            {
+                id: "current",
+                device: "Ordinateur Windows",
+                browser: "Chrome 118.0",
+                ip: "192.168.1.***",
+                location: "Montréal, QC",
+                lastActivity: "Maintenant",
+                loginTime: "2024-11-06 08:30",
+                isCurrent: true
+            },
+            {
+                id: "mobile",
+                device: "iPhone 15 Pro",
+                browser: "Safari Mobile",
+                ip: "10.0.0.***",
+                location: "Montréal, QC",
+                lastActivity: "Il y a 2 heures",
+                loginTime: "2024-11-06 06:15",
+                isCurrent: false
+            },
+            {
+                id: "tablet",
+                device: "iPad Air",
+                browser: "Safari",
+                ip: "192.168.1.***",
+                location: "Montréal, QC",
+                lastActivity: "Il y a 1 jour",
+                loginTime: "2024-11-05 14:22",
+                isCurrent: false
+            }
+        ];
 
         return (
             <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 overflow-auto">
@@ -8827,7 +8820,10 @@ const LBNApp = () => {
                                 </span>
                                 <ChevronRight size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
                             </button>
-                            <button className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left font-medium text-slate-700 transition-colors flex items-center justify-between group">
+                            <button 
+                                onClick={() => setShowSessionsModal(true)}
+                                className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left font-medium text-slate-700 transition-colors flex items-center justify-between group"
+                            >
                                 <span className="flex items-center gap-3">
                                     <Activity size={18} className="text-slate-500 group-hover:text-orange-500 transition-colors" />
                                     Gérer les sessions actives
@@ -9000,6 +8996,106 @@ const LBNApp = () => {
                                 <button className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors">
                                     Confirmer
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Sessions Modal */}
+                {showSessionsModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <Activity size={22} className="text-orange-500" />
+                                    Sessions actives
+                                </h3>
+                                <button
+                                    onClick={() => setShowSessionsModal(false)}
+                                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                >
+                                    <X size={20} className="text-slate-500" />
+                                </button>
+                            </div>
+                            
+                            <p className="text-sm text-slate-600 mb-6">
+                                Voici la liste de tous les appareils où vous êtes actuellement connecté. 
+                                Si vous remarquez une activité suspecte, vous pouvez fermer les sessions non autorisées.
+                            </p>
+
+                            <div className="space-y-4">
+                                {activeSessions.map((session) => (
+                                    <div key={session.id} className={`border rounded-xl p-6 transition-all ${
+                                        session.isCurrent 
+                                            ? "border-orange-200 bg-orange-50" 
+                                            : "border-slate-200 bg-white hover:bg-slate-50"
+                                    }`}>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                    session.device.includes("iPhone") || session.device.includes("iPad")
+                                                        ? "bg-slate-100 text-slate-600"
+                                                        : session.device.includes("Windows")
+                                                        ? "bg-blue-100 text-blue-600"
+                                                        : "bg-green-100 text-green-600"
+                                                }`}>
+                                                    {session.device.includes("iPhone") || session.device.includes("iPad") ? (
+                                                        <Phone size={24} />
+                                                    ) : (
+                                                        <Monitor size={24} />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <h4 className="font-semibold text-slate-900">{session.device}</h4>
+                                                        {session.isCurrent && (
+                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded-full">
+                                                                Session actuelle
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-1 text-sm text-slate-600">
+                                                        <div className="flex items-center gap-2">
+                                                            <Globe size={14} />
+                                                            <span>{session.browser}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <MapPin size={14} />
+                                                            <span>{session.location} ({session.ip})</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={14} />
+                                                            <span>Connecté le {session.loginTime}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Activity size={14} />
+                                                            <span>Dernière activité: {session.lastActivity}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {!session.isCurrent && (
+                                                <button className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-medium transition-colors flex items-center gap-2">
+                                                    <Ban size={16} />
+                                                    Fermer
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 pt-4 border-t border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-sm text-slate-600">
+                                        {activeSessions.length} session{activeSessions.length > 1 ? "s" : ""} active{activeSessions.length > 1 ? "s" : ""}
+                                    </div>
+                                    <button className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                        <Ban size={16} />
+                                        Fermer toutes les autres sessions
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -9918,20 +10014,14 @@ const LBNApp = () => {
     const LogsPage = () => {
         const [searchQuery, setSearchQuery] = useState("");
         const [filterType, setFilterType] = useState<Log["type"] | "all">("all");
-        const [filterStatus, setFilterStatus] = useState<Log["status"] | "all">("all");
-        const [filterUser, setFilterUser] = useState<string>("all");
         const [currentPageNum, setCurrentPageNum] = useState(1);
         const logsPerPage = 20;
-
-        const uniqueUsers = Array.from(new Set(logs.map(log => log.user)));
 
         const filteredLogs = logs.filter(log => {
             const matchesSearch = log.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                log.user.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesType = filterType === "all" || log.type === filterType;
-            const matchesStatus = filterStatus === "all" || log.status === filterStatus;
-            const matchesUser = filterUser === "all" || log.user === filterUser;
-            return matchesSearch && matchesType && matchesStatus && matchesUser;
+            return matchesSearch && matchesType;
         });
 
         const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
@@ -9972,16 +10062,30 @@ const LBNApp = () => {
             }
         };
 
+        const highlightText = (text: string, query: string) => {
+            if (!query.trim()) return text;
+            
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            const parts = text.split(regex);
+            
+            return parts.map((part, index) => 
+                regex.test(part) ? (
+                    <span key={index} className="bg-yellow-200 text-yellow-900 px-1 rounded">
+                        {part}
+                    </span>
+                ) : part
+            );
+        };
+
         const exportLogs = () => {
             const csvContent = [
-                ["Date", "Heure", "Type", "Utilisateur", "Description", "Statut"].join(","),
+                ["Date", "Heure", "Type", "Utilisateur", "Description"].join(","),
                 ...filteredLogs.map(log => [
                     log.timestamp.toLocaleDateString("fr-FR"),
                     log.timestamp.toLocaleTimeString("fr-FR"),
                     log.type,
                     log.user,
-                    `"${log.description}"`,
-                    log.status
+                    `"${log.description}"`
                 ].join(","))
             ].join("\n");
 
@@ -10013,7 +10117,7 @@ const LBNApp = () => {
 
                     {/* Filters */}
                     <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Search */}
                             <div className="relative">
                                 <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
@@ -10044,36 +10148,6 @@ const LBNApp = () => {
                                 <option value="erreur">Erreur</option>
                                 <option value="admin">Admin</option>
                             </select>
-
-                            {/* Status Filter */}
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => {
-                                    setFilterStatus(e.target.value as Log["status"] | "all");
-                                    setCurrentPageNum(1);
-                                }}
-                                className="px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            >
-                                <option value="all">Tous les statuts</option>
-                                <option value="success">Succès</option>
-                                <option value="error">Erreur</option>
-                                <option value="warning">Avertissement</option>
-                            </select>
-
-                            {/* User Filter */}
-                            <select
-                                value={filterUser}
-                                onChange={(e) => {
-                                    setFilterUser(e.target.value);
-                                    setCurrentPageNum(1);
-                                }}
-                                className="px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            >
-                                <option value="all">Tous les utilisateurs</option>
-                                {uniqueUsers.map(user => (
-                                    <option key={user} value={user}>{user}</option>
-                                ))}
-                            </select>
                         </div>
 
                         <div className="mt-4 text-sm text-slate-600">
@@ -10092,13 +10166,12 @@ const LBNApp = () => {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Type</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Utilisateur</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Statut</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
                                 {paginatedLogs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                                             Aucun log trouvé
                                         </td>
                                     </tr>
@@ -10126,19 +10199,13 @@ const LBNApp = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-slate-900">{log.user}</div>
+                                                <div className="text-sm text-slate-900">{highlightText(log.user, searchQuery)}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-slate-900">{log.description}</div>
+                                                <div className="text-sm text-slate-900">{highlightText(log.description, searchQuery)}</div>
                                                 {log.details && (
-                                                    <div className="text-xs text-slate-500 mt-1">{log.details}</div>
+                                                    <div className="text-xs text-slate-500 mt-1">{highlightText(log.details, searchQuery)}</div>
                                                 )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    {getStatusIcon(log.status)}
-                                                    <span className="text-sm text-slate-900 capitalize">{log.status}</span>
-                                                </div>
                                             </td>
                                         </tr>
                                     ))
