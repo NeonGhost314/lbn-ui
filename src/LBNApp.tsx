@@ -6223,6 +6223,71 @@ const LBNApp = () => {
         const activeTutorFiltersCount = tutorAvailabilityFilter.length + tutorSpecialtyFilter.length;
         const activeStudentFiltersCount = studentGradeFilter.length + (studentPgFilter ? 1 : 0);
 
+        // Helper function to check if a person (tutor or student) is already placed in selected time slots
+        const isPersonPlacedInSelectedSlots = (personName: string, personType: 'tutor' | 'student'): boolean => {
+            // Get selected time slots based on current view
+            const selectedSlots = placementView === "detailed" 
+                ? selectedTimeSlotsForDetailedView 
+                : selectedTimeSlotsForGridView;
+            
+            // If no slots are selected, don't grey out
+            if (selectedSlots.length === 0) {
+                return false;
+            }
+            
+            const dayCourses = placementCourses[placementDay] || [];
+            
+            // Get all time slots for the current day
+            const dayTimeSlots = filteredPlacementTimeSlots;
+            
+            // Filter to only selected slots
+            const selectedTimeSlots = dayTimeSlots.filter(slot => selectedSlots.includes(slot.id));
+            
+            if (selectedTimeSlots.length === 0) {
+                return false;
+            }
+            
+            // If only one slot is selected: check if person is already in that slot
+            if (selectedTimeSlots.length === 1) {
+                const slot = selectedTimeSlots[0];
+                const coursesInSlot = dayCourses.filter(course => 
+                    course.time.startsWith(slot.startTime.split(":")[0])
+                );
+                
+                if (personType === 'tutor') {
+                    return coursesInSlot.some(course => course.tutor === personName);
+                } else {
+                    return coursesInSlot.some(course => course.studentNames?.includes(personName));
+                }
+            }
+            
+            // If 2 or more slots are selected: check if person appears in 2 or more slots
+            if (selectedTimeSlots.length >= 2) {
+                let count = 0;
+                for (const slot of selectedTimeSlots) {
+                    const coursesInSlot = dayCourses.filter(course => 
+                        course.time.startsWith(slot.startTime.split(":")[0])
+                    );
+                    
+                    let isInSlot = false;
+                    if (personType === 'tutor') {
+                        isInSlot = coursesInSlot.some(course => course.tutor === personName);
+                    } else {
+                        isInSlot = coursesInSlot.some(course => course.studentNames?.includes(personName));
+                    }
+                    
+                    if (isInSlot) {
+                        count++;
+                    }
+                }
+                
+                // Grey out if person appears in 2 or more selected slots (cannot be in 2 places at the same time)
+                return count >= 2;
+            }
+            
+            return false;
+        };
+
         // Helper functions for student name formatting
         const formatStudentName = (studentName: string, grade: string | null): string => {
             const parts = studentName.trim().split(/\s+/);
@@ -6968,14 +7033,17 @@ const LBNApp = () => {
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
                                                 {filteredTutors.map((tutor) => {
                                                     const tutorGroup = getGroupForPerson(tutor.name);
+                                                    const isGreyedOut = isPersonPlacedInSelectedSlots(tutor.name, 'tutor');
                                                     return (
                                                         <div
                                                             key={tutor.id}
-                                                            draggable
-                                                            onDragStart={() => setDraggedItem({ type: 'tutor', data: tutor })}
+                                                            draggable={!isGreyedOut}
+                                                            onDragStart={() => !isGreyedOut && setDraggedItem({ type: 'tutor', data: tutor })}
                                                             onDragEnd={() => setDraggedItem(null)}
-                                                            className={`p-3 rounded-lg border-2 cursor-move transition-all ${tutor.available
-                                                                ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg'
+                                                            className={`p-3 rounded-lg border-2 transition-all ${isGreyedOut
+                                                                ? 'bg-slate-100 border-slate-300 opacity-60 cursor-not-allowed'
+                                                                : tutor.available
+                                                                ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:shadow-lg cursor-move'
                                                                 : 'bg-slate-100 border-slate-300 opacity-60'
                                                                 }`}
                                                         >
@@ -7123,13 +7191,17 @@ const LBNApp = () => {
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
                                                 {filteredStudents.map((student) => {
                                                     const studentGroup = getGroupForPerson(student.name);
+                                                    const isGreyedOut = isPersonPlacedInSelectedSlots(student.name, 'student');
                                                     return (
                                                         <div
                                                             key={student.id}
-                                                            draggable
-                                                            onDragStart={() => setDraggedItem({ type: 'student', data: student })}
+                                                            draggable={!isGreyedOut}
+                                                            onDragStart={() => !isGreyedOut && setDraggedItem({ type: 'student', data: student })}
                                                             onDragEnd={() => setDraggedItem(null)}
-                                                            className="p-3 bg-purple-50 border-2 border-purple-200 rounded-lg cursor-move hover:border-purple-400 hover:shadow-lg transition-all"
+                                                            className={`p-3 rounded-lg border-2 transition-all ${isGreyedOut
+                                                                ? 'bg-slate-100 border-slate-300 opacity-60 cursor-not-allowed'
+                                                                : 'bg-purple-50 border-purple-200 hover:border-purple-400 hover:shadow-lg cursor-move'
+                                                                }`}
                                                         >
                                                             <div className="font-medium text-slate-900 text-sm mb-1">{student.name}</div>
                                                             {studentGroup && (
