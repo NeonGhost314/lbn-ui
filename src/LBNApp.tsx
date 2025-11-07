@@ -61,6 +61,7 @@ const LBNApp = () => {
     type RoomFilter = "all" | "occupied" | "free";
 
     interface Course {
+        id?: string;
         time: string;
         room: string;
         tutor: string;
@@ -5975,6 +5976,15 @@ const LBNApp = () => {
         const [placementCourses, setPlacementCourses] = useState<Partial<Record<Day, Course[]>>>({});
         const [showDuplicateModal, setShowDuplicateModal] = useState(false);
         const [duplicateTargetDate, setDuplicateTargetDate] = useState<Date | null>(null);
+        const [placementGroups, setPlacementGroups] = useState<Array<{
+            id: number;
+            name: string;
+            tutor: string | null;
+            students: string[];
+            totalPG: number;
+            color: string;
+        }>>([]);
+        const [recurrenceDuration, setRecurrenceDuration] = useState<number>(1);
 
         // Accordion state - which sections are expanded
         const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -6100,7 +6110,7 @@ const LBNApp = () => {
         };
 
         // Mock groups from Personnel page
-        const groups = [
+        const initialGroups = [
             {
                 id: 1,
                 name: "Groupe Math Avancé",
@@ -6126,6 +6136,9 @@ const LBNApp = () => {
                 color: "green"
             }
         ];
+        
+        // Combine initial groups with placement groups
+        const groups = [...initialGroups, ...placementGroups];
 
         // Mock tutors
         const tutors = [
@@ -6304,10 +6317,196 @@ const LBNApp = () => {
             return student ? student.grade : null;
         };
 
+        // Function to calculate total PG used in a course (only for present students)
+        const calculateCoursePG = (course: Course): number => {
+            if (!course.studentNames || course.studentNames.length === 0) {
+                return 0;
+            }
+            return course.studentNames.reduce((total, studentName) => {
+                // Only count PG for present students (attendance !== false)
+                const isPresent = course.attendance?.[studentName] !== false;
+                if (!isPresent) {
+                    return total; // Skip absent students
+                }
+                const student = students.find(s => s.name === studentName);
+                return total + (student?.pg || 0);
+            }, 0);
+        };
+
+        // Function to get tutor capacity
+        const getTutorCapacity = (tutorName: string): number => {
+            if (!tutorName || tutorName.trim() === "") return 15;
+            const tutor = tutors.find(t => t.name === tutorName);
+            return tutor?.capacity ? parseInt(tutor.capacity.split("/")[1]) || 15 : 15; // Default to 15 if not found
+        };
+
         // Helper functions for groups and courses
         const getGroupForCourse = (course: Course) => {
             if (!course.groupId) return null;
             return groups.find(g => g.id === course.groupId) || null;
+        };
+
+        // Check if a group already exists with the same students and tutor
+        const groupExists = (course: Course): boolean => {
+            if (!course.studentNames || course.studentNames.length === 0) return false;
+            
+            const courseStudents = [...course.studentNames].sort();
+            const courseTutor = course.tutor && course.tutor.trim() !== "" ? course.tutor : null;
+            
+            return groups.some(group => {
+                const groupStudents = [...group.students].sort();
+                const groupTutor = group.tutor;
+                
+                // Check if students match
+                if (courseStudents.length !== groupStudents.length) return false;
+                const studentsMatch = courseStudents.every((student, idx) => student === groupStudents[idx]);
+                
+                // Check if tutors match (both null or both same)
+                const tutorsMatch = courseTutor === groupTutor;
+                
+                return studentsMatch && tutorsMatch;
+            });
+        };
+
+        // Create a group from the course
+        const handleCreateGroupFromCourse = (course: Course) => {
+            if (!course.studentNames || course.studentNames.length === 0) {
+                alert("Impossible de créer un groupe sans étudiants");
+                return;
+            }
+
+            // Calculate total PG
+            const totalPG = course.studentNames.reduce((sum, studentName) => {
+                const student = students.find(s => s.name === studentName);
+                return sum + (student?.pg || 0);
+            }, 0);
+
+            // Generate a new group ID
+            const newGroupId = Math.max(...initialGroups.map(g => g.id), ...placementGroups.map(g => g.id), 0) + 1;
+
+            // Create new group
+            const newGroup = {
+                id: newGroupId,
+                name: `Groupe ${course.room} - ${placementDay}`,
+                tutor: course.tutor && course.tutor.trim() !== "" ? course.tutor : null,
+                students: [...course.studentNames],
+                totalPG: totalPG,
+                color: "blue"
+            };
+
+            // Add to placement groups
+            setPlacementGroups(prev => [...prev, newGroup]);
+
+            // Update the course to link it to the new group
+            const dayCourses = placementCourses[placementDay] || [];
+            const updatedCourses = dayCourses.map(c => {
+                if (c.room === course.room && c.time === course.time) {
+                    return { ...c, groupId: newGroupId };
+                }
+                return c;
+            });
+
+            setPlacementCourses({
+                ...placementCourses,
+                [placementDay]: updatedCourses
+            });
+
+            // Update selected course details
+            setSelectedCourseForDetails({ ...course, groupId: newGroupId });
+
+            alert(`Groupe "${newGroup.name}" créé avec succès!`);
+        };
+
+        // Apply recurrence - create courses in consecutive time slots
+        const handleApplyRecurrence = (course: Course, duration: number) => {
+            if (duration <= 1) {
+                // No recurrence needed
+                return;
+            }
+
+            const dayCourses = placementCourses[placementDay] || [];
+            const currentSlot = filteredPlacementTimeSlots.find(s => 
+                s.startTime === course.time || course.time.startsWith(s.startTime.split(":")[0])
+            );
+
+            if (!currentSlot) {
+                alert("Impossible de trouver le créneau horaire actuel");
+                return;
+            }
+
+            // Find the index of the current slot
+            const currentSlotIndex = filteredPlacementTimeSlots.findIndex(s => s.id === currentSlot.id);
+            if (currentSlotIndex === -1) {
+                alert("Impossible de trouver l'index du créneau horaire");
+                return;
+            }
+
+            // Get consecutive slots (including current)
+            const slotsToCreate = filteredPlacementTimeSlots.slice(
+                currentSlotIndex,
+                Math.min(currentSlotIndex + duration, filteredPlacementTimeSlots.length)
+            );
+
+            if (slotsToCreate.length < duration) {
+                alert(`Seulement ${slotsToCreate.length} créneau(x) disponible(s) pour cette journée`);
+            }
+
+            // Create courses for each consecutive slot
+            const updatedCourses = [...dayCourses];
+            let createdCount = 0;
+
+            slotsToCreate.forEach((slot, index) => {
+                // Skip the first slot (current course)
+                if (index === 0) return;
+
+                // Check if a course already exists at this slot and room
+                const existingCourse = updatedCourses.find(c => 
+                    c.room === course.room && 
+                    c.time.startsWith(slot.startTime.split(":")[0])
+                );
+
+                if (existingCourse) {
+                    // Update existing course with tutor and students
+                    const courseIndex = updatedCourses.indexOf(existingCourse);
+                    updatedCourses[courseIndex] = {
+                        ...existingCourse,
+                        id: existingCourse.id || `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        tutor: course.tutor,
+                        studentNames: course.studentNames ? [...course.studentNames] : [],
+                        students: course.studentNames?.length || 0,
+                        color: course.color,
+                        groupId: course.groupId
+                    };
+                } else {
+                    // Create new course
+                    const newCourse: Course = {
+                        id: `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        time: slot.startTime,
+                        room: course.room,
+                        tutor: course.tutor,
+                        students: course.studentNames?.length || 0,
+                        subject: course.subject || "",
+                        color: course.color,
+                        studentNames: course.studentNames ? [...course.studentNames] : [],
+                        groupId: course.groupId
+                    };
+                    updatedCourses.push(newCourse);
+                }
+                createdCount++;
+            });
+
+            setPlacementCourses({
+                ...placementCourses,
+                [placementDay]: updatedCourses
+            });
+
+            setHasUnsavedChanges(true);
+
+            if (createdCount > 0) {
+                alert(`Récurrence appliquée: ${createdCount} cours créé(s) dans les créneaux suivants`);
+            } else {
+                alert("Aucun nouveau cours créé (tous les créneaux sont déjà occupés)");
+            }
         };
 
         const getGroupForPerson = (personName: string) => {
@@ -6405,6 +6604,7 @@ const LBNApp = () => {
                 // Create updated course with new time and room
                 const movedCourse: Course = {
                     ...courseToMove,
+                    id: courseToMove.id || `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                     time: slot.startTime,
                     room: room
                 };
@@ -6447,6 +6647,7 @@ const LBNApp = () => {
             if (!courseToUpdate) {
                 // Create new course
                 const newCourse: Course = {
+                    id: `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                     time: slot.startTime,
                     room: room,
                     tutor: "",
@@ -7031,7 +7232,14 @@ const LBNApp = () => {
                                                 )}
                                             </div>
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                                {filteredTutors.map((tutor) => {
+                                                {[...filteredTutors].sort((a, b) => {
+                                                    const aGreyed = isPersonPlacedInSelectedSlots(a.name, 'tutor');
+                                                    const bGreyed = isPersonPlacedInSelectedSlots(b.name, 'tutor');
+                                                    // Les éléments grisés vont à la fin
+                                                    if (aGreyed && !bGreyed) return 1;
+                                                    if (!aGreyed && bGreyed) return -1;
+                                                    return 0;
+                                                }).map((tutor) => {
                                                     const tutorGroup = getGroupForPerson(tutor.name);
                                                     const isGreyedOut = isPersonPlacedInSelectedSlots(tutor.name, 'tutor');
                                                     return (
@@ -7189,7 +7397,14 @@ const LBNApp = () => {
                                                 )}
                                             </div>
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                                {filteredStudents.map((student) => {
+                                                {[...filteredStudents].sort((a, b) => {
+                                                    const aGreyed = isPersonPlacedInSelectedSlots(a.name, 'student');
+                                                    const bGreyed = isPersonPlacedInSelectedSlots(b.name, 'student');
+                                                    // Les éléments grisés vont à la fin
+                                                    if (aGreyed && !bGreyed) return 1;
+                                                    if (!aGreyed && bGreyed) return -1;
+                                                    return 0;
+                                                }).map((student) => {
                                                     const studentGroup = getGroupForPerson(student.name);
                                                     const isGreyedOut = isPersonPlacedInSelectedSlots(student.name, 'student');
                                                     return (
@@ -7717,10 +7932,52 @@ const LBNApp = () => {
                                         
                                         return (
                                             <>
-                                                <div className={`${selectedCourseForDetails.color || 'bg-blue-500'} text-white rounded-lg p-4 mb-4`}>
-                                                    <div className="font-bold text-lg mb-1">{courseTitle}</div>
-                                                    <div className="text-sm opacity-90">{selectedCourseForDetails.room} • {selectedCourseForDetails.time}</div>
+                                                {/* Course Details - No title */}
+                                                <div className="mb-4 space-y-2">
+                                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                                        <div>
+                                                            <div className="text-xs text-slate-500 mb-1">ID unique</div>
+                                                            <div className="font-mono text-slate-900">{selectedCourseForDetails.id || 'N/A'}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-slate-500 mb-1">Num salle</div>
+                                                            <div className="font-medium text-slate-900">{selectedCourseForDetails.room}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-slate-500 mb-1">Date</div>
+                                                            <div className="font-medium text-slate-900">{placementDay}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-slate-500 mb-1">Heure</div>
+                                                            <div className="font-medium text-slate-900">{selectedCourseForDetails.time}</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                
+                                                {/* PG Progress Bar */}
+                                                {selectedCourseForDetails.tutor && selectedCourseForDetails.tutor.trim() !== "" && (() => {
+                                                    const coursePG = calculateCoursePG(selectedCourseForDetails);
+                                                    const tutorCapacity = getTutorCapacity(selectedCourseForDetails.tutor);
+                                                    const percentage = tutorCapacity > 0 ? Math.round((coursePG / tutorCapacity) * 100) : 0;
+                                                    const progressColor = percentage < 80 ? 'bg-green-500' : percentage <= 100 ? 'bg-orange-500' : 'bg-red-500';
+                                                    
+                                                    return (
+                                                        <div className="mb-4">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="text-sm font-semibold text-slate-700">Points de Gestion (PG)</div>
+                                                                <div className="text-sm font-medium text-slate-900">
+                                                                    {coursePG}/{tutorCapacity} PG ({percentage}%)
+                                                                </div>
+                                                            </div>
+                                                            <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                                                <div 
+                                                                    className={`h-full ${progressColor} transition-all duration-300`}
+                                                                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                                 
                                                 {/* Tutor Info */}
                                                 {selectedCourseForDetails.tutor && selectedCourseForDetails.tutor.trim() !== "" && (
@@ -7742,6 +7999,40 @@ const LBNApp = () => {
                                                         {shouldShowGroup && group && group.tutor && group.tutor === selectedCourseForDetails.tutor && (
                                                             <div className="text-xs text-slate-500 mt-1">Tuteur du groupe</div>
                                                         )}
+                                                    </div>
+                                                )}
+
+                                                {/* Recurrence Feature */}
+                                                {selectedCourseForDetails.tutor && selectedCourseForDetails.tutor.trim() !== "" && (
+                                                    <div className="mb-4 border-2 rounded-xl p-4 border-slate-200 bg-white">
+                                                        <div className="text-sm font-semibold text-slate-700 mb-3">Récurrence</div>
+                                                        <div className="space-y-3">
+                                                            <div>
+                                                                <label className="block text-xs text-slate-600 mb-2">
+                                                                    Maintenir le tuteur dans cette salle pour:
+                                                                </label>
+                                                                <select
+                                                                    value={recurrenceDuration}
+                                                                    onChange={(e) => setRecurrenceDuration(parseInt(e.target.value))}
+                                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                >
+                                                                    <option value={1}>1 créneau (actuel uniquement)</option>
+                                                                    <option value={2}>2 créneaux consécutifs</option>
+                                                                    <option value={3}>3 créneaux consécutifs</option>
+                                                                    <option value={4}>4 créneaux consécutifs</option>
+                                                                    <option value={5}>5 créneaux consécutifs</option>
+                                                                </select>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleApplyRecurrence(selectedCourseForDetails, recurrenceDuration);
+                                                                }}
+                                                                className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
+                                                            >
+                                                                Appliquer la récurrence
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 )}
 
@@ -7803,6 +8094,23 @@ const LBNApp = () => {
                                                         </div>
                                                     )}
                                                 </div>
+
+                                                {/* Create Group Option */}
+                                                {selectedCourseForDetails.studentNames && 
+                                                 selectedCourseForDetails.studentNames.length > 0 && 
+                                                 !groupExists(selectedCourseForDetails) && (
+                                                    <div className="mt-4 pt-4 border-t border-slate-200">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleCreateGroupFromCourse(selectedCourseForDetails);
+                                                            }}
+                                                            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                                                        >
+                                                            <span>Créer un groupe avec les personnes du cours</span>
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </>
                                         );
                                     })()}
