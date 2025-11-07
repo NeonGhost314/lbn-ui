@@ -6299,6 +6299,56 @@ const LBNApp = () => {
             if (!draggedItem) return;
 
             const dayCourses = placementCourses[day] || [];
+            
+            // Handle course movement (moving a complete course to another time slot)
+            if (draggedItem.type === 'course') {
+                const courseToMove = draggedItem.data as Course;
+                
+                // Find the course in the current day's courses
+                const courseIndex = dayCourses.findIndex(
+                    (c) => c.room === courseToMove.room && 
+                           c.time.startsWith(courseToMove.time.split(":")[0]) &&
+                           c.tutor === courseToMove.tutor &&
+                           JSON.stringify(c.studentNames?.sort()) === JSON.stringify(courseToMove.studentNames?.sort())
+                );
+                
+                if (courseIndex === -1) return; // Course not found
+                
+                // Create updated course with new time and room
+                const movedCourse: Course = {
+                    ...courseToMove,
+                    time: slot.startTime,
+                    room: room
+                };
+                
+                // Remove the course from its old position
+                const updatedCourses = dayCourses.filter((_, idx) => idx !== courseIndex);
+                
+                // Check if there's already a course at the target location
+                const existingCourseAtTarget = updatedCourses.find(
+                    (c) => c.room === room && c.time.startsWith(slot.startTime.split(":")[0])
+                );
+                
+                if (existingCourseAtTarget) {
+                    // Merge with existing course or replace? For now, we'll replace
+                    const targetIndex = updatedCourses.findIndex(
+                        (c) => c.room === room && c.time.startsWith(slot.startTime.split(":")[0])
+                    );
+                    updatedCourses[targetIndex] = movedCourse;
+                } else {
+                    // Add the moved course to the new location
+                    updatedCourses.push(movedCourse);
+                }
+                
+                setPlacementCourses({
+                    ...placementCourses,
+                    [day]: updatedCourses
+                });
+                setHasUnsavedChanges(true);
+                return;
+            }
+
+            // Original logic for groups, tutors, and students
             const existingCourses = dayCourses.filter(
                 (c) => c.room === room && c.time.startsWith(slot.startTime.split(":")[0])
             );
@@ -7241,8 +7291,14 @@ const LBNApp = () => {
                                                                         return (
                                                                             <div
                                                                                 key={idx}
+                                                                                draggable
+                                                                                onDragStart={(e) => {
+                                                                                    setDraggedItem({ type: 'course', data: course });
+                                                                                    e.dataTransfer.effectAllowed = 'move';
+                                                                                }}
+                                                                                onDragEnd={() => setDraggedItem(null)}
                                                                                 onClick={() => setSelectedCourseForDetails(course)}
-                                                                                className="bg-white rounded-lg shadow-sm overflow-hidden relative border border-slate-200 cursor-pointer hover:shadow-md transition-all"
+                                                                                className="bg-white rounded-lg shadow-sm overflow-hidden relative border border-slate-200 cursor-move hover:shadow-md transition-all"
                                                                             >
                                                                                 {/* Course Header Section */}
                                                                                 <div 
