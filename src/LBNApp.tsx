@@ -59,6 +59,7 @@ import {
     Edit3,
     Save,
     RefreshCw,
+    Rocket,
 } from "lucide-react";
 
 const LBNApp = () => {
@@ -138,7 +139,7 @@ const LBNApp = () => {
         id: number;
         name: string;
         status: "Apprenti" | "Tuteur" | "Administrateur";
-        hourlyRate: number;
+        hourlyRate: number; // Pour apprentis: variable par personne, pour tuteurs/admins: fixe
         weeklyHours: number;
         sessions: PayrollSession[];
         adjustments: PayrollAdjustment[];
@@ -151,8 +152,7 @@ const LBNApp = () => {
     }
 
     interface PayrollConfig {
-        rates: {
-            Apprenti: number;
+        fixedRates: {
             Tuteur: number;
             Administrateur: number;
         };
@@ -357,8 +357,7 @@ const LBNApp = () => {
 
     // Payroll Configuration
     const [payrollConfig, setPayrollConfig] = useState<PayrollConfig>({
-        rates: {
-            Apprenti: 18.50,
+        fixedRates: {
             Tuteur: 25.00,
             Administrateur: 35.00
         },
@@ -369,6 +368,7 @@ const LBNApp = () => {
     // Mock Payroll Data
     const generateMockPayrollData = (): PayrollEmployee[] => {
         return [
+            // Tuteurs avec salaire fixe et bonus possibles
             {
                 id: 1,
                 name: "Marie Dupont",
@@ -442,6 +442,7 @@ const LBNApp = () => {
                 validatedBy: "admin@labonnenote.com",
                 validatedAt: new Date()
             },
+            // Administrateur avec salaire fixe
             {
                 id: 3,
                 name: "Sophie Chen",
@@ -456,6 +457,84 @@ const LBNApp = () => {
                 validatedBy: "admin@labonnenote.com",
                 validatedAt: new Date(),
                 paidAt: new Date()
+            },
+            // Apprentis avec salaires variables et sans bonus
+            {
+                id: 4,
+                name: "Lucas Apprenti",
+                status: "Apprenti",
+                hourlyRate: 16.50, // Salaire variable individuel
+                weeklyHours: 20,
+                sessions: [
+                    {
+                        id: "s4",
+                        date: "2024-11-04",
+                        startTime: "16:15",
+                        endTime: "18:15",
+                        students: 5, // Même avec 5+ élèves, pas de bonus
+                        hasBonus: false,
+                        paidBreak: 15,
+                        hours: 2,
+                        baseAmount: 33.00,
+                        bonusAmount: 0
+                    }
+                ],
+                adjustments: [],
+                grossTotal: 330.00,
+                netTotal: 330.00,
+                payrollStatus: "draft",
+            },
+            {
+                id: 5,
+                name: "Emma Stagiaire",
+                status: "Apprenti",
+                hourlyRate: 18.75, // Salaire différent d'un autre apprenti
+                weeklyHours: 15,
+                sessions: [
+                    {
+                        id: "s5",
+                        date: "2024-11-05",
+                        startTime: "13:00",
+                        endTime: "15:00",
+                        students: 2,
+                        hasBonus: false,
+                        paidBreak: 0,
+                        hours: 2,
+                        baseAmount: 37.50,
+                        bonusAmount: 0
+                    }
+                ],
+                adjustments: [],
+                grossTotal: 281.25,
+                netTotal: 281.25,
+                payrollStatus: "validated",
+                validatedBy: "admin@labonnenote.com",
+                validatedAt: new Date()
+            },
+            {
+                id: 6,
+                name: "Noah Débutant",
+                status: "Apprenti",
+                hourlyRate: 15.00, // Salaire plus bas pour débutant
+                weeklyHours: 12,
+                sessions: [
+                    {
+                        id: "s6",
+                        date: "2024-11-06",
+                        startTime: "10:30",
+                        endTime: "12:30",
+                        students: 1,
+                        hasBonus: false,
+                        paidBreak: 0,
+                        hours: 2,
+                        baseAmount: 30.00,
+                        bonusAmount: 0
+                    }
+                ],
+                adjustments: [],
+                grossTotal: 180.00,
+                netTotal: 180.00,
+                payrollStatus: "draft",
             }
         ];
     };
@@ -1782,177 +1861,256 @@ const LBNApp = () => {
 
                     {/* Contact Form Section */}
                     <section className="container mx-auto px-4 py-24">
-                        <div className="max-w-4xl mx-auto">
-                            <div className="text-center mb-16">
-                                <div className="inline-block px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full mb-4">
-                                    <span className="text-orange-400 font-semibold text-sm">Contact</span>
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-20">
+                                <div className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/30 rounded-full mb-6">
+                                    <span className="text-orange-400 font-semibold text-sm">Transformez votre gestion éducative</span>
                                 </div>
-                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                                <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
                                     Parlons de votre projet
                                 </h2>
-                                <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                                    Une question? Une suggestion? Notre équipe est là pour vous accompagner.
+                                <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                                    Rejoignez les établissements qui révolutionnent leur gestion pédagogique. 
+                                    Découvrons ensemble comment La Bonne Note peut transformer vos opérations éducatives.
                                 </p>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-8">
-                                {/* Contact Info Cards */}
-                                <div className="space-y-6">
-                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Mail size={24} className="text-white" />
+                            {/* Bénéfices du partenariat */}
+                            <div className="grid md:grid-cols-3 gap-8 mb-16">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <Rocket size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Implémentation prioritaire</h3>
+                                    <p className="text-slate-400 leading-relaxed">
+                                        Travaillez directement avec notre équipe pour adapter La Bonne Note à vos processus spécifiques.
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <Users size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Partenariat personnalisé</h3>
+                                    <p className="text-slate-400 leading-relaxed">
+                                        Vos retours d'expérience guident nos développements pour créer la solution idéale.
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <Shield size={28} className="text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Support dédié</h3>
+                                    <p className="text-slate-400 leading-relaxed">
+                                        Accompagnement personnalisé et formation complète de votre équipe éducative.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid lg:grid-cols-5 gap-12 items-start">
+                                {/* Contact Info - Plus compact */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white mb-6">Contactez-nous directement</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-xl rounded-xl border border-slate-700/30">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Mail size={20} className="text-white" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-300 text-sm font-medium">Email direct</p>
+                                                    <a href="mailto:ouldmayanis@gmail.com" className="text-orange-400 hover:text-orange-300 transition-colors font-semibold">
+                                                        ouldmayanis@gmail.com
+                                                    </a>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-white mb-1">Email</h3>
-                                                <p className="text-slate-400 text-sm mb-2">Notre équipe vous répond sous 24h</p>
-                                                <a href="mailto:contact@labonnenote.com" className="text-orange-400 hover:text-orange-300 transition-colors">
-                                                    contact@labonnenote.com
-                                                </a>
+
+                                            <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-xl rounded-xl border border-slate-700/30">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Phone size={20} className="text-white" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-300 text-sm font-medium">Téléphone</p>
+                                                    <a href="tel:+15144305404" className="text-orange-400 hover:text-orange-300 transition-colors font-semibold">
+                                                        (514) 430-5404
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Phone size={24} className="text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-white mb-1">Téléphone</h3>
-                                                <p className="text-slate-400 text-sm mb-2">Disponible du lundi au vendredi</p>
-                                                <a href="tel:+15141234567" className="text-orange-400 hover:text-orange-300 transition-colors">
-                                                    +1 (514) 123-4567
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/50 transition-all">
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <MapPinIcon size={24} className="text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-white mb-1">Adresse</h3>
-                                                <p className="text-slate-400 text-sm">
-                                                    123 Rue de l'Éducation<br />
-                                                    Montréal, QC, Canada
-                                                </p>
-                                            </div>
-                                        </div>
+                                    {/* Citation inspirante */}
+                                    <div className="p-6 bg-gradient-to-br from-orange-500/10 to-pink-500/10 backdrop-blur-xl rounded-2xl border border-orange-500/20">
+                                        <blockquote className="text-orange-100 italic text-lg leading-relaxed">
+                                            "Nous n'automatisons pas l'éducation, nous libérons le potentiel pédagogique."
+                                        </blockquote>
+                                        <p className="text-orange-300 text-sm mt-3 font-medium">
+                                            La Bonne Note simplifie la gestion pour que vous puissiez vous concentrer sur l'essentiel : enseigner.
+                                        </p>
                                     </div>
                                 </div>
 
-                                {/* Contact Form */}
-                                <form onSubmit={handleSubmit} className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50">
-                                    <div className="space-y-6">
-                                        <h3 className="text-xl font-bold text-white mb-6">Envoyez-nous un message</h3>
-                                        
-                                        {/* Name Field */}
-                                        <div>
-                                            <label htmlFor="name" className="block text-sm font-semibold text-slate-300 mb-2">
-                                                Nom complet <span className="text-orange-400">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="name"
-                                                value={contactFormData.name}
-                                                onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
-                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
-                                                    formErrors.name ? "border-red-500" : "border-slate-700 focus:border-orange-500"
-                                                } text-white placeholder-slate-500 focus:outline-none transition-all`}
-                                                placeholder="Jean Dupont"
-                                            />
-                                            {formErrors.name && (
-                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-                                                    <AlertCircle size={14} />
-                                                    {formErrors.name}
-                                                </p>
-                                            )}
+                                {/* Formulaire de contact amélioré */}
+                                <div className="lg:col-span-3">
+                                    <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/30">
+                                        <div className="mb-8">
+                                            <h3 className="text-2xl font-bold text-white mb-3">Démarrons votre transformation</h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Chaque implémentation commence par une analyse personnalisée de vos besoins spécifiques. 
+                                                Parlons de vos défis éducatifs actuels.
+                                            </p>
                                         </div>
 
-                                        {/* Email Field */}
-                                        <div>
-                                            <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
-                                                Adresse courriel <span className="text-orange-400">*</span>
-                                            </label>
-                                            <input
-                                                type="email"
-                                                id="email"
-                                                value={contactFormData.email}
-                                                onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
-                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
-                                                    formErrors.email ? "border-red-500" : "border-slate-700 focus:border-orange-500"
-                                                } text-white placeholder-slate-500 focus:outline-none transition-all`}
-                                                placeholder="jean.dupont@exemple.com"
-                                            />
-                                            {formErrors.email && (
-                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-                                                    <AlertCircle size={14} />
-                                                    {formErrors.email}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Message Field */}
-                                        <div>
-                                            <label htmlFor="message" className="block text-sm font-semibold text-slate-300 mb-2">
-                                                Votre message <span className="text-orange-400">*</span>
-                                            </label>
-                                            <textarea
-                                                id="message"
-                                                value={contactFormData.message}
-                                                onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
-                                                rows={5}
-                                                className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
-                                                    formErrors.message ? "border-red-500" : "border-slate-700 focus:border-orange-500"
-                                                } text-white placeholder-slate-500 focus:outline-none transition-all resize-none`}
-                                                placeholder="Parlez-nous de votre projet..."
-                                            />
-                                            {formErrors.message && (
-                                                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-                                                    <AlertCircle size={14} />
-                                                    {formErrors.message}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Status Messages */}
-                                        {formStatus === "success" && formMessage && (
-                                            <div className="p-4 bg-green-500/10 border-2 border-green-500/30 rounded-xl flex items-start gap-3">
-                                                <CheckCircle size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
-                                                <p className="text-green-300 text-sm">{formMessage}</p>
+                                        {/* Critères de partenariat */}
+                                        <div className="mb-8 p-6 bg-slate-800/40 rounded-xl border border-slate-600/30">
+                                            <h4 className="text-lg font-semibold text-white mb-4">Nous recherchons des partenaires qui :</h4>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+                                                    <span className="text-slate-300">Gèrent plus de 50 élèves avec des processus établis</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+                                                    <span className="text-slate-300">Souhaitent optimiser leur gestion administrative</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+                                                    <span className="text-slate-300">Sont prêts à collaborer sur le développement produit</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+                                                    <span className="text-slate-300">Investissent dans l'efficacité de leur équipe pédagogique</span>
+                                                </div>
                                             </div>
-                                        )}
+                                        </div>
 
-                                        {formStatus === "error" && formMessage && (
-                                            <div className="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-xl flex items-start gap-3">
-                                                <AlertCircle size={20} className="text-red-400 mt-0.5 flex-shrink-0" />
-                                                <p className="text-red-300 text-sm">{formMessage}</p>
+                                        <form onSubmit={handleSubmit} className="space-y-6">
+                                            {/* Nom et Email sur la même ligne */}
+                                            <div className="grid md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label htmlFor="name" className="block text-sm font-semibold text-slate-300 mb-3">
+                                                        Nom complet <span className="text-orange-400">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        id="name"
+                                                        value={contactFormData.name}
+                                                        onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                                                        className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                            formErrors.name ? "border-red-500" : "border-slate-600 focus:border-orange-500"
+                                                        } text-white placeholder-slate-400 focus:outline-none transition-all`}
+                                                        placeholder="Jean Dupont"
+                                                    />
+                                                    {formErrors.name && (
+                                                        <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                            <AlertCircle size={14} />
+                                                            {formErrors.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-3">
+                                                        Adresse courriel <span className="text-orange-400">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        id="email"
+                                                        value={contactFormData.email}
+                                                        onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                                                        className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                            formErrors.email ? "border-red-500" : "border-slate-600 focus:border-orange-500"
+                                                        } text-white placeholder-slate-400 focus:outline-none transition-all`}
+                                                        placeholder="jean.dupont@exemple.com"
+                                                    />
+                                                    {formErrors.email && (
+                                                        <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                            <AlertCircle size={14} />
+                                                            {formErrors.email}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* Submit Button */}
-                                        <button
-                                            type="submit"
-                                            disabled={formStatus === "submitting"}
-                                            className="group w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-xl flex items-center justify-center gap-2"
-                                        >
-                                            {formStatus === "submitting" ? (
-                                                <>
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    <span>Envoi en cours...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Send size={20} className="group-hover:translate-x-1 transition-transform" />
-                                                    <span>Envoyer le message</span>
-                                                </>
+                                            {/* Nouveau champ : Type d'établissement */}
+                                            <div>
+                                                <label htmlFor="institution-type" className="block text-sm font-semibold text-slate-300 mb-3">
+                                                    Type d'établissement
+                                                </label>
+                                                <select className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 border-slate-600 focus:border-orange-500 text-white focus:outline-none transition-all">
+                                                    <option value="">Sélectionnez votre type d'établissement</option>
+                                                    <option value="centre-tutorat">Centre de tutorat</option>
+                                                    <option value="ecole-privee">École privée</option>
+                                                    <option value="organisme-formation">Organisme de formation</option>
+                                                    <option value="etablissement-superieur">Établissement supérieur</option>
+                                                    <option value="autre">Autre</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Message personnalisé */}
+                                            <div>
+                                                <label htmlFor="message" className="block text-sm font-semibold text-slate-300 mb-3">
+                                                    Parlez-nous de vos défis actuels <span className="text-orange-400">*</span>
+                                                </label>
+                                                <textarea
+                                                    id="message"
+                                                    value={contactFormData.message}
+                                                    onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
+                                                    rows={5}
+                                                    className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border-2 ${
+                                                        formErrors.message ? "border-red-500" : "border-slate-600 focus:border-orange-500"
+                                                    } text-white placeholder-slate-400 focus:outline-none transition-all resize-none`}
+                                                    placeholder="Décrivez vos processus actuels, vos points de douleur, et comment vous envisagez améliorer votre gestion éducative..."
+                                                />
+                                                {formErrors.message && (
+                                                    <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                                        <AlertCircle size={14} />
+                                                        {formErrors.message}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Status Messages */}
+                                            {formStatus === "success" && formMessage && (
+                                                <div className="p-4 bg-green-500/10 border-2 border-green-500/30 rounded-xl flex items-start gap-3">
+                                                    <CheckCircle size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
+                                                    <p className="text-green-300 text-sm">{formMessage}</p>
+                                                </div>
                                             )}
-                                        </button>
+
+                                            {formStatus === "error" && formMessage && (
+                                                <div className="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-xl flex items-start gap-3">
+                                                    <AlertCircle size={20} className="text-red-400 mt-0.5 flex-shrink-0" />
+                                                    <p className="text-red-300 text-sm">{formMessage}</p>
+                                                </div>
+                                            )}
+
+                                            {/* Submit Button */}
+                                            <button
+                                                type="submit"
+                                                disabled={formStatus === "submitting"}
+                                                className="group w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-xl flex items-center justify-center gap-2"
+                                            >
+                                                {formStatus === "submitting" ? (
+                                                    <>
+                                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                        <span>Démarrage en cours...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Rocket size={20} className="group-hover:translate-x-1 transition-transform" />
+                                                        <span>Démarrer notre collaboration</span>
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            {/* Note de confidentialité */}
+                                            <p className="text-xs text-slate-400 text-center leading-relaxed">
+                                                En soumettant ce formulaire, vous acceptez que nous vous recontactions pour discuter de votre projet. 
+                                                Nous respectons votre vie privée et ne partagerons jamais vos informations.
+                                            </p>
+                                        </form>
                                     </div>
-                                </form>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1973,17 +2131,17 @@ const LBNApp = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-2 text-sm">
-                                        <a href="mailto:contact@labonnenote.com" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
+                                        <a href="mailto:ouldmayanis@gmail.com" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
                                             <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                                                 <Mail size={16} className="text-orange-500" />
                                             </div>
-                                            <span>contact@labonnenote.com</span>
+                                            <span>ouldmayanis@gmail.com</span>
                                         </a>
-                                        <a href="tel:+15141234567" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
+                                        <a href="tel:+15144305404" className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-colors group">
                                             <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                                                 <Phone size={16} className="text-orange-500" />
                                             </div>
-                                            <span>+1 (514) 123-4567</span>
+                                            <span>+1 (514) 430-5404</span>
                                         </a>
                                         <div className="flex items-center gap-3 text-slate-400">
                                             <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
@@ -9346,7 +9504,7 @@ const LBNApp = () => {
 
     // Payroll Page - Gestion de la paie
     const PayrollPage = () => {
-        const [selectedTab, setSelectedTab] = useState<"overview" | "config" | "history">("overview");
+        const [selectedTab, setSelectedTab] = useState<"overview" | "statistics" | "history">("overview");
         const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
         const [selectedEmployee, setSelectedEmployee] = useState<PayrollEmployee | null>(null);
         const [newAdjustment, setNewAdjustment] = useState({
@@ -9414,14 +9572,14 @@ const LBNApp = () => {
                             Vue d'ensemble
                         </button>
                         <button
-                            onClick={() => setSelectedTab("config")}
+                            onClick={() => setSelectedTab("statistics")}
                             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                selectedTab === "config"
+                                selectedTab === "statistics"
                                     ? "bg-white text-slate-900 shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
                             }`}
                         >
-                            Configuration
+                            Statistiques
                         </button>
                         <button
                             onClick={() => setSelectedTab("history")}
@@ -9530,16 +9688,22 @@ const LBNApp = () => {
                                                         {employee.weeklyHours}h
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm text-slate-900">
-                                                                {totalBonus.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                        {employee.status === "Apprenti" ? (
+                                                            <span className="text-sm text-slate-500 italic">
+                                                                N/A
                                                             </span>
-                                                            {totalBonus > 0 && (
-                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                                    +30%
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm text-slate-900">
+                                                                    {totalBonus.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
                                                                 </span>
-                                                            )}
-                                                        </div>
+                                                                {totalBonus > 0 && (
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                        +30%
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                                         {totalPaidBreaks.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
@@ -9593,58 +9757,214 @@ const LBNApp = () => {
                     </div>
                 )}
 
-                {/* Configuration Tab */}
-                {selectedTab === "config" && (
+                {/* Statistics Tab */}
+                {selectedTab === "statistics" && (
                     <div className="space-y-6">
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                <Settings size={20} className="text-orange-500" />
-                                Configuration des taux horaires
-                            </h3>
-                            <div className="space-y-4">
-                                {Object.entries(payrollConfig.rates).map(([status, rate]) => (
-                                    <div key={status} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                                status === "Apprenti" ? "bg-blue-100 text-blue-600" :
-                                                status === "Tuteur" ? "bg-orange-100 text-orange-600" :
-                                                "bg-purple-100 text-purple-600"
-                                            }`}>
-                                                {status === "Apprenti" ? "A" : status === "Tuteur" ? "T" : "AD"}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-slate-900">{status}</h4>
-                                                <p className="text-sm text-slate-600">Taux de base actuel</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                                <div className="text-lg font-bold text-slate-900">
-                                                    {rate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })} /h
-                                                </div>
-                                                <div className="text-xs text-slate-500">
-                                                    Mis à jour le {payrollConfig.lastUpdated.toLocaleDateString('fr-FR')}
-                                                </div>
-                                            </div>
-                                            <button className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors">
-                                                Modifier
-                                            </button>
-                                        </div>
+                        {/* Métriques principales */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-900">Coût moyen/élève</h3>
+                                    <Users className="text-orange-500" size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="text-3xl font-bold text-slate-900">
+                                        {(() => {
+                                            const totalSessions = payrollEmployees.reduce((sum, emp) => sum + emp.sessions.length, 0);
+                                            const totalStudents = payrollEmployees.reduce((sum, emp) => 
+                                                sum + emp.sessions.reduce((sessSum, session) => sessSum + session.students, 0), 0);
+                                            const totalCost = payrollEmployees.reduce((sum, emp) => sum + emp.grossTotal, 0);
+                                            const avgCostPerStudent = totalStudents > 0 ? totalCost / totalStudents : 0;
+                                            return avgCostPerStudent.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+                                        })()}
                                     </div>
-                                ))}
+                                    <p className="text-sm text-slate-600">Par élève et par semaine</p>
+                                </div>
                             </div>
                             
-                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                <div className="flex items-start gap-3">
-                                    <Info className="text-blue-500 mt-0.5" size={20} />
-                                    <div className="text-sm text-blue-700">
-                                        <p className="font-semibold mb-1">Règles de calcul automatiques :</p>
-                                        <ul className="space-y-1 text-blue-600">
-                                            <li>• Bonus de 30% appliqué automatiquement pour 3 élèves ou plus par séance</li>
-                                            <li>• Pauses payées calculées entre séances consécutives</li>
-                                            <li>• Les modifications de taux n'affectent pas les périodes déjà validées</li>
-                                        </ul>
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-900">Efficacité bonus</h3>
+                                    <TrendingUp className="text-green-500" size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="text-3xl font-bold text-slate-900">
+                                        {(() => {
+                                            const sessionsWithBonus = payrollEmployees.reduce((sum, emp) => 
+                                                sum + emp.sessions.filter(s => s.hasBonus && emp.status !== "Apprenti").length, 0);
+                                            const totalSessions = payrollEmployees.reduce((sum, emp) => 
+                                                sum + emp.sessions.filter(s => emp.status !== "Apprenti").length, 0);
+                                            const bonusRate = totalSessions > 0 ? (sessionsWithBonus / totalSessions * 100) : 0;
+                                            return Math.round(bonusRate);
+                                        })()}%
                                     </div>
+                                    <p className="text-sm text-slate-600">Séances avec bonus 30%</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-900">Coût/heure moyen</h3>
+                                    <Clock className="text-blue-500" size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="text-3xl font-bold text-slate-900">
+                                        {(() => {
+                                            const totalCost = payrollEmployees.reduce((sum, emp) => sum + emp.grossTotal, 0);
+                                            const totalHours = payrollEmployees.reduce((sum, emp) => sum + emp.weeklyHours, 0);
+                                            const avgCostPerHour = totalHours > 0 ? totalCost / totalHours : 0;
+                                            return avgCostPerHour.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
+                                        })()}
+                                    </div>
+                                    <p className="text-sm text-slate-600">Tous employés confondus</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-900">Taux validation</h3>
+                                    <CheckCircle className="text-purple-500" size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="text-3xl font-bold text-slate-900">
+                                        {(() => {
+                                            const validatedCount = payrollEmployees.filter(emp => emp.payrollStatus === "validated" || emp.payrollStatus === "paid").length;
+                                            const totalCount = payrollEmployees.length;
+                                            const validationRate = totalCount > 0 ? (validatedCount / totalCount * 100) : 0;
+                                            return Math.round(validationRate);
+                                        })()}%
+                                    </div>
+                                    <p className="text-sm text-slate-600">Feuilles validées/payées</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Répartition par statut */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                    <BarChart3 size={20} className="text-orange-500" />
+                                    Répartition des coûts par statut
+                                </h3>
+                                <div className="space-y-4">
+                                    {["Apprenti", "Tuteur", "Administrateur"].map((status) => {
+                                        const statusEmployees = payrollEmployees.filter(emp => emp.status === status);
+                                        const statusTotal = statusEmployees.reduce((sum, emp) => sum + emp.grossTotal, 0);
+                                        const totalCost = payrollEmployees.reduce((sum, emp) => sum + emp.grossTotal, 0);
+                                        const percentage = totalCost > 0 ? (statusTotal / totalCost * 100) : 0;
+                                        
+                                        return (
+                                            <div key={status} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
+                                                        status === "Apprenti" ? "bg-blue-100 text-blue-600" :
+                                                        status === "Tuteur" ? "bg-orange-100 text-orange-600" :
+                                                        "bg-purple-100 text-purple-600"
+                                                    }`}>
+                                                        {status === "Apprenti" ? "A" : status === "Tuteur" ? "T" : "AD"}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900">{status}</h4>
+                                                        <p className="text-sm text-slate-600">{statusEmployees.length} employé(s)</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-lg font-bold text-slate-900">
+                                                        {statusTotal.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}
+                                                    </div>
+                                                    <div className="text-sm text-slate-600">{Math.round(percentage)}%</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                    <TrendingUp size={20} className="text-green-500" />
+                                    Analyse des salaires apprentis
+                                </h3>
+                                <div className="space-y-4">
+                                    {(() => {
+                                        const apprentis = payrollEmployees.filter(emp => emp.status === "Apprenti");
+                                        const rates = apprentis.map(a => a.hourlyRate);
+                                        const minRate = Math.min(...rates);
+                                        const maxRate = Math.max(...rates);
+                                        const avgRate = rates.length > 0 ? rates.reduce((sum, rate) => sum + rate, 0) / rates.length : 0;
+                                        
+                                        return (
+                                            <>
+                                                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                                    <span className="text-sm font-medium text-blue-900">Salaire minimum</span>
+                                                    <span className="text-lg font-bold text-blue-600">
+                                                        {minRate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}/h
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                                    <span className="text-sm font-medium text-green-900">Salaire maximum</span>
+                                                    <span className="text-lg font-bold text-green-600">
+                                                        {maxRate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}/h
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                                    <span className="text-sm font-medium text-orange-900">Salaire moyen</span>
+                                                    <span className="text-lg font-bold text-orange-600">
+                                                        {avgRate.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' })}/h
+                                                    </span>
+                                                </div>
+                                                <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                                                    <p className="text-sm text-slate-600">
+                                                        <strong>{apprentis.length}</strong> apprenti(s) actif(s) avec des salaires individualisés
+                                                    </p>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Informations sur les règles de paie */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Info size={20} className="text-blue-500" />
+                                Règles de rémunération en vigueur
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 className="font-semibold text-slate-900 mb-3">Apprentis</h4>
+                                    <ul className="space-y-2 text-sm text-slate-600">
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                            Salaires individualisés et variables
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                            Aucun bonus, peu importe le nombre d'élèves
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                            Pauses payées selon les séances
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-slate-900 mb-3">Tuteurs & Administrateurs</h4>
+                                    <ul className="space-y-2 text-sm text-slate-600">
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                            Salaires fixes par statut
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                            Bonus +30% avec 3 élèves ou plus
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                            Ajustements manuels possibles
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -10047,7 +10367,7 @@ const LBNApp = () => {
                                         </label>
                                         <input
                                             type="email"
-                                            defaultValue="contact@labonnenote.ca"
+                                            defaultValue="ouldmayanis@gmail.com"
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
                                         />
                                     </div>
@@ -10058,7 +10378,7 @@ const LBNApp = () => {
                                             </label>
                                             <input
                                                 type="tel"
-                                                defaultValue="+1 (514) 555-0100"
+                                                defaultValue="+1 (514) 430-5404"
                                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
                                             />
                                         </div>
