@@ -6,7 +6,6 @@ import {
     BookOpen,
     BarChart3,
     Settings,
-    Bell,
     Search,
     Filter,
     Plus,
@@ -24,6 +23,7 @@ import {
     Printer,
     Trash2,
     ChevronDown,
+    ChevronUp,
     Building2,
     UserCog,
     Palette,
@@ -270,6 +270,7 @@ const LBNApp = () => {
     const [selectedDay, setSelectedDay] = useState<Day>("Lundi");
     const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
     const [targetStatsSection, setTargetStatsSection] = useState<string | null>(null);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const [visibleStats, setVisibleStats] = useState<Record<string, boolean>>({
         activeStudents: true,
         plannedCourses: true,
@@ -909,18 +910,6 @@ const LBNApp = () => {
                     <span>Comptabilité</span>
                 </button>
 
-                {/* Notifications Button */}
-                <div className="pt-4 mt-4 border-t border-slate-700/50">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group hover:bg-slate-800/50 text-slate-300 hover:text-white">
-                        <div className="relative">
-                            <Bell size={20} className="group-hover:scale-110 transition-transform" />
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                        </div>
-                        <span>Notifications</span>
-                        <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">3</span>
-                    </button>
-                </div>
-
                 <div className="pt-2">
                     <button
                         onClick={() => setCurrentPage("companySettings")}
@@ -940,42 +929,58 @@ const LBNApp = () => {
 
             {/* Footer/User Section */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 mb-3">
-                    <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md flex items-center justify-center text-sm font-bold">
-                        A
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">Admin</div>
-                        <div className="text-xs text-slate-400 truncate">admin@labonnenote.com</div>
-                    </div>
-                </div>
-                
-                <div className="space-y-1 mb-3">
+                <div className="relative">
+                    {/* User Menu Toggle */}
                     <button
-                        onClick={() => setCurrentPage("settings")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 relative overflow-hidden group ${currentPage === "settings"
-                            ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
-                            : "hover:bg-slate-800/50 text-slate-300 hover:text-white"
-                            }`}
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 mb-3 hover:bg-slate-700/50 transition-all duration-200"
                     >
-                        {currentPage === "settings" && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                        <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full shadow-md flex items-center justify-center text-sm font-bold">
+                            A
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">Admin</div>
+                            <div className="text-xs text-slate-400 truncate">admin@labonnenote.com</div>
+                        </div>
+                        {showUserMenu ? (
+                            <ChevronUp size={16} className="text-slate-400" />
+                        ) : (
+                            <ChevronDown size={16} className="text-slate-400" />
                         )}
-                        <UserCog size={18} className="group-hover:scale-110 transition-transform" />
-                        <span>Mon Compte</span>
                     </button>
+
+                    {/* Dropdown Menu */}
+                    {showUserMenu && (
+                        <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-800/95 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-xl z-50">
+                            <div className="p-2 space-y-1">
+                                <button
+                                    onClick={() => {
+                                        setCurrentPage("settings");
+                                        setShowUserMenu(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition-all duration-200 ${currentPage === "settings"
+                                        ? "bg-orange-500 text-white"
+                                        : "hover:bg-slate-700/50 text-slate-300 hover:text-white"
+                                        }`}
+                                >
+                                    <UserCog size={16} />
+                                    <span>Mon Compte</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsLoggedIn(false);
+                                        setCurrentPage("landing");
+                                        setShowUserMenu(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-500/20 text-slate-300 hover:text-red-400"
+                                >
+                                    <DoorOpen size={16} />
+                                    <span>Se déconnecter</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                
-                <button
-                    onClick={() => {
-                        setIsLoggedIn(false);
-                        setCurrentPage("landing");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-red-500/20 text-slate-300 hover:text-red-400"
-                >
-                    <DoorOpen size={20} />
-                    <span>Se déconnecter</span>
-                </button>
             </div>
         </div>
     );
@@ -2699,12 +2704,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Élèves actifs
-                                        </span>
-                                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                                            <Users size={20} className="text-blue-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                                <Users size={20} className="text-blue-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Élèves actifs
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2736,12 +2743,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Cours planifiés
-                                        </span>
-                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                                            <Calendar size={20} className="text-purple-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                <Calendar size={20} className="text-purple-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Cours planifiés
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2773,12 +2782,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Cours réalisés
-                                        </span>
-                                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <CheckCircle size={20} className="text-emerald-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                                <CheckCircle size={20} className="text-emerald-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Cours réalisés
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2810,12 +2821,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Taux occupation
-                                        </span>
-                                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <BarChart3 size={20} className="text-green-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                                <BarChart3 size={20} className="text-green-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Taux occupation
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2853,15 +2866,17 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Dépassements
-                                        </span>
-                                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                                            <AlertCircle
-                                                size={20}
-                                                className="text-orange-600"
-                                            />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                                                <AlertCircle
+                                                    size={20}
+                                                    className="text-orange-600"
+                                                />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Dépassements
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2893,12 +2908,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Capacité tuteurs
-                                        </span>
-                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                                            <Users size={20} className="text-purple-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                <Users size={20} className="text-purple-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Capacité tuteurs
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
@@ -2930,12 +2947,14 @@ const LBNApp = () => {
                                     >
                                         <X size={14} />
                                     </button>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-slate-600 text-sm font-medium">
-                                            Utilisation salles
-                                        </span>
-                                        <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
-                                            <MapPin size={20} className="text-teal-600" />
+                                    <div className="flex items-start justify-between mb-2 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+                                                <MapPin size={20} className="text-teal-600" />
+                                            </div>
+                                            <span className="text-slate-600 text-sm font-medium">
+                                                Utilisation salles
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="text-3xl font-bold text-slate-900">
